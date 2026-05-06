@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Kosher Phone SMS Converter</title>
+<script src="https://cdn.jsdelivr.net/npm/@zip.js/zip.js@2.7.52/dist/zip.min.js"></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:linear-gradient(135deg,#eef2ff 0%,#f0f4ff 50%,#e8ecf8 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+  .card{background:#fff;border:1px solid #e2e8f0;border-radius:20px;padding:36px;max-width:520px;width:100%;box-shadow:0 10px 40px rgba(0,0,0,.08),0 1px 3px rgba(0,0,0,.04)}
+  .logo{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+  .logo-icon{width:44px;height:44px;background:linear-gradient(135deg,#3b82f6,#6366f1);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;box-shadow:0 4px 12px rgba(59,130,246,.25)}
+  h1{font-size:1.2rem;color:#1e293b;font-weight:700;letter-spacing:-.01em}
+  .subtitle{font-size:.82rem;color:#64748b;margin-bottom:24px;line-height:1.5}
+  .drop-zone{border:2px dashed #cbd5e0;border-radius:16px;padding:40px 20px;text-align:center;cursor:pointer;transition:all .25s;background:#f8fafc}
+  .drop-zone:hover{border-color:#818cf8;background:#f5f3ff}
+  .drop-zone.active{border-color:#6366f1;background:#eef2ff}
+  .drop-zone.done{border-color:#22c55e;border-style:solid;background:#f0fdf4}
+  .drop-zone input{display:none}
+  .drop-icon{font-size:2.5rem;margin-bottom:10px}
+  .drop-text{color:#334155;font-size:.92rem;font-weight:500}
+  .drop-hint{font-size:.75rem;color:#94a3b8;margin-top:6px}
+  .btn{display:block;width:100%;padding:14px;border:none;border-radius:12px;font-size:.95rem;font-weight:600;cursor:pointer;margin-top:16px;transition:all .2s;letter-spacing:.01em}
+  .btn-primary{background:linear-gradient(135deg,#3b82f6,#6366f1);color:#fff;box-shadow:0 4px 15px rgba(99,102,241,.25)}
+  .btn-primary:hover{box-shadow:0 6px 20px rgba(99,102,241,.35);transform:translateY(-1px)}
+  .btn-primary:disabled{background:#cbd5e1;color:#94a3b8;box-shadow:none;transform:none;cursor:not-allowed}
+  .btn-success{background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;box-shadow:0 4px 15px rgba(34,197,94,.25)}
+  .btn-success:hover{box-shadow:0 6px 20px rgba(34,197,94,.35);transform:translateY(-1px)}
+  .btn-cancel{background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;box-shadow:0 4px 15px rgba(239,68,68,.25)}
+  .btn-cancel:hover{box-shadow:0 6px 20px rgba(239,68,68,.35);transform:translateY(-1px)}
+  .progress{margin-top:16px;display:none}
+  .progress-bar-wrap{background:#e2e8f0;border-radius:99px;height:6px;overflow:hidden;margin-top:8px}
+  .progress-bar{height:100%;background:linear-gradient(90deg,#3b82f6,#6366f1);width:0;transition:width .15s;border-radius:99px}
+  .progress-label{font-size:.78rem;color:#64748b}
+  .scan-results{margin-top:20px;padding:16px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;font-size:.84rem;color:#475569;display:none}
+  .scan-results h3{font-size:.9rem;color:#1e293b;margin-bottom:10px;font-weight:600}
+  .scan-results div.stat{margin:4px 0;display:flex;align-items:center;gap:8px}
+  .scan-results strong{color:#1e293b}
+  .detected-badge{display:inline-block;padding:3px 10px;border-radius:6px;font-size:.75rem;font-weight:600;background:#eef2ff;color:#4f46e5;margin-left:6px}
+  .section-label{font-size:.8rem;font-weight:600;color:#475569;margin:14px 0 8px;text-transform:uppercase;letter-spacing:.04em}
+  .options{margin-top:18px;display:none}
+  .option{display:flex;align-items:flex-start;gap:12px;padding:14px;border:1px solid #e2e8f0;border-radius:12px;margin-bottom:8px;cursor:pointer;transition:all .2s;background:#fff}
+  .option:hover{border-color:#818cf8;background:#f5f3ff}
+  .option.selected{border-color:#6366f1;background:#eef2ff;box-shadow:0 0 0 1px rgba(99,102,241,.15)}
+  .option input[type="radio"]{margin-top:3px;accent-color:#6366f1;width:16px;height:16px}
+  .option-label{font-weight:600;font-size:.88rem;color:#1e293b}
+  .option-desc{font-size:.76rem;color:#64748b;margin-top:2px;line-height:1.4}
+  .pdf-panel{margin-top:14px;padding:16px;background:#fffbeb;border:1px solid #fde68a;border-radius:14px;transition:all .3s}
+  .pdf-panel-title{font-weight:600;font-size:.88rem;color:#92400e;margin-bottom:4px}
+  .pdf-panel-info{font-size:.78rem;color:#b45309;margin-bottom:10px;line-height:1.5}
+  .pdf-panel-desc{font-size:.78rem;color:#92400e;margin-bottom:12px;line-height:1.5}
+  .info{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 14px;font-size:.82rem;color:#166534;margin-top:14px;display:none;line-height:1.5}
+  .error{background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:12px 14px;font-size:.82rem;color:#991b1b;margin-top:14px;display:none;line-height:1.5}
+  .file-name{font-size:.78rem;color:#6366f1;margin-top:10px;word-break:break-all;display:none;font-weight:500}
+  .footer{margin-top:24px;font-size:.72rem;color:#94a3b8;text-align:center;display:flex;align-items:center;justify-content:center;gap:6px}
+  .footer-dot{width:4px;height:4px;border-radius:50%;background:#cbd5e1}
+  .log-panel{margin-top:14px}
+  .log-panel summary{font-size:.7rem;color:#94a3b8;cursor:pointer;user-select:none;text-align:center;list-style:none}
+  .log-panel summary::-webkit-details-marker{display:none}
+  .log-panel summary::before{content:'▸ ';font-size:.65rem}
+  .log-panel[open] summary::before{content:'▾ '}
+  .log-panel .log-box{max-height:120px;overflow-y:auto;background:#1e293b;color:#94a3b8;font-family:'Cascadia Code',Consolas,monospace;font-size:.65rem;line-height:1.5;padding:8px 10px;border-radius:8px;margin-top:6px;white-space:pre-wrap;word-break:break-all}
+  .log-panel .log-box .log-warn{color:#facc15}
+  .log-panel .log-box .log-err{color:#f87171}
+  .log-panel .log-box .log-ok{color:#4ade80}
+  @keyframes shake{0%,100%{transform:translateX(0)}15%{transform:translateX(-6px)}30%{transform:translateX(5px)}45%{transform:translateX(-4px)}60%{transform:translateX(3px)}75%{transform:translateX(-2px)}}
+  .shake{animation:shake .5s ease-in-out}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">
+    <div class="logo-icon">📱</div>
+    <h1>Kosher Phone SMS Converter</h1>
+  </div>
+  <p class="subtitle">Convert message backups between Fig, Wonder, and SMS Backup &amp; Restore. Works with any file size.</p>
+
+  <div class="drop-zone" id="dropZone">
+    <input type="file" id="fileInput" accept=".zip,.xml" />
+    <div class="drop-icon">📦</div>
+    <div class="drop-text">Tap to choose your backup file</div>
+    <div class="drop-hint">Supports Fig ZIP, Wonder ZIP, or SMS Backup &amp; Restore XML</div>
+    <div class="file-name" id="fileName"></div>
+  </div>
+
+  <button class="btn btn-primary" id="scanBtn" disabled>Scan backup</button>
+
+  <div class="scan-results" id="scanResults">
+    <h3>What's inside <span class="detected-badge" id="detectedBadge"></span></h3>
+    <div class="stat">📩 Received: <strong id="statIn">0</strong></div>
+    <div class="stat">📤 Sent: <strong id="statOut">0</strong></div>
+    <div class="stat" id="statMmsRow">📎 MMS: <strong id="statMms">0</strong></div>
+    <div class="stat" id="statAttachRow">🖼️ Attachments: <strong id="statAttach">0</strong></div>
+    <div class="stat" id="statPdfRow" style="display:none">📄 PDFs: <strong id="statPdf">0</strong></div>
+  </div>
+
+  <div class="options" id="options">
+    <div class="section-label">Convert to</div>
+    <label class="option" data-value="smsbackup" id="optSms">
+      <input type="radio" name="target" value="smsbackup" />
+      <div>
+        <div class="option-label">SMS Backup &amp; Restore</div>
+        <div class="option-desc">XML file — import on any Android phone</div>
+      </div>
+    </label>
+    <label class="option" data-value="fig" id="optFig">
+      <input type="radio" name="target" value="fig" />
+      <div>
+        <div class="option-label">Fig</div>
+        <div class="option-desc">NDJSON ZIP — for Fig phones</div>
+      </div>
+    </label>
+    <label class="option" data-value="wonder" id="optWonder">
+      <input type="radio" name="target" value="wonder" />
+      <div>
+        <div class="option-label">Wonder</div>
+        <div class="option-desc">XML ZIP — for Wonder phones</div>
+      </div>
+    </label>
+
+    <div class="section-label" id="contentLabel">Content</div>
+    <label class="option selected" data-value="all" id="optAll">
+      <input type="radio" name="content" value="all" checked />
+      <div>
+        <div class="option-label">Everything</div>
+        <div class="option-desc">All messages with attachments</div>
+      </div>
+    </label>
+    <label class="option" data-value="text" id="optText">
+      <input type="radio" name="content" value="text" />
+      <div>
+        <div class="option-label">Messages only</div>
+        <div class="option-desc">Text only — no images/audio (smaller file)</div>
+      </div>
+    </label>
+    <label class="option" data-value="mms" id="optMmsOnly">
+      <input type="radio" name="content" value="mms" />
+      <div>
+        <div class="option-label">MMS only</div>
+        <div class="option-desc">Only MMS with attachments</div>
+      </div>
+    </label>
+
+    <div class="pdf-panel" id="pdfChoice" style="display:none">
+      <div class="pdf-panel-title">Your backup contains PDF files</div>
+      <div class="pdf-panel-info" id="pdfSizeInfo"></div>
+      <div class="pdf-panel-desc">PDFs make the output much larger and most SMS apps can't display them. What do you want to do?</div>
+      <label class="option" data-value="pdf-include" style="margin-bottom:6px">
+        <input type="radio" name="pdfmode" value="include" />
+        <div><div class="option-label">Include PDFs</div><div class="option-desc">Larger file</div></div>
+      </label>
+      <label class="option" data-value="pdf-skip">
+        <input type="radio" name="pdfmode" value="skip" />
+        <div><div class="option-label">Skip PDFs</div><div class="option-desc">Saves space</div></div>
+      </label>
+    </div>
+
+    <button class="btn btn-success" id="buildBtn" disabled>Build &amp; Download</button>
+  </div>
+
+  <div class="progress" id="progress">
+    <div class="progress-label" id="progressLabel">Reading…</div>
+    <div class="progress-bar-wrap"><div class="progress-bar" id="progressBar"></div></div>
+  </div>
+  <button class="btn btn-cancel" id="cancelBtn" style="display:none">Cancel</button>
+
+  <div class="info" id="infoBox"></div>
+  <div class="error" id="errorBox"></div>
+
+  <details class="log-panel" id="logPanel" style="display:none">
+    <summary>Show log</summary>
+    <div class="log-box" id="logBox"></div>
+  </details>
+
+  <div class="footer">
+    <span>Runs 100% on your device</span>
+    <span class="footer-dot"></span>
+    <span>Nothing uploaded anywhere</span>
+    <span class="footer-dot"></span>
+    <span>v1.0.0</span>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+let selectedFile=null, zipReader=null, parsedData=null, cancelled=false, hasPdfs=false, sourceFormat='';
+
+const $=id=>document.getElementById(id);
+const dropZone=$('dropZone'),fileInput=$('fileInput'),scanBtn=$('scanBtn'),buildBtn=$('buildBtn'),
+  cancelBtn=$('cancelBtn'),progressEl=$('progress'),progressBar=$('progressBar'),progressLabel=$('progressLabel'),
+  scanResults=$('scanResults'),optionsEl=$('options'),infoBox=$('infoBox'),errorBox=$('errorBox'),fileNameEl=$('fileName');
+
+const logPanel=$('logPanel'),logBox=$('logBox');
+function log(msg,type){logPanel.style.display='block';const s=document.createElement('span');if(type)s.className='log-'+type;s.textContent=(new Date().toLocaleTimeString('en-US',{hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'}))+' '+msg+'\n';logBox.appendChild(s);logBox.scrollTop=logBox.scrollHeight}
+function clearLog(){logBox.innerHTML='';logPanel.style.display='none';logPanel.removeAttribute('open')}
+
+function hasAttach(p){return!!(p.data||p._entry)}
+async function resolveData(p){if(p.data)return p.data;if(p._entry){try{const b=await p._entry.getData(new zip.BlobWriter());p.data=await b.arrayBuffer();delete p._entry;return p.data}catch(e){log('Failed to read attachment: '+e.message,'warn');return null}}return null}
+
+function formatSize(b){if(b<1048576)return(b/1024).toFixed(0)+' KB';if(b<1073741824)return(b/1048576).toFixed(1)+' MB';return(b/1073741824).toFixed(2)+' GB'}
+function showProgress(l,p){progressEl.style.display='block';progressLabel.textContent=l;progressBar.style.width=p+'%'}
+function tick(){return new Promise(r=>setTimeout(r,0))}
+function escXml(s){if(s==null)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/\r/g,'&#13;').replace(/\n/g,'&#10;')}
+function fmtDate(ts){const ms=parseInt(ts,10);if(!ms||isNaN(ms))return'';const d=new Date(ms<1e12?ms*1000:ms);return d.toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit',second:'2-digit',hour12:true})}
+function ab2b64(buf){const u=new Uint8Array(buf);let b='';for(let i=0;i<u.length;i+=32768)b+=String.fromCharCode.apply(null,u.subarray(i,i+32768));return btoa(b)}
+function b642ab(s){const b=atob(s),a=new Uint8Array(b.length);for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i);return a.buffer}
+
+// ===== OPTION UI =====
+function bindRadioGroup(selector){
+  document.querySelectorAll(selector).forEach(opt=>{
+    opt.addEventListener('click',()=>{
+      document.querySelectorAll(selector).forEach(o=>o.classList.remove('selected'));
+      opt.classList.add('selected');
+      opt.querySelector('input').checked=true;
+      updateUI();
+    });
+  });
+}
+bindRadioGroup('.option[data-value="smsbackup"],.option[data-value="fig"],.option[data-value="wonder"]');
+bindRadioGroup('.option[data-value="all"],.option[data-value="text"],.option[data-value="mms"]');
+bindRadioGroup('.option[data-value="pdf-include"],.option[data-value="pdf-skip"]');
+
+function needsPdfChoice(){
+  if(!hasPdfs)return false;
+  const c=document.querySelector('input[name="content"]:checked');
+  return c&&c.value!=='text';
+}
+function updateUI(){
+  const pc=$('pdfChoice');
+  pc.style.display=needsPdfChoice()?'block':'none';
+  const t=document.querySelector('input[name="target"]:checked');
+  buildBtn.disabled=!t;
+}
+
+// ===== FILE PICKING =====
+dropZone.addEventListener('click',()=>fileInput.click());
+dropZone.addEventListener('dragover',e=>{e.preventDefault();dropZone.classList.add('active')});
+dropZone.addEventListener('dragleave',()=>dropZone.classList.remove('active'));
+dropZone.addEventListener('drop',e=>{e.preventDefault();dropZone.classList.remove('active');if(e.dataTransfer.files[0])pickFile(e.dataTransfer.files[0])});
+fileInput.addEventListener('change',()=>{if(fileInput.files[0])pickFile(fileInput.files[0])});
+
+function pickFile(f){
+  selectedFile=f;
+  fileNameEl.textContent=f.name+' ('+formatSize(f.size)+')';
+  fileNameEl.style.display='block';
+  scanBtn.disabled=false;
+  scanResults.style.display='none';optionsEl.style.display='none';infoBox.style.display='none';errorBox.style.display='none';progressEl.style.display='none';
+  dropZone.classList.remove('done');parsedData=null;
+  if(zipReader){try{zipReader.close()}catch{}zipReader=null}
+}
+
+// ===== SCAN =====
+scanBtn.addEventListener('click',()=>{
+  if(!selectedFile)return;
+  scanBtn.disabled=true;errorBox.style.display='none';infoBox.style.display='none';scanResults.style.display='none';optionsEl.style.display='none';
+  scan();
+});
+
+async function scan(){
+  try{
+    clearLog();
+    log('Scanning '+selectedFile.name+' ('+formatSize(selectedFile.size)+')');
+    showProgress('Opening file…',10);await tick();
+    const isZip=selectedFile.name.toLowerCase().endsWith('.zip');
+    let messages,attachMap,fmt,pdfCount=0,pdfSize=0;
+
+    if(isZip){
+      const br=new zip.BlobReader(selectedFile);
+      zipReader=new zip.ZipReader(br);
+      const entries=await zipReader.getEntries();
+      // Detect format
+      const hasNdjson=entries.some(e=>e.filename.endsWith('.ndjson'));
+      const hasWonderXml=entries.some(e=>e.filename.endsWith('.xml')&&!e.filename.includes('/'));
+      const hasMmsAttach=entries.some(e=>e.filename.startsWith('mms_attachments/'));
+
+      log('ZIP contains '+entries.length+' entries');
+      if(hasNdjson){
+        fmt='fig';log('Detected Fig format (NDJSON)','ok');
+        ({messages,attachMap,pdfCount,pdfSize}=await parseFigZip(entries));
+      }else if(hasWonderXml){
+        fmt='wonder';log('Detected Wonder format (XML)','ok');
+        ({messages,attachMap,pdfCount,pdfSize}=await parseWonderZip(entries));
+      }else{
+        log('Unknown ZIP format — no .ndjson or .xml found','err');
+        throw new Error('Could not detect format. Expected Fig (NDJSON) or Wonder (XML) ZIP.');
+      }
+    }else{
+      log('Detected SMS Backup & Restore XML','ok');
+      fmt='smsbackup';
+      ({messages,attachMap,pdfCount,pdfSize}=await parseSmsBackupXmlStream(selectedFile));
+    }
+
+    parsedData={messages,attachMap,fmt};
+    showProgress('Done!',100);await tick();progressEl.style.display='none';
+
+    // Stats
+    let cIn=0,cOut=0,cMms=0,cAttach=0;
+    for(const m of messages){
+      if(m.type==='sms'){m.direction==='in'?cIn++:cOut++}
+      else{cMms++;cAttach+=m.parts.filter(p=>hasAttach(p)).length}
+    }
+
+    log('Parsed '+messages.length+' messages ('+cIn+' in, '+cOut+' out, '+cMms+' MMS, '+cAttach+' attachments)'+(pdfCount?' + '+pdfCount+' PDFs':''),'ok');
+    $('detectedBadge').textContent=fmt==='fig'?'Fig':fmt==='wonder'?'Wonder':'SMS Backup & Restore';
+    $('statIn').textContent=cIn.toLocaleString();
+    $('statOut').textContent=cOut.toLocaleString();
+    $('statMms').textContent=cMms.toLocaleString();
+    $('statAttach').textContent=cAttach.toLocaleString();
+    $('statMmsRow').style.display=cMms>0?'':'none';
+    $('statAttachRow').style.display=cAttach>0?'':'none';
+
+    if(pdfCount>0){
+      const pdfXmlSize=Math.round(pdfSize*1.37);
+      $('statPdf').textContent=pdfCount+' ('+formatSize(pdfSize)+' raw, ~'+formatSize(pdfXmlSize)+' in output)';
+      $('statPdfRow').style.display='';
+      $('pdfSizeInfo').textContent='Found '+pdfCount+' PDF(s) totaling '+formatSize(pdfSize)+'. Including them adds ~'+formatSize(pdfXmlSize)+'.';
+      hasPdfs=true;
+      document.querySelectorAll('input[name="pdfmode"]').forEach(r=>r.checked=false);
+      document.querySelectorAll('.option[data-value="pdf-include"],.option[data-value="pdf-skip"]').forEach(o=>o.classList.remove('selected'));
+    }else{
+      $('statPdfRow').style.display='none';hasPdfs=false;$('pdfChoice').style.display='none';
+    }
+
+    // Hide source format from targets, show others
+    const hide=fmt;
+    ['smsbackup','fig','wonder'].forEach(v=>{
+      const el=$('opt'+v.charAt(0).toUpperCase()+v.slice(1));
+      // Fix IDs: optSms, optFig, optWonder
+    });
+    $('optSms').style.display=fmt==='smsbackup'?'none':'';
+    $('optFig').style.display=fmt==='fig'?'none':'';
+    $('optWonder').style.display=fmt==='wonder'?'none':'';
+    // Reset target selection
+    document.querySelectorAll('input[name="target"]').forEach(r=>r.checked=false);
+    document.querySelectorAll('.option[data-value="smsbackup"],.option[data-value="fig"],.option[data-value="wonder"]').forEach(o=>o.classList.remove('selected'));
+
+    // Hide MMS content options if no MMS
+    $('optAll').style.display=cMms>0?'':'none';
+    $('optMmsOnly').style.display=cMms>0?'':'none';
+    $('contentLabel').style.display=cMms>0?'':'none';
+    if(cMms===0){
+      document.querySelector('input[name="content"][value="text"]').checked=true;
+      document.querySelectorAll('.option[data-value="all"],.option[data-value="text"],.option[data-value="mms"]').forEach(o=>o.classList.remove('selected'));
+      $('optText').classList.add('selected');
+    }
+
+    scanResults.style.display='block';
+    dropZone.classList.add('done');
+    optionsEl.style.display='block';
+    scanBtn.disabled=false;
+    sourceFormat=fmt;
+    updateUI();
+  }catch(err){
+    log('Scan failed: '+(err.message||err),'err');
+    progressEl.style.display='none';
+    errorBox.textContent=err.message||String(err);errorBox.style.display='block';scanBtn.disabled=false;
+  }
+}
+
+// ===== PARSERS =====
+
+async function parseFigZip(entries){
+  showProgress('Reading Fig backup…',15);await tick();
+  const ndjEntry=entries.find(e=>e.filename.endsWith('.ndjson'));
+  const partEntries={};
+  for(const e of entries){const n=e.filename.split('/').pop();if(n.startsWith('PART_'))partEntries[n]=e}
+  const totalSize=ndjEntry.uncompressedSize||0;
+  log('NDJSON size: '+formatSize(totalSize)+', '+Object.keys(partEntries).length+' attachment files');
+
+  const blob=await ndjEntry.getData(new zip.BlobWriter());
+  const reader=blob.stream().getReader();
+  const dec=new TextDecoder();
+  let buf='',bytesRead=0,lastPct=0;
+  const messages=[];let pdfCount=0,pdfSize=0;
+
+  async function yld(){const p=Math.min(90,Math.round(bytesRead/(totalSize||1)*80)+15);if(p>lastPct+1){lastPct=p;showProgress('Parsing… '+messages.length.toLocaleString()+' messages ('+formatSize(bytesRead)+' / '+formatSize(totalSize)+')',p);await tick()}}
+
+  while(true){
+    const{done,value}=await reader.read();
+    if(value){bytesRead+=value.length;buf+=dec.decode(value,{stream:!done})}
+    let nl;
+    while((nl=buf.indexOf('\n'))!==-1){
+      const line=buf.substring(0,nl).trim();buf=buf.substring(nl+1);
+      if(!line)continue;
+      let obj;try{obj=JSON.parse(line)}catch(e){log('Skipped unparseable line: '+line.slice(0,60)+'…','warn');continue}
+      const t=obj.type;
+      if(t==='1'||t===1||t==='2'||t===2){
+        messages.push({type:'sms',address:(obj.address||'').replace(/\s/g,''),body:obj.body||'',date:obj.date,dateSent:obj.date_sent||'0',direction:(t==='1'||t===1)?'in':'out',read:obj.read||'0',contactName:obj.__display_name||'(Unknown)',protocol:obj.protocol,status:obj.status,locked:obj.locked,subId:obj.sub_id});
+      }else if(obj.m_type!==undefined||obj.__parts){
+        const isIn=String(obj.msg_box)==='1';
+        const addrs=[];
+        if(obj.__sender_address)addrs.push({address:obj.__sender_address.address,type:obj.__sender_address.type||137});
+        if(obj.__recipient_addresses)for(const r of obj.__recipient_addresses)addrs.push({address:r.address,type:r.type||151});
+        const parts=[];
+        for(const p of(obj.__parts||[])){
+          if(p.ct==='application/smil')continue;
+          if(p._data){
+            const pn=p._data.split('/').pop();
+            const entry=partEntries[pn];
+            if(entry){
+              if(p.ct==='application/pdf'){pdfCount++;pdfSize+=entry.uncompressedSize||0}
+              parts.push({ct:p.ct,cl:p.cl||'',cid:p.cid||'',_entry:entry,seq:p.seq||0});
+            }else{log('Attachment not found in ZIP: '+pn,'warn')}
+          }else if(p.text!=null){
+            parts.push({ct:'text/plain',text:p.text,seq:p.seq||0});
+          }
+        }
+        let addr='';let cn='(Unknown)';
+        if(isIn&&obj.__sender_address){addr=obj.__sender_address.address||'';cn=obj.__sender_address.__display_name||'(Unknown)'}
+        else if(!isIn&&obj.__recipient_addresses&&obj.__recipient_addresses[0]){addr=obj.__recipient_addresses[0].address||'';cn=obj.__recipient_addresses[0].__display_name||'(Unknown)'}
+        messages.push({type:'mms',date:obj.date,dateSent:obj.date_sent||'0',direction:isIn?'in':'out',read:obj.read||'0',address:(addr||'').replace(/\s/g,''),contactName:cn,addrs,parts,msgBox:obj.msg_box,ctT:obj.ct_t,mType:obj.m_type,mSize:obj.m_size,mId:obj.m_id,mCls:obj.m_cls,trId:obj.tr_id,v:obj.v,locked:obj.locked,subId:obj.sub_id,seen:obj.seen,creator:obj.creator,_id:obj._id});
+      }
+      if(messages.length%500===0)await yld();
+    }
+    if(done)break;
+    await yld();
+  }
+  if(buf.trim()){let obj;try{obj=JSON.parse(buf.trim());const t=obj.type;if(t==='1'||t===1||t==='2'||t===2)messages.push({type:'sms',address:(obj.address||'').replace(/\s/g,''),body:obj.body||'',date:obj.date,dateSent:obj.date_sent||'0',direction:(t==='1'||t===1)?'in':'out',read:obj.read||'0',contactName:obj.__display_name||'(Unknown)'})}catch{}}
+  log('Streamed '+formatSize(totalSize)+' → '+messages.length+' messages','ok');
+  return{messages,attachMap:{},pdfCount,pdfSize};
+}
+
+async function parseWonderZip(entries){
+  showProgress('Reading Wonder backup…',25);await tick();
+  const xmlEntry=entries.find(e=>e.filename.endsWith('.xml')&&!e.filename.includes('/'));
+  const text=await xmlEntry.getData(new zip.TextWriter());
+  const attachEntries={};
+  for(const e of entries){if(e.filename.startsWith('mms_attachments/'))attachEntries[e.filename.split('/').pop()]=e}
+
+  showProgress('Parsing messages…',50);await tick();
+  const parser=new DOMParser();
+  const doc=parser.parseFromString(text,'text/xml');
+  const messages=[];let pdfCount=0,pdfSize=0;
+
+  for(const el of doc.querySelectorAll('sms')){
+    const t=el.getAttribute('type');
+    messages.push({type:'sms',address:el.getAttribute('address')||'',body:el.getAttribute('body')||'',date:el.getAttribute('date')||'',dateSent:el.getAttribute('date_sent')||'0',direction:t==='1'?'in':'out',read:el.getAttribute('read')||'0',contactName:'(Unknown)'});
+  }
+
+  for(const el of doc.querySelectorAll('mms')){
+    const mb=el.getAttribute('msg_box')||'1';
+    const addrs=[];
+    for(const a of el.querySelectorAll('addr'))addrs.push({address:a.getAttribute('address')||'',type:parseInt(a.getAttribute('type'))||137});
+    const parts=[];
+    for(const p of el.querySelectorAll('part')){
+      const ct=p.getAttribute('ct')||'';
+      if(ct==='application/smil')continue;
+      const fileRef=p.getAttribute('file');
+      if(fileRef&&attachEntries[fileRef]){
+        let data=null;
+        try{const blob=await attachEntries[fileRef].getData(new zip.BlobWriter());data=await blob.arrayBuffer()}catch{}
+        if(ct==='application/pdf'){pdfCount++;pdfSize+=(attachEntries[fileRef].uncompressedSize||0)}
+        parts.push({ct,cl:p.getAttribute('cl')||'',data,seq:parts.length});
+      }else if(p.getAttribute('text')!=null){
+        parts.push({ct:'text/plain',text:p.getAttribute('text')||'',seq:parts.length});
+      }
+    }
+    let addr='';
+    const senderAddr=addrs.find(a=>a.type===137);
+    const recipAddr=addrs.find(a=>a.type===151);
+    if(mb==='1'&&senderAddr)addr=senderAddr.address;
+    else if(mb==='2'&&recipAddr)addr=recipAddr.address;
+    messages.push({type:'mms',date:el.getAttribute('date')||'',dateSent:'0',direction:mb==='1'?'in':'out',read:el.getAttribute('read')||'0',address:addr,contactName:'(Unknown)',addrs,parts,msgBox:mb,ctT:el.getAttribute('ct_t')||'application/vnd.wap.multipart.related',mType:el.getAttribute('m_type')||'132',seen:el.getAttribute('seen')||'1'});
+  }
+  return{messages,attachMap:{},pdfCount,pdfSize};
+}
+
+async function parseSmsBackupXmlStream(file){
+  const messages=[];let pdfCount=0,pdfSize=0;
+  const reader=file.stream().getReader();
+  const dec=new TextDecoder();
+  let buf='',bytesRead=0;const tot=file.size;let lastPct=0;
+
+  function pa(s){const a={},r=/(\w[\w_-]*)=(?:"([^"]*)"|'([^']*)')/g;let m;while((m=r.exec(s))!==null)a[m[1]]=m[2]!=null?m[2]:m[3];return a}
+  function ux(s){return s?s.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&apos;/g,"'").replace(/&#13;/g,'\r').replace(/&#10;/g,'\n').replace(/&#x([0-9a-fA-F]+);/g,(_,h)=>String.fromCharCode(parseInt(h,16))).replace(/&#(\d+);/g,(_,d)=>String.fromCharCode(parseInt(d))):''}
+  function fc(from,pat){let q=0;for(let i=from;i<=buf.length-pat.length;i++){const c=buf[i];if(q){if(c===(q===1?'"':"'"))q=0}else if(c==='"')q=1;else if(c==="'")q=2;else if(buf.startsWith(pat,i))return i+pat.length}return -1}
+
+  async function yld(){const p=Math.min(90,Math.round(bytesRead/tot*80)+15);if(p>lastPct+1){lastPct=p;showProgress('Parsing… '+formatSize(bytesRead)+' / '+formatSize(tot),p);await tick()}}
+
+  while(true){
+    const{done,value}=await reader.read();
+    if(value){bytesRead+=value.length;buf+=dec.decode(value,{stream:!done})}
+    let moved=true;
+    while(moved){
+      moved=false;
+      const si=buf.indexOf('<sms ');
+      const mi=buf.indexOf('<mms ');
+      if(si===-1&&mi===-1){const lt=buf.lastIndexOf('>');if(lt>0)buf=buf.substring(lt+1);break}
+      const first=(si!==-1&&(mi===-1||si<mi))?'sms':'mms';
+      if(first==='sms'){
+        const end=fc(si,'/>');
+        if(end===-1)break;
+        const tag=buf.substring(si,end);buf=buf.substring(end);moved=true;
+        const a=pa(tag);const t=a.type;
+        messages.push({type:'sms',address:a.address||'',body:ux(a.body)||'',date:a.date||'',dateSent:a.date_sent||'0',direction:t==='1'?'in':'out',read:a.read||'0',contactName:ux(a.contact_name)||'(Unknown)',protocol:a.protocol,status:a.status,locked:a.locked,subId:a.sub_id});
+      }else{
+        const end=buf.indexOf('</mms>',mi);
+        if(end===-1)break;
+        const block=buf.substring(mi,end+6);buf=buf.substring(end+6);moved=true;
+        const mt=block.substring(0,block.indexOf('>'));
+        const ma=pa(mt);const mb=ma.msg_box||'1';
+        const addrs=[];
+        const ar=/<addr\s[^>]*\/>/g;let am;
+        while((am=ar.exec(block))!==null){const aa=pa(am[0]);addrs.push({address:aa.address||'',type:parseInt(aa.type)||137})}
+        const parts=[];
+        const pr=/<part\s[^>]*\/>/g;let pm;
+        while((pm=pr.exec(block))!==null){
+          const pp=pa(pm[0]);const ct=pp.ct||'';
+          if(ct==='application/smil')continue;
+          if(pp.data){const data=b642ab(pp.data);if(ct==='application/pdf'){pdfCount++;pdfSize+=data.byteLength}parts.push({ct,cl:pp.cl||'',data,seq:parseInt(pp.seq)||0})}
+          else parts.push({ct:'text/plain',text:ux(pp.text)||'',seq:parseInt(pp.seq)||0});
+        }
+        messages.push({type:'mms',date:ma.date||'',dateSent:ma.date_sent||'0',direction:mb==='1'?'in':'out',read:ma.read||'0',address:ma.address||'',contactName:ux(ma.contact_name)||'(Unknown)',addrs,parts,msgBox:mb,ctT:ma.ct_t,mType:ma.m_type,mSize:ma.m_size,mId:ma.m_id,mCls:ma.m_cls,trId:ma.tr_id,v:ma.v,locked:ma.locked,subId:ma.sub_id,seen:ma.seen,creator:ma.creator,_id:ma._id});
+      }
+      if(messages.length%500===0)await yld();
+    }
+    if(done)break;
+    await yld();
+  }
+  log('Streamed '+formatSize(tot)+' → '+messages.length+' messages','ok');
+  return{messages,attachMap:{},pdfCount,pdfSize};
+}
+
+// ===== WRITERS =====
+
+function filterMessages(messages,content,skipPdf){
+  let out=messages;
+  if(content==='text')out=messages.map(m=>{if(m.type==='mms')return{...m,parts:m.parts.filter(p=>!hasAttach(p))};return m});
+  else if(content==='mms')out=messages.filter(m=>m.type==='mms');
+  if(skipPdf)out=out.map(m=>{if(m.type==='mms')return{...m,parts:m.parts.filter(p=>p.ct!=='application/pdf')};return m});
+  return out;
+}
+
+async function writeToSmsBackup(messages){
+  const parts=[];
+  const now=new Date();
+  parts.push(`<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>\n<!--File Created By Kosher Phone SMS Converter on ${now.toLocaleString()}-->\n<smses count="__COUNT__" backup_date="${Date.now()}" type="full">\n`);
+  let count=0,i=0;
+
+  for(const m of messages){
+    if(m.type==='sms'){
+      const t=m.direction==='in'?'1':'2';
+      parts.push(`  <sms protocol="${escXml(m.protocol??0)}" address="${escXml(m.address)}" date="${escXml(m.date)}" type="${t}" subject="null" body="${escXml(m.body)}" toa="null" sc_toa="null" service_center="null" read="${escXml(m.read??0)}" status="${escXml(m.status??-1)}" locked="${escXml(m.locked??0)}" date_sent="${escXml(m.dateSent??m.date)}" sub_id="${escXml(m.subId??1)}" readable_date="${escXml(fmtDate(m.date))}" contact_name="${escXml(m.contactName)}" />\n`);
+      count++;
+    }else{
+      const addr=m.address||'';if(!addr)continue;
+      const dateMs=parseInt(m.date,10)<1e12?parseInt(m.date,10)*1000:parseInt(m.date,10);
+      let hasAtt=false;
+      const pLines=[];
+      for(const p of m.parts){
+        if(hasAttach(p)){const d=await resolveData(p);if(d){hasAtt=true;pLines.push(`      <part seq="${p.seq||0}" ct="${escXml(p.ct)}" name="${escXml(p.cl||'attachment')}" chset="null" cd="null" fn="${escXml(p.cl||'')}" cid="" cl="${escXml(p.cl||'')}" ctt_s="null" ctt_t="null" data="${ab2b64(d)}" />`)}
+        }else pLines.push(`      <part seq="${p.seq||0}" ct="text/plain" name="body" chset="106" cd="null" fn="null" cid="null" cl="null" ctt_s="null" ctt_t="null" text="${escXml(p.text||'')}" />`);
+      }
+      if(!pLines.length)pLines.push(`      <part seq="0" ct="text/plain" name="body" chset="106" cd="null" fn="null" cid="null" cl="null" ctt_s="null" ctt_t="null" text="" />`);
+      const aLines=(m.addrs||[]).map(a=>`      <addr address="${escXml((a.address||'').replace(/\s/g,''))}" type="${a.type}" charset="106" />`);
+      if(!aLines.length)aLines.push(`      <addr address="${escXml(addr)}" type="${m.direction==='in'?137:151}" charset="106" />`);
+      parts.push(`  <mms date="${dateMs}" rr="null" sub="" ct_t="${escXml(m.ctT||'application/vnd.wap.multipart.related')}" read_status="null" seen="${escXml(m.seen??1)}" msg_box="${m.direction==='in'?1:2}" address="${escXml(addr)}" sub_cs="null" resp_st="null" retr_st="null" d_tm="null" text_only="${hasAtt?0:1}" exp="null" locked="${escXml(m.locked??0)}" m_id="${escXml(m.mId||'')}" st="null" retr_txt_cs="null" retr_txt="null" creator="${escXml(m.creator||'com.android.mms')}" date_sent="${escXml(m.dateSent??0)}" read="${escXml(m.read??0)}" m_size="${escXml(m.mSize??0)}" rpt_a="null" ct_cls="null" pri="null" sub_id="${escXml(m.subId??1)}" tr_id="${escXml(m.trId||'')}" resp_txt="null" ct_l="null" m_cls="${escXml(m.mCls||'personal')}" d_rpt="null" v="${escXml(m.v||18)}" service_center="null" _id="${escXml(m._id||'')}" m_type="${escXml(m.mType||128)}" readable_date="${escXml(fmtDate(m.date))}" contact_name="${escXml(m.contactName||'(Unknown)')}">
+    <parts>\n${pLines.join('\n')}\n    </parts>
+    <addrs>\n${aLines.join('\n')}\n    </addrs>
+  </mms>\n`);
+      count++;
+    }
+    if(++i%500===0){showProgress('Building… '+i.toLocaleString()+' / '+messages.length.toLocaleString(),Math.round(i/messages.length*80)+10);await tick()}
+  }
+  parts.push('</smses>\n');
+  parts[0]=parts[0].replace('__COUNT__',String(count));
+  return new Blob(parts,{type:'text/xml;charset=utf-8'});
+}
+
+async function buildFigZip(messages){
+  const zw=new zip.ZipWriter(new zip.BlobWriter('application/zip'));
+  const lines=[];let partId=Date.now();
+  for(const m of messages){
+    if(m.type==='sms'){
+      lines.push(JSON.stringify({address:m.address,body:m.body,date:m.date,date_sent:m.dateSent||'0',type:m.direction==='in'?'1':'2',read:m.read||'0',status:m.status||'-1',locked:m.locked||'0',sub_id:m.subId||'1',creator:'com.figmessenger',seen:'1',__display_name:m.contactName||'(Unknown)'}));
+    }else{
+      const obj={date:m.date,date_sent:m.dateSent||'0',msg_box:m.direction==='in'?'1':'2',read:m.read||'0',ct_t:m.ctT||'application/vnd.wap.multipart.related',m_type:m.mType||'128',locked:m.locked||'0',sub_id:m.subId||'1',seen:m.seen||'1',creator:'com.figmessenger',text_only:m.parts.some(p=>hasAttach(p))?'0':'1'};
+      const sAddr=m.addrs?m.addrs.find(a=>a.type===137):null;
+      const rAddrs=m.addrs?m.addrs.filter(a=>a.type===151):[];
+      if(sAddr)obj.__sender_address={address:sAddr.address,type:137};
+      if(rAddrs.length)obj.__recipient_addresses=rAddrs.map(a=>({address:a.address,type:a.type}));
+      obj.__parts=[];
+      for(const p of m.parts){
+        if(hasAttach(p)){const d=await resolveData(p);if(d){
+          const pn='PART_'+(partId++);
+          await zw.add('data/'+pn,new zip.BlobReader(new Blob([d])));
+          obj.__parts.push({ct:p.ct,cl:p.cl||'',_data:'/data/user_de/0/com.android.providers.telephony/app_parts/'+pn,seq:p.seq||0});
+        }}else{
+          obj.__parts.push({ct:'text/plain',text:p.text||'',seq:p.seq||0});
+        }
+      }
+      lines.push(JSON.stringify(obj));
+    }
+  }
+  await zw.add('messages.ndjson',new zip.BlobReader(new Blob([lines.join('\n')+'\n'])));
+  return await zw.close();
+}
+
+async function buildWonderZip(messages){
+  let smsCount=0,mmsCount=0,attachId=1;
+  const xmlParts=[];
+  const attachFiles=[];
+  xmlParts.push('<?xml version="1.0" encoding="UTF-8"?>\n<messages sms_count="__SMS__" mms_count="__MMS__">\n');
+
+  for(const m of messages){
+    if(m.type==='sms'){
+      xmlParts.push(`  <sms address="${escXml(m.address)}" body="${escXml(m.body)}" date="${escXml(m.date)}" date_sent="${escXml(m.dateSent||'0')}" type="${m.direction==='in'?'1':'2'}" read="${escXml(m.read||'1')}" seen="1" />\n`);
+      smsCount++;
+    }else{
+      const mb=m.direction==='in'?'1':'2';
+      const mmsDate=parseInt(m.date,10)>1e12?Math.floor(parseInt(m.date,10)/1000):parseInt(m.date,10)||0;
+      let xml=`  <mms date="${mmsDate}" read="${escXml(m.read||'1')}" msg_box="${mb}" ct_t="${escXml(m.ctT||'application/vnd.wap.multipart.related')}" m_type="${escXml(m.mType||(mb==='1'?'132':'128'))}" seen="${mb==='2'?'0':'1'}">\n`;
+      for(const a of(m.addrs||[]))xml+=`    <addr address="${escXml(a.address)}" type="${a.type}" />\n`;
+      const smilParts=[];
+      for(const p of m.parts){
+        if(hasAttach(p)){const d=await resolveData(p);if(d){
+          const ext=(p.ct||'').split('/').pop().replace('jpeg','jpg')||'bin';
+          const imgName=(p.cl||'image'+String(attachId).padStart(6,'0')+'.'+ext);
+          const fn='mms_'+(mmsCount+1)+'_'+attachId+'.'+ext;attachId++;
+          attachFiles.push({fn,data:d});
+          xml+=`    <part ct="${escXml(p.ct)}" name="${escXml(imgName)}" cl="${escXml(imgName)}" file="${escXml(fn)}" />\n`;
+          smilParts.push({src:imgName,ct:p.ct});
+        }}else{
+          xml+=`    <part ct="text/plain" text="${escXml(p.text||'')}" />\n`;
+        }
+      }
+      if(smilParts.length){
+        let smil='<smil>\n    <head>\n        <layout>\n            <root-layout width="240" height="160"/>\n';
+        smil+='            <region id="Image" width="100%" height="67%" left="0%" top="0%" fit="meet"/>\n';
+        smil+='            <region id="Text" width="100%" height="33%" left="0%" top="67%" fit="meet"/>\n';
+        smil+='        </layout>\n    </head>\n    <body>\n';
+        for(const ap of smilParts){
+          const tag=ap.ct.startsWith('image')?'img':ap.ct.startsWith('video')?'video':'ref';
+          smil+=`    <par dur="8000ms"><${tag} src="${escXml(ap.src)}" region="Image"/></par>`;
+        }
+        smil+=`</body>\n</smil>`;
+        xml=xml.replace(/(\n    <part ct=)/, `    <part ct="application/smil" name="smil.xml" cl="smil.xml" text="${escXml(smil)}" />\n$1`);
+      }
+      xml+=`  </mms>\n`;
+      xmlParts.push(xml);
+      mmsCount++;
+    }
+  }
+  xmlParts.push('</messages>\n');
+  xmlParts[0]=xmlParts[0].replace('__SMS__',String(smsCount)).replace('__MMS__',String(mmsCount));
+
+  const zw=new zip.ZipWriter(new zip.BlobWriter('application/zip'));
+  const xmlBlob=new Blob(xmlParts,{type:'text/xml;charset=utf-8'});
+  const dateStr=new Date().toISOString().slice(0,10);
+  await zw.add('Messages_Backup_'+dateStr+'.xml',new zip.BlobReader(xmlBlob));
+  for(const af of attachFiles)await zw.add('mms_attachments/'+af.fn,new zip.BlobReader(new Blob([af.data])));
+  return await zw.close();
+}
+
+// ===== BUILD =====
+buildBtn.addEventListener('click',()=>{
+  if(!parsedData)return;
+  const t=document.querySelector('input[name="target"]:checked');
+  if(!t)return;
+  if(needsPdfChoice()&&!document.querySelector('input[name="pdfmode"]:checked')){
+    const pc=$('pdfChoice');
+    pc.classList.remove('shake');void pc.offsetWidth;pc.classList.add('shake');
+    pc.style.background='#fef2f2';pc.style.borderColor='#fca5a5';
+    setTimeout(()=>{pc.style.background='#fffbeb';pc.style.borderColor='#fde68a'},1500);
+    pc.scrollIntoView({behavior:'smooth',block:'center'});
+    return;
+  }
+  buildBtn.disabled=true;cancelled=false;cancelBtn.style.display='block';errorBox.style.display='none';infoBox.style.display='none';
+  build(t.value);
+});
+
+cancelBtn.addEventListener('click',()=>{cancelled=true;cancelBtn.style.display='none'});
+
+async function build(target){
+  try{
+    const content=(document.querySelector('input[name="content"]:checked')||{}).value||'all';
+    const pdfSel=document.querySelector('input[name="pdfmode"]:checked');
+    const skipPdf=needsPdfChoice()&&(!pdfSel||pdfSel.value==='skip');
+    const msgs=filterMessages(parsedData.messages,content,skipPdf);
+
+    log('Building '+target+' from '+msgs.length+' messages (content='+content+', skipPdf='+skipPdf+')');
+    showProgress('Building…',20);await tick();
+    let blob,filename;
+    const baseName=selectedFile.name.replace(/\.(zip|xml)$/i,'');
+
+    if(target==='smsbackup'){
+      blob=await writeToSmsBackup(msgs);
+      filename='sms-'+baseName+'.xml';
+    }else if(target==='fig'){
+      showProgress('Building Fig ZIP…',40);await tick();
+      blob=await buildFigZip(msgs);
+      filename='fig-'+baseName+'.zip';
+    }else if(target==='wonder'){
+      showProgress('Building Wonder ZIP…',40);await tick();
+      blob=await buildWonderZip(msgs);
+      filename='wonder-'+baseName+'.zip';
+    }
+
+    if(cancelled){log('Build cancelled by user','warn');cancelBtn.style.display='none';progressEl.style.display='none';infoBox.textContent='Cancelled.';infoBox.style.display='block';buildBtn.disabled=false;return}
+
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();
+    setTimeout(()=>{URL.revokeObjectURL(url);a.remove()},2000);
+
+    cancelBtn.style.display='none';
+    showProgress('Done! '+formatSize(blob.size),100);
+    log('Export complete: '+msgs.length+' messages, '+formatSize(blob.size)+' → '+filename,'ok');
+    infoBox.textContent='Exported '+msgs.length.toLocaleString()+' messages ('+formatSize(blob.size)+') as '+target.toUpperCase()+'.';
+    infoBox.style.display='block';
+  }catch(err){
+    log('Build failed: '+(err.message||err),'err');
+    progressEl.style.display='none';errorBox.textContent=err.message||String(err);errorBox.style.display='block';
+  }
+  cancelBtn.style.display='none';buildBtn.disabled=false;
+}
+
+})();
+</script>
+</body>
+</html>
