@@ -573,23 +573,51 @@ async function writeToSmsBackup(messages){
 async function buildFigZip(messages){
   const zw=new zip.ZipWriter(new zip.BlobWriter('application/zip'));
   const lines=[];let partId=Date.now();
+  let msgId=1,addrId=1,partObjId=1;
+
+  // Build thread_id map: group by address
+  const threadMap={};let nextThread=1;
   for(const m of messages){
+    const addr=(m.address||'').replace(/[^\d+]/g,'');
+    if(addr&&!threadMap[addr])threadMap[addr]=String(nextThread++);
+  }
+
+  for(const m of messages){
+    const id=String(msgId++);
+    const addr=(m.address||'').replace(/[^\d+]/g,'');
+    const tid=threadMap[addr]||'1';
+
     if(m.type==='sms'){
-      lines.push(JSON.stringify({address:m.address,body:m.body,date:m.date,date_sent:m.dateSent||'0',type:m.direction==='in'?'1':'2',read:m.read||'0',status:m.status||'-1',locked:m.locked||'0',sub_id:m.subId||'1',creator:'com.figmessenger',seen:'1',__display_name:m.contactName||'(Unknown)'}));
+      lines.push(JSON.stringify({_id:id,thread_id:tid,address:m.address,date:m.date,date_sent:m.dateSent||'0',protocol:m.protocol||'0',read:m.read||'0',status:m.status||'-1',type:m.direction==='in'?'1':'2',reply_path_present:'0',body:m.body||'',locked:m.locked||'0',sub_id:m.subId||'1',error_code:'-1',creator:'com.figmessenger',seen:'1',ipmsg_id:'0',__display_name:m.contactName||'(Unknown)'}));
     }else{
-      const obj={date:m.date,date_sent:m.dateSent||'0',msg_box:m.direction==='in'?'1':'2',read:m.read||'0',ct_t:m.ctT||'application/vnd.wap.multipart.related',m_type:m.mType||'128',locked:m.locked||'0',sub_id:m.subId||'1',seen:m.seen||'1',creator:'com.figmessenger',text_only:m.parts.some(p=>hasAttach(p))?'0':'1'};
+      const mb=m.direction==='in'?'1':'2';
+      const obj={_id:id,thread_id:tid,date:m.date,date_sent:m.dateSent||'0',msg_box:mb,read:m.read||'0',m_id:m.mId||'',ct_t:m.ctT||'application/vnd.wap.multipart.related',m_cls:m.mCls||'personal',m_type:m.mType||(mb==='1'?'132':'128'),v:m.v||'18',pri:'129',rr:'129',tr_id:m.trId||'',d_rpt:'129',locked:m.locked||'0',sub_id:m.subId||'1',seen:m.seen||'1',creator:'com.figmessenger',text_only:m.parts.some(p=>hasAttach(p))?'0':'1'};
       const sAddr=m.addrs?m.addrs.find(a=>a.type===137):null;
       const rAddrs=m.addrs?m.addrs.filter(a=>a.type===151):[];
-      if(sAddr)obj.__sender_address={address:sAddr.address,type:137};
-      if(rAddrs.length)obj.__recipient_addresses=rAddrs.map(a=>({address:a.address,type:a.type}));
+      if(sAddr){const aid=String(addrId++);obj.__sender_address={_id:aid,msg_id:id,address:sAddr.address,type:'137',charset:'106',__display_name:m.contactName||'(Unknown)'}}
+      if(rAddrs.length)obj.__recipient_addresses=rAddrs.map(a=>{const aid=String(addrId++);return{_id:aid,msg_id:id,address:a.address,type:String(a.type),charset:'106',__display_name:'(Unknown)'}});
       obj.__parts=[];
+      // Add SMIL part for MMS with attachments
+      const attachNames=[];
+      for(const p of m.parts){if(hasAttach(p))attachNames.push(p.cl||'image000000.jpg')}
+      if(attachNames.length){
+        const pid=String(partObjId++);
+        let smil='<smil><head><layout><root-layout/><region id="Image" fit="meet" top="0" left="0" height="100%" width="100%"/></layout></head><body>';
+        for(const an of attachNames)smil+='<par dur="5000ms"><img src="'+an+'" region="Image" /></par>';
+        smil+='</body></smil>';
+        obj.__parts.push({_id:pid,mid:id,seq:'-1',ct:'application/smil',cid:'<smil>',cl:'smil.xml',text:smil});
+      }
+      let seq=0;
       for(const p of m.parts){
         if(hasAttach(p)){const d=await resolveData(p);if(d){
           const pn='PART_'+(partId++);
+          const pid=String(partObjId++);
+          const cl=p.cl||'image000000.jpg';
           await zw.add('data/'+pn,new zip.BlobReader(new Blob([d])));
-          obj.__parts.push({ct:p.ct,cl:p.cl||'',_data:'/data/user_de/0/com.android.providers.telephony/app_parts/'+pn,seq:p.seq||0});
+          obj.__parts.push({_id:pid,mid:id,seq:String(seq++),ct:p.ct,name:cl,cid:'<'+cl.replace(/\.[^.]+$/,'')+'>',cl:cl,_data:'/data/user_de/0/com.android.providers.telephony/app_parts/'+pn});
         }}else{
-          obj.__parts.push({ct:'text/plain',text:p.text||'',seq:p.seq||0});
+          const pid=String(partObjId++);
+          obj.__parts.push({_id:pid,mid:id,seq:String(seq++),ct:'text/plain',text:p.text||''});
         }
       }
       lines.push(JSON.stringify(obj));
