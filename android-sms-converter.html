@@ -178,7 +178,7 @@
     <span class="footer-dot"></span>
     <span>Nothing uploaded anywhere</span>
     <span class="footer-dot"></span>
-    <span>v1.0.1</span>
+    <span>v1.0.2</span>
   </div>
 </div>
 
@@ -571,9 +571,9 @@ async function writeToSmsBackup(messages){
 }
 
 async function buildFigZip(messages){
-  const zw=new zip.ZipWriter(new zip.BlobWriter('application/zip'));
   const lines=[];let partId=Date.now();
   let msgId=1,addrId=1,partObjId=1;
+  const attachFiles=[];
 
   // Build thread_id map: group by address
   const threadMap={};let nextThread=1;
@@ -613,7 +613,7 @@ async function buildFigZip(messages){
           const pn='PART_'+(partId++);
           const pid=String(partObjId++);
           const cl=p.cl||'image000000.jpg';
-          await zw.add('data/'+pn,new zip.BlobReader(new Blob([d])));
+          attachFiles.push({fn:'data/'+pn,data:d});
           obj.__parts.push({_id:pid,mid:id,seq:String(seq++),ct:p.ct,name:cl,cid:'<'+cl.replace(/\.[^.]+$/,'')+'>',cl:cl,_data:'/data/user_de/0/com.android.providers.telephony/app_parts/'+pn});
         }}else{
           const pid=String(partObjId++);
@@ -623,7 +623,10 @@ async function buildFigZip(messages){
       lines.push(JSON.stringify(obj));
     }
   }
+  // NDJSON first, then attachments — Fig requires this order
+  const zw=new zip.ZipWriter(new zip.BlobWriter('application/zip'));
   await zw.add('messages.ndjson',new zip.BlobReader(new Blob([lines.join('\n')+'\n'])));
+  for(const af of attachFiles)await zw.add(af.fn,new zip.BlobReader(new Blob([af.data])));
   return await zw.close();
 }
 
