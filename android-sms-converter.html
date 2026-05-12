@@ -178,7 +178,7 @@
     <span class="footer-dot"></span>
     <span>Nothing uploaded anywhere</span>
     <span class="footer-dot"></span>
-    <span>v1.0.8</span>
+    <span>v1.0.9</span>
   </div>
 </div>
 
@@ -635,7 +635,7 @@ async function buildFigZip(messages){
   log('NDJSON blob size: '+ndjsonBlob.size);
   const zw=new zip.ZipWriter(new zip.BlobWriter('application/zip'));
   await zw.add('messages.ndjson',new zip.BlobReader(ndjsonBlob));
-  for(const af of attachFiles)await zw.add(af.fn,new zip.BlobReader(new Blob([af.data])));
+  for(const af of attachFiles)await zw.add(af.fn,new zip.Uint8ArrayReader(new Uint8Array(af.data)),{level:0});
   return await zw.close();
 }
 
