@@ -178,7 +178,7 @@
     <span class="footer-dot"></span>
     <span>Nothing uploaded anywhere</span>
     <span class="footer-dot"></span>
-    <span>v1.0.6</span>
+    <span>v1.0.7</span>
   </div>
 </div>
 
@@ -572,7 +572,7 @@ async function writeToSmsBackup(messages){
 
 async function buildFigZip(messages){
   const lines=[];let partId=Date.now();
-  let msgId=1,addrId=1,partObjId=1;
+  let msgId=1,addrId=100001,partObjId=200001;
   const attachFiles=[];
 
   // Build thread_id map: group by address
