@@ -178,7 +178,7 @@
     <span class="footer-dot"></span>
     <span>Nothing uploaded anywhere</span>
     <span class="footer-dot"></span>
-    <span>v1.0.5</span>
+    <span>v1.0.6</span>
   </div>
 </div>
 
@@ -625,9 +625,17 @@ async function buildFigZip(messages){
       lines.push(JSON.stringify(obj));
     }
   }
+  // Log build stats
+  const smsLines=lines.filter(l=>{const o=JSON.parse(l);return !o.__parts});
+  const mmsLines=lines.filter(l=>{const o=JSON.parse(l);return !!o.__parts});
+  log('Building Fig ZIP: '+smsLines.length+' SMS, '+mmsLines.length+' MMS, '+attachFiles.length+' attachments');
+  for(const ml of mmsLines){const o=JSON.parse(ml);log('  MMS _id='+o._id+' parts='+o.__parts.length+' attach='+(o.__parts.filter(p=>p._data).length)+' date='+o.date)}
+  for(const af of attachFiles)log('  File: '+af.fn+' size='+af.data.byteLength);
   // NDJSON first, then attachments — Fig requires this order
+  const ndjsonBlob=new Blob([lines.join('\n')+'\n']);
+  log('NDJSON blob size: '+ndjsonBlob.size);
   const zw=new zip.ZipWriter(new zip.BlobWriter('application/zip'));
-  await zw.add('messages.ndjson',new zip.BlobReader(new Blob([lines.join('\n')+'\n'])));
+  await zw.add('messages.ndjson',new zip.BlobReader(ndjsonBlob));
   for(const af of attachFiles)await zw.add(af.fn,new zip.BlobReader(new Blob([af.data])));
   return await zw.close();
 }
