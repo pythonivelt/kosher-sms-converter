@@ -178,7 +178,7 @@
     <span class="footer-dot"></span>
     <span>Nothing uploaded anywhere</span>
     <span class="footer-dot"></span>
-    <span>v0.0.10</span>
+    <span>v0.0.11</span>
   </div>
 </div>
 
@@ -635,15 +635,14 @@ async function buildFigZip(messages){
   log('NDJSON size: '+ndjsonData.length);
   const zipFiles=[{name:'messages.ndjson',data:ndjsonData}];
   for(const af of attachFiles)zipFiles.push({name:af.fn,data:new Uint8Array(af.data)});
-  return buildRawZip(zipFiles);
+  return await buildRawZip(zipFiles);
 }
 
-function buildRawZip(files){
+async function buildRawZip(files){
   // Pure JS ZIP creator (STORE, no compression) — compatible with Fig
+  if(!buildRawZip._t){const t=new Int32Array(256);for(let n=0;n<256;n++){let v=n;for(let k=0;k<8;k++)v=v&1?0xEDB88320^(v>>>1):v>>>1;t[n]=v}buildRawZip._t=t}
   function crc32(data){
-    let c=0xFFFFFFFF;
-    if(!buildRawZip._t){const t=new Int32Array(256);for(let n=0;n<256;n++){let v=n;for(let k=0;k<8;k++)v=v&1?0xEDB88320^(v>>>1):v>>>1;t[n]=v}buildRawZip._t=t}
-    const t=buildRawZip._t;
+    let c=0xFFFFFFFF;const t=buildRawZip._t;
     for(let i=0;i<data.length;i++)c=t[(c^data[i])&0xFF]^(c>>>8);
     return(c^0xFFFFFFFF)>>>0;
   }
@@ -651,23 +650,21 @@ function buildRawZip(files){
   function u32(v){return[v&0xFF,(v>>8)&0xFF,(v>>16)&0xFF,(v>>24)&0xFF]}
   const enc=new TextEncoder();
   const parts=[];const cdirs=[];let offset=0;
-  for(const f of files){
+  for(let fi=0;fi<files.length;fi++){
+    const f=files[fi];
     const nameBytes=enc.encode(f.name);
     const crc=crc32(f.data);const sz=f.data.length;
-    // Local file header
     const lh=new Uint8Array([0x50,0x4B,0x03,0x04,...u16(20),...u16(0),...u16(0),...u16(0),...u16(0),...u32(crc),...u32(sz),...u32(sz),...u16(nameBytes.length),...u16(0)]);
     parts.push(lh,nameBytes,f.data);
-    // Central directory entry
     const cd=new Uint8Array([0x50,0x4B,0x01,0x02,...u16(20),...u16(20),...u16(0),...u16(0),...u16(0),...u16(0),...u32(crc),...u32(sz),...u32(sz),...u16(nameBytes.length),...u16(0),...u16(0),...u16(0),...u16(0),...u32(0),...u32(offset)]);
     cdirs.push(cd,nameBytes);
     offset+=lh.length+nameBytes.length+f.data.length;
+    if(fi%5===0){showProgress('Building ZIP… '+fi+'/'+files.length+' files',90+Math.round(fi/files.length*10));await tick()}
   }
   const cdirOffset=offset;let cdirSize=0;
   for(const c of cdirs)cdirSize+=c.length;
-  // End of central directory
   const eocd=new Uint8Array([0x50,0x4B,0x05,0x06,...u16(0),...u16(0),...u16(files.length),...u16(files.length),...u32(cdirSize),...u32(cdirOffset),...u16(0)]);
-  const blob=new Blob([...parts,...cdirs,eocd],{type:'application/zip'});
-  return blob;
+  return new Blob([...parts,...cdirs,eocd],{type:'application/zip'});
 }
 
 async function buildWonderZip(messages){
