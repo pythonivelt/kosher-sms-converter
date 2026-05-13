@@ -178,7 +178,7 @@
     <span class="footer-dot"></span>
     <span>Nothing uploaded anywhere</span>
     <span class="footer-dot"></span>
-    <span>v0.0.11</span>
+    <span>v0.0.12</span>
   </div>
 </div>
 
@@ -624,15 +624,11 @@ async function buildFigZip(messages){
       lines.push(JSON.stringify(obj));
     }
   }
-  // Log build stats
-  const smsLines=lines.filter(l=>{const o=JSON.parse(l);return !o.__parts});
-  const mmsLines=lines.filter(l=>{const o=JSON.parse(l);return !!o.__parts});
-  log('Building Fig ZIP: '+smsLines.length+' SMS, '+mmsLines.length+' MMS, '+attachFiles.length+' attachments');
-  for(const ml of mmsLines){const o=JSON.parse(ml);log('  MMS _id='+o._id+' parts='+o.__parts.length+' attach='+(o.__parts.filter(p=>p._data).length)+' date='+o.date)}
-  for(const af of attachFiles)log('  File: '+af.fn+' size='+af.data.byteLength);
   // Build ZIP manually — zip.js output not compatible with Fig's reader
+  const smsCt=lines.filter(l=>!l.includes('"__parts"')).length;
+  const mmsCt=lines.length-smsCt;
+  log('Building Fig ZIP: '+smsCt+' SMS, '+mmsCt+' MMS, '+attachFiles.length+' attachments','ok');
   const ndjsonData=new TextEncoder().encode(lines.join('\n')+'\n');
-  log('NDJSON size: '+ndjsonData.length);
   const zipFiles=[{name:'messages.ndjson',data:ndjsonData}];
   for(const af of attachFiles)zipFiles.push({name:af.fn,data:new Uint8Array(af.data)});
   return await buildRawZip(zipFiles);
