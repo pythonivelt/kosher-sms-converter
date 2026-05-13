@@ -27,7 +27,3 @@ Convert SMS/MMS backups between kosher phone formats. Runs 100% in your browser 
 3. Choose the output format
 4. Download the converted file
 5. Import on your phone
-
-## Questions or Issues?
-
-Contact pythonivelt@gmail.com or visit [ivelt.com](https://ivelt.com)
