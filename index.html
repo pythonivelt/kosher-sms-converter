@@ -178,7 +178,7 @@
     <span class="footer-dot"></span>
     <span>Nothing uploaded anywhere</span>
     <span class="footer-dot"></span>
-    <span>v0.0.12</span>
+    <span>v0.0.13</span>
   </div>
 </div>
 
@@ -582,10 +582,12 @@ async function buildFigZip(messages){
     if(addr&&!threadMap[addr])threadMap[addr]=String(nextThread++);
   }
 
-  for(const m of messages){
+  for(let mi=0;mi<messages.length;mi++){
+    const m=messages[mi];
     const id=String(msgId++);
     const addr=(m.address||'').replace(/[^\d+]/g,'');
     const tid=threadMap[addr]||'1';
+    if(mi%200===0){const pct=Math.round(mi/messages.length*50);showProgress('Building messages… '+mi+'/'+messages.length,50+pct);await tick()}
 
     if(m.type==='sms'){
       lines.push(JSON.stringify({_id:id,thread_id:tid,address:m.address,date:m.date,date_sent:m.dateSent||'0',protocol:m.protocol||'0',read:m.read||'0',status:m.status||'-1',type:m.direction==='in'?'1':'2',reply_path_present:'0',body:m.body||'',locked:m.locked||'0',sub_id:m.subId||'1',error_code:'-1',creator:'com.figmessenger',seen:'1',ipmsg_id:'0',__display_name:m.contactName||'(Unknown)'}));
@@ -655,7 +657,7 @@ async function buildRawZip(files){
     const cd=new Uint8Array([0x50,0x4B,0x01,0x02,...u16(20),...u16(20),...u16(0),...u16(0),...u16(0),...u16(0),...u32(crc),...u32(sz),...u32(sz),...u16(nameBytes.length),...u16(0),...u16(0),...u16(0),...u16(0),...u32(0),...u32(offset)]);
     cdirs.push(cd,nameBytes);
     offset+=lh.length+nameBytes.length+f.data.length;
-    if(fi%5===0){showProgress('Building ZIP… '+fi+'/'+files.length+' files',90+Math.round(fi/files.length*10));await tick()}
+    if(fi%5===0){const pct=Math.round(fi/files.length*100);showProgress('Building ZIP… '+pct+'%',90+Math.round(pct/10));await tick()}
   }
   const cdirOffset=offset;let cdirSize=0;
   for(const c of cdirs)cdirSize+=c.length;
