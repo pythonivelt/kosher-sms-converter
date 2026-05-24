@@ -178,7 +178,7 @@
     <span class="footer-dot"></span>
     <span>Nothing uploaded anywhere</span>
     <span class="footer-dot"></span>
-    <span>v0.0.15</span>
+    <span>v0.0.16</span>
   </div>
 </div>
 
@@ -203,6 +203,87 @@ async function resolveData(p){if(p.data)return p.data;if(p._entry){try{const b=a
 function formatSize(b){if(b<1048576)return(b/1024).toFixed(0)+' KB';if(b<1073741824)return(b/1048576).toFixed(1)+' MB';return(b/1073741824).toFixed(2)+' GB'}
 function showProgress(l,p){progressEl.style.display='block';progressLabel.textContent=l;progressBar.style.width=p+'%'}
 function tick(){return new Promise(r=>setTimeout(r,0))}
+
+// Extract structure from unsupported formats (no private data)
+function redactText(s){return s.replace(/[A-Za-z0-9]/g,'x').substring(0,40)}
+function extractXmlStructure(text){
+  // Get tag names, attribute names, and nesting — redact all values
+  const tags={};const r=/<(\/?)([\w:_-]+)([^>]*?)(\/?)\s*>/g;let m;
+  while((m=r.exec(text))!==null){
+    const tag=m[2];if(!tags[tag])tags[tag]={count:0,attrs:new Set(),selfClose:false};
+    tags[tag].count++;
+    if(m[4]==='/')tags[tag].selfClose=true;
+    const ar=/(\w[\w_:-]*)=/g;let am;
+    while((am=ar.exec(m[3]))!==null)tags[tag].attrs.add(am[1]);
+  }
+  const out={};for(const[t,info]of Object.entries(tags))out[t]={count:info.count,selfClosing:info.selfClose,attributes:[...info.attrs]};
+  return out;
+}
+function extractJsonStructure(text){
+  try{const obj=JSON.parse(text);return describeJsonShape(obj)}catch(e){
+    // Try NDJSON — first line
+    const nl=text.indexOf('\n');
+    if(nl>0){try{const obj=JSON.parse(text.substring(0,nl));return{format:'ndjson',firstLine:describeJsonShape(obj)}}catch(e2){}}
+    return{error:'Could not parse JSON'}
+  }
+}
+function describeJsonShape(v){
+  if(v===null)return'null';if(typeof v!=='object')return typeof v;
+  if(Array.isArray(v)){return v.length===0?'[]':['array('+v.length+')',describeJsonShape(v[0])]}
+  const out={};for(const[k,val]of Object.entries(v))out[k]=describeJsonShape(val);return out;
+}
+
+async function generateStructureReport(entries,fileName){
+  const report={fileName,totalEntries:entries.length,files:[]};
+  log('Analyzing '+entries.length+' ZIP entries…');
+  for(let i=0;i<entries.length;i++){
+    const e=entries[i];
+    const info={name:e.filename,size:e.uncompressedSize,compressedSize:e.compressedSize};
+    // For first 3 text/xml/json files, extract structure
+    const ext=e.filename.split('.').pop().toLowerCase();
+    if(report.files.filter(f=>f.structure).length<3&&['xml','json','ndjson','txt','csv','dat'].includes(ext)&&e.uncompressedSize<5000000){
+      try{
+        const blob=await e.getData(new zip.BlobWriter());
+        const text=await blob.text();
+        const sample=text.substring(0,2000);
+        if(ext==='xml')info.structure=extractXmlStructure(sample);
+        else if(ext==='json'||ext==='ndjson')info.structure=extractJsonStructure(sample);
+        else info.structure={firstLine:redactText(sample.split('\n')[0]),lineCount:sample.split('\n').length};
+      }catch(e){}
+    }
+    report.files.push(info);
+  }
+  downloadReport(report,fileName);
+}
+
+async function generateRawStructureReport(file){
+  const report={fileName:file.name,fileSize:file.size,type:'raw'};
+  // Read first 4KB to detect format
+  const slice=file.slice(0,4096);
+  const text=await slice.text();
+  const firstBytes=text.substring(0,20);
+  report.startsWithXml=text.trimStart().startsWith('<?xml')||text.trimStart().startsWith('<');
+  report.firstChars=redactText(firstBytes);
+  if(report.startsWithXml){
+    report.structure=extractXmlStructure(text);
+  }else{
+    try{report.structure=extractJsonStructure(text)}catch(e){report.format='unknown binary'}
+  }
+  downloadReport(report,file.name);
+}
+
+function downloadReport(report,origName){
+  const json=JSON.stringify(report,null,2);
+  const blob=new Blob([json],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download='structure-report-'+origName.replace(/\.[^.]+$/,'')+'.json';
+  a.click();URL.revokeObjectURL(url);
+  log('Structure report downloaded — no private messages included','ok');
+  progressEl.style.display='none';
+  errorBox.innerHTML='<b>This phone format is not supported yet.</b><br><br>A structure report was downloaded (no private messages included).<br>Please send it to <a href="mailto:pythonivelt@gmail.com?subject=New phone format report">pythonivelt@gmail.com</a> so we can add support for your phone.';
+  errorBox.style.display='block';scanBtn.disabled=false;
+}
 function escXml(s){if(s==null)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/\r/g,'&#13;').replace(/\n/g,'&#10;')}
 function fmtDate(ts){const ms=parseInt(ts,10);if(!ms||isNaN(ms))return'';const d=new Date(ms<1e12?ms*1000:ms);return d.toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit',second:'2-digit',hour12:true})}
 function ab2b64(buf){const u=new Uint8Array(buf);let b='';for(let i=0;i<u.length;i+=32768)b+=String.fromCharCode.apply(null,u.subarray(i,i+32768));return btoa(b)}
@@ -284,10 +365,9 @@ async function scan(){
         fmt='wonder';log('Detected Wonder format (XML)','ok');
         ({messages,attachMap,pdfCount,pdfSize}=await parseWonderZip(entries));
       }else{
-        log('Unknown ZIP format — no .ndjson or .xml found','err');
-        const fnames=entries.slice(0,10).map(e=>e.filename).join(', ');
-        log('ZIP entries: '+fnames+(entries.length>10?' …':''),'warn');
-        throw new Error('Unrecognized backup format. This phone type is not supported yet. Please email the backup file to pythonivelt@gmail.com so we can add support for your phone.');
+        log('Unknown ZIP format — generating structure report…','warn');
+        await generateStructureReport(entries,selectedFile.name);
+        return;
       }
     }else{
       log('Detected SMS Backup & Restore XML','ok');
@@ -359,11 +439,13 @@ async function scan(){
     const msg=err.message||String(err);
     log('Scan failed: '+msg,'err');
     progressEl.style.display='none';
-    if(msg.includes('central directory')||msg.includes('not a valid')||msg.includes('Unrecognized')){
-      errorBox.innerHTML='<b>This backup format is not supported yet.</b><br><br>To help us add support for your phone, please email the backup file to <a href="mailto:pythonivelt@gmail.com?subject=New phone backup format">pythonivelt@gmail.com</a>';
-    }else{
-      errorBox.textContent=msg;
+    if(msg.includes('central directory')||msg.includes('not a valid')){
+      // Not a ZIP — try reading as raw file for structure report
+      log('Not a ZIP file — analyzing raw structure…','warn');
+      await generateRawStructureReport(selectedFile);
+      return;
     }
+    errorBox.textContent=msg;
     errorBox.style.display='block';scanBtn.disabled=false;
   }
 }
