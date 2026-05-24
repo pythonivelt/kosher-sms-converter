@@ -178,7 +178,7 @@
     <span class="footer-dot"></span>
     <span>Nothing uploaded anywhere</span>
     <span class="footer-dot"></span>
-    <span>v0.0.17</span>
+    <span>v0.0.18</span>
   </div>
 </div>
 
@@ -205,69 +205,156 @@ function showProgress(l,p){progressEl.style.display='block';progressLabel.textCo
 function tick(){return new Promise(r=>setTimeout(r,0))}
 
 // Extract structure from unsupported formats (no private data)
-function redactText(s){return s.replace(/[A-Za-z0-9]/g,'x').substring(0,40)}
-function extractXmlStructure(text){
-  // Get tag names, attribute names, and nesting — redact all values
-  const tags={};const r=/<(\/?)([\w:_-]+)([^>]*?)(\/?)\s*>/g;let m;
+function redactValue(s){
+  // Keep date/number patterns, redact text content
+  if(!s)return'';
+  if(/^\d+$/.test(s))return s.length<=4?s:'<number:'+s.length+'digits>';
+  if(/^\d{4}-\d{2}-\d{2}/.test(s))return'<date>';
+  if(/^\+?\d[\d\s()-]{5,}/.test(s))return'<phone>';
+  if(/@/.test(s))return'<email>';
+  if(/^(https?|ftp):\/\//.test(s))return'<url>';
+  if(s.length>100)return'<text:'+s.length+'chars>';
+  return'<text:'+s.length+'>';
+}
+function extractXmlStructure(text,full){
+  const tags={};const nesting=[];const nestingPaths=new Set();
+  const r=/<(\/?)([\w:_-]+)([^>]*?)(\/?)\s*>/g;let m;
   while((m=r.exec(text))!==null){
-    const tag=m[2];if(!tags[tag])tags[tag]={count:0,attrs:new Set(),selfClose:false};
-    tags[tag].count++;
-    if(m[4]==='/')tags[tag].selfClose=true;
-    const ar=/(\w[\w_:-]*)=/g;let am;
-    while((am=ar.exec(m[3]))!==null)tags[tag].attrs.add(am[1]);
+    const isClose=m[1]==='/';const tag=m[2];const isSelfClose=m[4]==='/';
+    if(!tags[tag])tags[tag]={count:0,attrs:{},selfClose:false,parents:new Set(),children:new Set()};
+    if(!isClose)tags[tag].count++;
+    if(isSelfClose)tags[tag].selfClose=true;
+    // Track nesting
+    if(!isClose&&!isSelfClose){if(nesting.length)tags[tag].parents.add(nesting[nesting.length-1]);nesting.push(tag)}
+    if(isClose&&nesting.length){const popped=nesting.pop();if(nesting.length)tags[nesting[nesting.length-1]].children.add(popped)}
+    if(isSelfClose&&nesting.length){tags[nesting[nesting.length-1]].children.add(tag)}
+    // Extract attribute names and redacted sample values
+    if(!isClose){
+      const ar=/(\w[\w_:-]*)=(?:"([^"]*)"|'([^']*)')/g;let am;
+      while((am=ar.exec(m[3]))!==null){
+        const aname=am[1];const aval=am[2]!=null?am[2]:am[3];
+        if(!tags[tag].attrs[aname])tags[tag].attrs[aname]={sampleValue:redactValue(aval),valueCount:0};
+        tags[tag].attrs[aname].valueCount++;
+      }
+    }
   }
-  const out={};for(const[t,info]of Object.entries(tags))out[t]={count:info.count,selfClosing:info.selfClose,attributes:[...info.attrs]};
+  const out={};
+  for(const[t,info]of Object.entries(tags)){
+    out[t]={count:info.count,selfClosing:info.selfClose,attributes:{}};
+    for(const[a,ai]of Object.entries(info.attrs))out[t].attributes[a]={sample:ai.sampleValue,seen:ai.valueCount};
+    if(info.parents.size)out[t].parents=[...info.parents];
+    if(info.children.size)out[t].children=[...info.children];
+  }
   return out;
 }
 function extractJsonStructure(text){
-  try{const obj=JSON.parse(text);return describeJsonShape(obj)}catch(e){
-    // Try NDJSON — first line
-    const nl=text.indexOf('\n');
-    if(nl>0){try{const obj=JSON.parse(text.substring(0,nl));return{format:'ndjson',firstLine:describeJsonShape(obj)}}catch(e2){}}
-    return{error:'Could not parse JSON'}
+  try{const obj=JSON.parse(text);return{format:'json',shape:describeJsonShape(obj,3)}}catch(e){
+    // Try NDJSON — first 3 lines
+    const lines=text.split('\n').filter(l=>l.trim());
+    const shapes=[];
+    for(let i=0;i<Math.min(3,lines.length);i++){
+      try{shapes.push(describeJsonShape(JSON.parse(lines[i]),3))}catch(e2){}
+    }
+    if(shapes.length)return{format:'ndjson',totalLines:lines.length,sampleLines:shapes};
+    return{error:'Could not parse JSON/NDJSON'}
   }
 }
-function describeJsonShape(v){
-  if(v===null)return'null';if(typeof v!=='object')return typeof v;
-  if(Array.isArray(v)){return v.length===0?'[]':['array('+v.length+')',describeJsonShape(v[0])]}
-  const out={};for(const[k,val]of Object.entries(v))out[k]=describeJsonShape(val);return out;
+function describeJsonShape(v,depth){
+  if(depth<=0)return'…';
+  if(v===null)return'null';if(typeof v==='string')return redactValue(v);
+  if(typeof v==='number')return'<number:'+String(v).length+'>';if(typeof v==='boolean')return'boolean';
+  if(Array.isArray(v)){
+    if(v.length===0)return'[]';
+    const unique=new Set();const samples=[];
+    for(let i=0;i<Math.min(3,v.length);i++){const s=describeJsonShape(v[i],depth-1);const k=JSON.stringify(s);if(!unique.has(k)){unique.add(k);samples.push(s)}}
+    return{array:v.length,itemShapes:samples};
+  }
+  const out={};for(const[k,val]of Object.entries(v))out[k]=describeJsonShape(val,depth-1);return out;
 }
 
 async function generateStructureReport(entries,fileName){
-  const report={fileName,totalEntries:entries.length,files:[]};
+  const report={fileName,totalEntries:entries.length,fileTypes:{},directoryTree:{},files:[]};
   log('Analyzing '+entries.length+' ZIP entries…');
-  for(let i=0;i<entries.length;i++){
-    const e=entries[i];
-    const info={name:e.filename,size:e.uncompressedSize,compressedSize:e.compressedSize};
-    // For first 3 text/xml/json files, extract structure
+  // Count file types
+  for(const e of entries){
     const ext=e.filename.split('.').pop().toLowerCase();
-    if(report.files.filter(f=>f.structure).length<3&&['xml','json','ndjson','txt','csv','dat'].includes(ext)&&e.uncompressedSize<5000000){
+    if(!report.fileTypes[ext])report.fileTypes[ext]={count:0,totalSize:0};
+    report.fileTypes[ext].count++;report.fileTypes[ext].totalSize+=e.uncompressedSize;
+    // Directory tree (just folder names)
+    const dir=e.filename.includes('/')?e.filename.substring(0,e.filename.lastIndexOf('/')):'(root)';
+    if(!report.directoryTree[dir])report.directoryTree[dir]=0;
+    report.directoryTree[dir]++;
+  }
+  // Analyze ALL text-based files (up to 10)
+  let analyzed=0;
+  for(let i=0;i<entries.length&&analyzed<10;i++){
+    const e=entries[i];
+    const ext=e.filename.split('.').pop().toLowerCase();
+    const info={name:e.filename,size:e.uncompressedSize,compressedSize:e.compressedSize};
+    if(['xml','json','ndjson','txt','csv','dat','html','cfg','ini','properties','yaml','yml','db','sql'].includes(ext)&&e.uncompressedSize<10000000&&e.uncompressedSize>0){
       try{
         const blob=await e.getData(new zip.BlobWriter());
         const text=await blob.text();
-        const sample=text.substring(0,2000);
-        if(ext==='xml')info.structure=extractXmlStructure(sample);
+        // Read more for full structure — up to 50KB
+        const sample=text.substring(0,50000);
+        info.encoding=text.charCodeAt(0)===0xFEFF?'UTF-16 BOM':'UTF-8';
+        info.totalLength=text.length;
+        info.lineCount=text.split('\n').length;
+        if(ext==='xml'||ext==='html')info.structure=extractXmlStructure(sample);
         else if(ext==='json'||ext==='ndjson')info.structure=extractJsonStructure(sample);
-        else info.structure={firstLine:redactText(sample.split('\n')[0]),lineCount:sample.split('\n').length};
+        else{info.structure={firstLines:text.split('\n').slice(0,5).map(l=>redactValue(l))}}
+        analyzed++;
       }catch(e){}
+    }else{
+      // For binary files, get first 16 bytes as hex
+      if(e.uncompressedSize>0&&e.uncompressedSize<50000000){
+        try{
+          const blob=await e.getData(new zip.BlobWriter());
+          const arr=new Uint8Array(await blob.slice(0,16).arrayBuffer());
+          info.magicBytes=[...arr].map(b=>b.toString(16).padStart(2,'0')).join(' ');
+        }catch(e){}
+      }
     }
     report.files.push(info);
+  }
+  // Add remaining files (just names and sizes)
+  if(entries.length>10){
+    report.remainingFiles=entries.slice(10).map(e=>({name:e.filename,size:e.uncompressedSize}));
   }
   downloadReport(report,fileName);
 }
 
 async function generateRawStructureReport(file){
-  const report={fileName:file.name,fileSize:file.size,type:'raw'};
-  // Read first 4KB to detect format
-  const slice=file.slice(0,4096);
-  const text=await slice.text();
-  const firstBytes=text.substring(0,20);
-  report.startsWithXml=text.trimStart().startsWith('<?xml')||text.trimStart().startsWith('<');
-  report.firstChars=redactText(firstBytes);
+  const report={fileName:file.name,fileSize:file.size,fileSizeFormatted:formatSize(file.size),type:'raw'};
+  // Read first 50KB for thorough analysis
+  const readSize=Math.min(file.size,50000);
+  const slice=file.slice(0,readSize);
+  const arr=new Uint8Array(await slice.arrayBuffer());
+  report.magicBytes=[...arr.slice(0,16)].map(b=>b.toString(16).padStart(2,'0')).join(' ');
+  const text=new TextDecoder('utf-8',{fatal:false}).decode(arr);
+  const trimmed=text.trimStart();
+  report.startsWithXml=trimmed.startsWith('<?xml')||trimmed.startsWith('<');
+  report.startsWithJson=trimmed.startsWith('{')||trimmed.startsWith('[');
   if(report.startsWithXml){
     report.structure=extractXmlStructure(text);
+    // Also get the XML declaration and first few tag names
+    const declMatch=text.match(/<\?xml[^?]*\?>/);
+    if(declMatch)report.xmlDeclaration=declMatch[0];
+    const rootMatch=trimmed.match(/<(\w[\w:-]*)/);
+    if(rootMatch)report.rootElement=rootMatch[1];
+  }else if(report.startsWithJson){
+    report.structure=extractJsonStructure(text);
   }else{
-    try{report.structure=extractJsonStructure(text)}catch(e){report.format='unknown binary'}
+    report.format='unknown';
+    report.firstBytesAscii=text.substring(0,100).replace(/[^\x20-\x7E]/g,'.');
+  }
+  // Read a chunk from the middle too for more complete picture
+  if(file.size>100000){
+    const midSlice=file.slice(Math.floor(file.size/2),Math.floor(file.size/2)+10000);
+    const midText=new TextDecoder('utf-8',{fatal:false}).decode(new Uint8Array(await midSlice.arrayBuffer()));
+    if(report.startsWithXml){
+      report.midSampleStructure=extractXmlStructure(midText);
+    }
   }
   downloadReport(report,file.name);
 }
