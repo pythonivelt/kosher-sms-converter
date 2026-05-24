@@ -178,7 +178,7 @@
     <span class="footer-dot"></span>
     <span>Nothing uploaded anywhere</span>
     <span class="footer-dot"></span>
-    <span>v0.0.14</span>
+    <span>v0.0.15</span>
   </div>
 </div>
 
@@ -285,7 +285,9 @@ async function scan(){
         ({messages,attachMap,pdfCount,pdfSize}=await parseWonderZip(entries));
       }else{
         log('Unknown ZIP format — no .ndjson or .xml found','err');
-        throw new Error('Could not detect format. Expected Fig (NDJSON) or Wonder (XML) ZIP.');
+        const fnames=entries.slice(0,10).map(e=>e.filename).join(', ');
+        log('ZIP entries: '+fnames+(entries.length>10?' …':''),'warn');
+        throw new Error('Unrecognized backup format. This phone type is not supported yet. Please email the backup file to pythonivelt@gmail.com so we can add support for your phone.');
       }
     }else{
       log('Detected SMS Backup & Restore XML','ok');
@@ -354,9 +356,15 @@ async function scan(){
     sourceFormat=fmt;
     updateUI();
   }catch(err){
-    log('Scan failed: '+(err.message||err),'err');
+    const msg=err.message||String(err);
+    log('Scan failed: '+msg,'err');
     progressEl.style.display='none';
-    errorBox.textContent=err.message||String(err);errorBox.style.display='block';scanBtn.disabled=false;
+    if(msg.includes('central directory')||msg.includes('not a valid')||msg.includes('Unrecognized')){
+      errorBox.innerHTML='<b>This backup format is not supported yet.</b><br><br>To help us add support for your phone, please email the backup file to <a href="mailto:pythonivelt@gmail.com?subject=New phone backup format">pythonivelt@gmail.com</a>';
+    }else{
+      errorBox.textContent=msg;
+    }
+    errorBox.style.display='block';scanBtn.disabled=false;
   }
 }
 
