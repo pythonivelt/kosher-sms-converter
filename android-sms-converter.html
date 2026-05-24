@@ -178,7 +178,7 @@
     <span class="footer-dot"></span>
     <span>Nothing uploaded anywhere</span>
     <span class="footer-dot"></span>
-    <span>v0.0.16</span>
+    <span>v0.0.17</span>
   </div>
 </div>
 
@@ -275,14 +275,16 @@ async function generateRawStructureReport(file){
 function downloadReport(report,origName){
   const json=JSON.stringify(report,null,2);
   const blob=new Blob([json],{type:'application/json'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url;a.download='structure-report-'+origName.replace(/\.[^.]+$/,'')+'.json';
-  a.click();URL.revokeObjectURL(url);
-  log('Structure report downloaded — no private messages included','ok');
+  const fn='structure-report-'+origName.replace(/\.[^.]+$/,'')+'.json';
   progressEl.style.display='none';
-  errorBox.innerHTML='<b>This phone format is not supported yet.</b><br><br>A structure report was downloaded (no private messages included).<br>Please send it to <a href="mailto:pythonivelt@gmail.com?subject=New phone format report">pythonivelt@gmail.com</a> so we can add support for your phone.';
+  errorBox.innerHTML='<b>This phone format is not supported yet.</b><br><br>Want to help us add support? Download a small structure report (no private messages included) and send it to <a href="mailto:pythonivelt@gmail.com?subject=New phone format report">pythonivelt@gmail.com</a>.<br><br><button id="dlReportBtn" style="padding:8px 20px;border-radius:8px;border:none;background:#4f46e5;color:#fff;font-weight:600;cursor:pointer">Download Structure Report</button>';
   errorBox.style.display='block';scanBtn.disabled=false;
+  $('dlReportBtn').onclick=function(){
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download=fn;a.click();URL.revokeObjectURL(url);
+    log('Structure report downloaded — no private messages included','ok');
+    this.textContent='Downloaded!';this.disabled=true;
+  };
 }
 function escXml(s){if(s==null)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/\r/g,'&#13;').replace(/\n/g,'&#10;')}
 function fmtDate(ts){const ms=parseInt(ts,10);if(!ms||isNaN(ms))return'';const d=new Date(ms<1e12?ms*1000:ms);return d.toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit',second:'2-digit',hour12:true})}
