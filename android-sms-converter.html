@@ -523,30 +523,38 @@ async function fallbackZipScan(file){
     // Move to next entry
     if(hasDD&&compSize===0){
       // Need to find end of this entry by scanning for next PK header
-      const scanSize=Math.min(50*1024*1024,fileSize-dataStart);
-      const chunk=new Uint8Array(await file.slice(dataStart,dataStart+Math.min(1024*64,scanSize)).arrayBuffer());
-      let found=false;
-      for(let i=1;i<chunk.length-4;i++){
-        if(chunk[i]===0x50&&chunk[i+1]===0x4B&&chunk[i+2]===0x03&&chunk[i+3]===0x04){
-          if(fileName.startsWith('data/')){
-            // Data descriptor (no sig) is 12 bytes before next header: CRC(4)+compSize(4)+uncompSize(4)
-            const ddOff=i-12;
-            const ddComp=ddOff>=0?(chunk[ddOff+4]|(chunk[ddOff+5]<<8)|(chunk[ddOff+6]<<16)|(chunk[ddOff+7]<<24)):i;
-            const pn=fileName.split('/').pop();
-            attachMap[pn]={zipOffset:dataStart,compSize:ddComp,method,hasDD:true,file};
+      // Scan in 1MB chunks to handle large attachments
+      let found=false;let searchOff=dataStart+1;
+      while(searchOff<fileSize-4&&!found){
+        const readEnd=Math.min(searchOff+1024*1024,fileSize);
+        const chunk=new Uint8Array(await file.slice(searchOff,readEnd).arrayBuffer());
+        for(let i=0;i<chunk.length-4;i++){
+          if(chunk[i]===0x50&&chunk[i+1]===0x4B&&chunk[i+2]===0x03&&chunk[i+3]===0x04){
+            const absPos=searchOff+i;
+            if(fileName.startsWith('data/')){
+              // Read 12-byte unsigned data descriptor just before this header
+              const ddStart=absPos-12;
+              if(ddStart>=dataStart){
+                const ddBuf=new Uint8Array(await file.slice(ddStart,absPos).arrayBuffer());
+                const ddComp=ddBuf[4]|(ddBuf[5]<<8)|(ddBuf[6]<<16)|(ddBuf[7]<<24);
+                const pn=fileName.split('/').pop();
+                attachMap[pn]={zipOffset:dataStart,compSize:ddComp,method,hasDD:true,file};
+              }
+            }
+            offset=absPos;found=true;break;
           }
-          offset=dataStart+i;found=true;break;
+          if(chunk[i]===0x50&&chunk[i+1]===0x4B&&chunk[i+2]===0x07&&chunk[i+3]===0x08){
+            const absPos=searchOff+i;
+            const ddBuf=new Uint8Array(await file.slice(absPos+4,absPos+20).arrayBuffer());
+            const ddCompSize=ddBuf[4]|(ddBuf[5]<<8)|(ddBuf[6]<<16)|(ddBuf[7]<<24);
+            attachMap[fileName.split('/').pop()]={zipOffset:dataStart,compSize:ddCompSize,uncompSize:ddBuf[8]|(ddBuf[9]<<8)|(ddBuf[10]<<16)|(ddBuf[11]<<24),method,hasDD:true,file};
+            offset=absPos+20;found=true;break;
+          }
         }
-        if(chunk[i]===0x50&&chunk[i+1]===0x4B&&chunk[i+2]===0x07&&chunk[i+3]===0x08){
-          // data descriptor with signature — sizes follow
-          const ddBuf=new Uint8Array(await file.slice(dataStart+i+4,dataStart+i+20).arrayBuffer());
-          const ddCompSize=ddBuf[4]|(ddBuf[5]<<8)|(ddBuf[6]<<16)|(ddBuf[7]<<24);
-          attachMap[fileName.split('/').pop()]={zipOffset:dataStart,compSize:ddCompSize,uncompSize:ddBuf[8]|(ddBuf[9]<<8)|(ddBuf[10]<<16)|(ddBuf[11]<<24),method,hasDD:true,file};
-          offset=dataStart+i+20;found=true;break;
-        }
+        if(!found)searchOff=readEnd-3; // overlap to catch signatures spanning chunks
       }
       if(!found){
-        log('Could not find end of entry '+fileName+', stopping scan','warn');
+        log('Could not find end of entry '+fileName+', skipping','warn');
         break;
       }
     }else{
