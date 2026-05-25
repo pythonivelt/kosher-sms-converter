@@ -433,26 +433,34 @@ async function fallbackZipScan(file){
       log('Found '+fileName+' — decompressing…','ok');
       ndjsonFound=true;fmt='pom';
       // Need to find the compressed data size
+      let ndjsonNextOffset=0; // where to resume scanning after this entry
       if(hasDD&&compSize===0){
         // Search for next PK signature or data descriptor to find end
-        // Read in chunks to find end of compressed data
-        const chunkSize=1024*1024; // 1MB chunks
+        const chunkSize=1024*1024;
         let searchOffset=dataStart;let found=false;
-        while(searchOffset<fileSize){
+        while(searchOffset<fileSize&&!found){
           const readSize=Math.min(chunkSize+4,fileSize-searchOffset);
           const chunk=new Uint8Array(await file.slice(searchOffset,searchOffset+readSize).arrayBuffer());
           for(let i=0;i<chunk.length-4;i++){
-            // Look for PK\x03\x04 (next file) or PK\x07\x08 (data descriptor with sig)
-            if(chunk[i]===0x50&&chunk[i+1]===0x4B&&((chunk[i+2]===0x03&&chunk[i+3]===0x04)||(chunk[i+2]===0x07&&chunk[i+3]===0x08))){
-              compSize=searchOffset+i-dataStart;
-              if(chunk[i+2]===0x07)compSize=searchOffset+i-dataStart; // data descriptor sig
-              found=true;break;
+            if(chunk[i]===0x50&&chunk[i+1]===0x4B){
+              if(chunk[i+2]===0x07&&chunk[i+3]===0x08){
+                // Data descriptor with signature: compressed data ends here
+                compSize=searchOffset+i-dataStart;
+                ndjsonNextOffset=searchOffset+i+20; // skip PK0708(4)+CRC(4)+comp(4)+uncomp(4)
+                found=true;break;
+              }
+              if(chunk[i+2]===0x03&&chunk[i+3]===0x04){
+                // Next local file header — DD (unsigned, 12 bytes) sits just before this
+                compSize=searchOffset+i-dataStart-12;
+                if(compSize<0)compSize=searchOffset+i-dataStart;
+                ndjsonNextOffset=searchOffset+i;
+                found=true;break;
+              }
             }
           }
-          if(found)break;
-          searchOffset+=chunkSize;
+          if(!found)searchOffset+=chunkSize; // no overlap needed — PK is 2 bytes
         }
-        if(!found)compSize=fileSize-dataStart;
+        if(!found){compSize=fileSize-dataStart;ndjsonNextOffset=fileSize}
       }
       // Read compressed data and decompress
       const compData=file.slice(dataStart,dataStart+compSize);
@@ -512,8 +520,7 @@ async function fallbackZipScan(file){
         if(li%5000===0&&li>0){showProgress('Parsing messages… '+li+'/'+lines.length,Math.round(li/lines.length*80));await tick()}
       }
       // Skip past this entry
-      offset=dataStart+compSize;
-      if(hasDD)offset+=compSize>0xFFFFFFFF?24:hasDD?16:0; // skip data descriptor
+      offset=ndjsonNextOffset||dataStart+compSize;
       continue;
     }
     // For attachment files (data/PART_xxx), store offset for later resolution
@@ -566,7 +573,11 @@ async function fallbackZipScan(file){
       }
     }else{
       offset=dataStart+compSize;
-      if(hasDD)offset+=16; // skip data descriptor
+      if(hasDD){
+        // Check if DD has PK\x07\x08 signature (16 bytes) or not (12 bytes)
+        const ddPeek=new Uint8Array(await file.slice(offset,offset+4).arrayBuffer());
+        offset+=(ddPeek[0]===0x50&&ddPeek[1]===0x4B&&ddPeek[2]===0x07&&ddPeek[3]===0x08)?16:12;
+      }
     }
   }
   if(!ndjsonFound)return null;
