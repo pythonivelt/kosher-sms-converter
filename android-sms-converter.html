@@ -730,8 +730,8 @@ async function scan(){
       // Fix IDs: optSms, optFig, optWonder
     });
     $('optSms').style.display=fmt==='smsbackup'?'none':'';
-    $('optFig').style.display=(fmt==='fig'||fmt==='pom')?'none':'';
-    $('optPom').style.display=(fmt==='pom'||fmt==='fig')?'none':'';
+    $('optFig').style.display=fmt==='fig'?'none':'';
+    $('optPom').style.display=fmt==='pom'?'none':'';
     $('optWonder').style.display=fmt==='wonder'?'none':'';
     // Reset target selection
     document.querySelectorAll('input[name="target"]').forEach(r=>r.checked=false);
