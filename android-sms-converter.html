@@ -687,7 +687,14 @@ async function scan(){
         log('ZIP contains '+entries.length+' entries');
         if(hasNdjson){
           fmt='fig';log('Detected Fig format (NDJSON)','ok');
-          ({messages,attachMap,pdfCount,pdfSize}=await parseFigZip(entries));
+          try{
+            ({messages,attachMap,pdfCount,pdfSize}=await parseFigZip(entries));
+          }catch(parseErr){
+            log('zip.js read failed: '+parseErr.message+' — trying fallback…','warn');
+            const fallback=await fallbackZipScan(selectedFile);
+            if(fallback){fmt=fallback.fmt;messages=fallback.messages;attachMap=fallback.attachMap;pdfCount=fallback.pdfCount||0;pdfSize=fallback.pdfSize||0}
+            else{log('Fallback also failed','err');return}
+          }
         }else if(hasWonderXml){
           fmt='wonder';log('Detected Wonder format (XML)','ok');
           ({messages,attachMap,pdfCount,pdfSize}=await parseWonderZip(entries));
