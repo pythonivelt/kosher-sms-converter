@@ -178,7 +178,7 @@
     <span class="footer-dot"></span>
     <span>Nothing uploaded anywhere</span>
     <span class="footer-dot"></span>
-    <span>v0.0.20</span>
+    <span>v0.0.21</span>
   </div>
 </div>
 
@@ -361,14 +361,19 @@ async function generateRawStructureReport(file){
 
 function downloadReport(report,origName){
   progressEl.style.display='none';
-  errorBox.innerHTML='<b>This phone format is not supported yet.</b><br><br>Want to help us add support? A small structure report will be sent (no private messages are included).<br><br><button id="sendReportBtn" style="padding:8px 20px;border-radius:8px;border:none;background:#4f46e5;color:#fff;font-weight:600;cursor:pointer">Send Report</button>';
+  errorBox.innerHTML='<b>This phone format is not supported yet.</b><br><br>Help us add support for your phone! A small structure report will be sent (no private messages are included).<br><br><input id="phoneBrandInput" type="text" placeholder="Phone brand (e.g. POM, Kosher XL...)" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;margin-bottom:8px;font-size:1rem"><input id="userEmailInput" type="email" placeholder="Your email (optional, if you want to help test)" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;margin-bottom:10px;font-size:1rem"><br><button id="sendReportBtn" style="padding:8px 20px;border-radius:8px;border:none;background:#4f46e5;color:#fff;font-weight:600;cursor:pointer">Send Report</button>';
   errorBox.style.display='block';scanBtn.disabled=false;
   $('sendReportBtn').onclick=async function(){
+    const brand=($('phoneBrandInput').value||'').trim();
+    if(!brand){$('phoneBrandInput').style.border='2px solid red';$('phoneBrandInput').focus();return}
+    report.phoneBrand=brand;
+    const email=($('userEmailInput').value||'').trim();
+    if(email)report.userEmail=email;
     this.textContent='Sending...';this.disabled=true;
     try{
       await fetch('https://script.google.com/macros/s/AKfycbzSrDeatu4a0rgT9pkypGDyiWdc-i89XSYoVhnSae7gRUvRaXlHee98ycsDE084TUVN4A/exec',{method:'POST',mode:'no-cors',body:JSON.stringify(report)});
       this.textContent='Sent! Thank you!';this.style.background='#16a34a';
-      log('Structure report sent — thank you!','ok');
+      log('Structure report sent for '+brand+' — thank you!','ok');
     }catch(e){
       this.textContent='Failed to send';this.style.background='#dc2626';
       log('Failed to send report: '+e.message,'err');
