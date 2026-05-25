@@ -111,6 +111,13 @@
         <div class="option-desc">NDJSON ZIP — for Fig phones</div>
       </div>
     </label>
+    <label class="option" data-value="pom" id="optPom">
+      <input type="radio" name="target" value="pom" />
+      <div>
+        <div class="option-label">Pom</div>
+        <div class="option-desc">NDJSON ZIP — for Pom phones</div>
+      </div>
+    </label>
     <label class="option" data-value="wonder" id="optWonder" style="opacity:.5;cursor:default">
       <input type="radio" name="target" value="wonder" disabled />
       <div>
@@ -424,7 +431,7 @@ async function fallbackZipScan(file){
     // For NDJSON, decompress and parse
     if(fileName.endsWith('.ndjson')){
       log('Found '+fileName+' — decompressing…','ok');
-      ndjsonFound=true;fmt='fig';
+      ndjsonFound=true;fmt='pom';
       // Need to find the compressed data size
       if(hasDD&&compSize===0){
         // Search for next PK signature or data descriptor to find end
@@ -590,7 +597,7 @@ function bindRadioGroup(selector){
     });
   });
 }
-bindRadioGroup('.option[data-value="smsbackup"],.option[data-value="fig"],.option[data-value="wonder"]');
+bindRadioGroup('.option[data-value="smsbackup"],.option[data-value="fig"],.option[data-value="pom"],.option[data-value="wonder"]');
 bindRadioGroup('.option[data-value="all"],.option[data-value="text"],.option[data-value="mms"]');
 bindRadioGroup('.option[data-value="pdf-include"],.option[data-value="pdf-skip"]');
 
@@ -696,7 +703,7 @@ async function scan(){
     }
 
     log('Parsed '+messages.length+' messages ('+cIn+' in, '+cOut+' out, '+cMms+' MMS, '+cAttach+' attachments)'+(pdfCount?' + '+pdfCount+' PDFs':''),'ok');
-    $('detectedBadge').textContent=fmt==='fig'?'Fig':fmt==='wonder'?'Wonder':'SMS Backup & Restore';
+    $('detectedBadge').textContent=fmt==='fig'?'Fig':fmt==='pom'?'Pom / Fig':fmt==='wonder'?'Wonder':'SMS Backup & Restore';
     $('statIn').textContent=cIn.toLocaleString();
     $('statOut').textContent=cOut.toLocaleString();
     $('statMms').textContent=cMms.toLocaleString();
@@ -723,11 +730,12 @@ async function scan(){
       // Fix IDs: optSms, optFig, optWonder
     });
     $('optSms').style.display=fmt==='smsbackup'?'none':'';
-    $('optFig').style.display=fmt==='fig'?'none':'';
+    $('optFig').style.display=(fmt==='fig'||fmt==='pom')?'none':'';
+    $('optPom').style.display=(fmt==='pom'||fmt==='fig')?'none':'';
     $('optWonder').style.display=fmt==='wonder'?'none':'';
     // Reset target selection
     document.querySelectorAll('input[name="target"]').forEach(r=>r.checked=false);
-    document.querySelectorAll('.option[data-value="smsbackup"],.option[data-value="fig"],.option[data-value="wonder"]').forEach(o=>o.classList.remove('selected'));
+    document.querySelectorAll('.option[data-value="smsbackup"],.option[data-value="fig"],.option[data-value="pom"],.option[data-value="wonder"]').forEach(o=>o.classList.remove('selected'));
 
     // Hide MMS content options if no MMS
     $('optAll').style.display=cMms>0?'':'none';
@@ -1176,10 +1184,10 @@ async function build(target){
     if(target==='smsbackup'){
       blob=await writeToSmsBackup(msgs);
       filename='sms-'+baseName+'.xml';
-    }else if(target==='fig'){
-      showProgress('Building Fig ZIP…',40);await tick();
+    }else if(target==='fig'||target==='pom'){
+      showProgress('Building '+(target==='pom'?'Pom':'Fig')+' ZIP…',40);await tick();
       blob=await buildFigZip(msgs);
-      filename='fig-'+baseName+'.zip';
+      filename=(target==='pom'?'pom':'fig')+'-'+baseName+'.zip';
     }else if(target==='wonder'){
       showProgress('Building Wonder ZIP…',40);await tick();
       blob=await buildWonderZip(msgs);

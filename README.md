@@ -10,6 +10,7 @@ Convert SMS/MMS backups between kosher phone formats. Runs 100% in your browser 
 |--------|:---:|:---:|
 | SMS Backup & Restore (XML) | Yes | Yes |
 | Fig | Yes | Yes |
+| Pom | Yes | Yes |
 | Wonder | Yes | Coming soon |
 
 ## Features
