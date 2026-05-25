@@ -185,7 +185,7 @@
     <span class="footer-dot"></span>
     <span>Nothing uploaded anywhere</span>
     <span class="footer-dot"></span>
-    <span>v0.0.26</span>
+    <span>v0.0.27</span>
   </div>
 </div>
 
@@ -361,6 +361,42 @@ async function generateRawStructureReport(file){
     const midText=new TextDecoder('utf-8',{fatal:false}).decode(new Uint8Array(await midSlice.arrayBuffer()));
     if(report.startsWithXml){
       report.midSampleStructure=extractXmlStructure(midText);
+    }
+  }
+  // ZIP-specific: scan local file headers for structure details
+  if(arr[0]===0x50&&arr[1]===0x4B&&arr[2]===0x03&&arr[3]===0x04){
+    report.isZip=true;
+    const zipEntries=[];let off=0;
+    while(off<arr.length-30&&zipEntries.length<20){
+      if(arr[off]!==0x50||arr[off+1]!==0x4B||arr[off+2]!==0x03||arr[off+3]!==0x04)break;
+      const method=arr[off+8]|(arr[off+9]<<8);
+      const flags=arr[off+6]|(arr[off+7]<<8);
+      const compSize=arr[off+18]|(arr[off+19]<<8)|(arr[off+20]<<16)|(arr[off+21]<<24);
+      const uncompSize=arr[off+22]|(arr[off+23]<<8)|(arr[off+24]<<16)|(arr[off+25]<<24);
+      const fnLen=arr[off+26]|(arr[off+27]<<8);
+      const exLen=arr[off+28]|(arr[off+29]<<8);
+      const fn=new TextDecoder().decode(arr.slice(off+30,off+30+fnLen));
+      zipEntries.push({name:fn,method,flags:'0x'+flags.toString(16).padStart(4,'0'),compSize,uncompSize,hasDataDescriptor:!!(flags&0x08)});
+      if(compSize>0)off=off+30+fnLen+exLen+compSize+(flags&0x08?16:0);
+      else off=off+30+fnLen+exLen+1; // can't skip without size, just record first entries
+      // Try to find next PK header
+      while(off<arr.length-4){if(arr[off]===0x50&&arr[off+1]===0x4B&&arr[off+2]===0x03&&arr[off+3]===0x04)break;off++}
+    }
+    report.zipEntries=zipEntries;
+    // Also scan remaining entries beyond first 50KB for names only
+    if(file.size>readSize){
+      const fullScan=[];let scanOff=0;
+      const scanBuf=new Uint8Array(await file.slice(0,Math.min(file.size,2*1024*1024)).arrayBuffer());
+      while(scanOff<scanBuf.length-30&&fullScan.length<100){
+        if(scanBuf[scanOff]===0x50&&scanBuf[scanOff+1]===0x4B&&scanBuf[scanOff+2]===0x03&&scanBuf[scanOff+3]===0x04){
+          const fl=scanBuf[scanOff+26]|(scanBuf[scanOff+27]<<8);
+          if(scanOff+30+fl<=scanBuf.length){
+            fullScan.push(new TextDecoder().decode(scanBuf.slice(scanOff+30,scanOff+30+fl)));
+          }
+          scanOff+=30+fl;
+        }else scanOff++;
+      }
+      if(fullScan.length>zipEntries.length)report.allFileNames=fullScan;
     }
   }
   downloadReport(report,file.name);
