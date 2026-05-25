@@ -185,7 +185,7 @@
     <span class="footer-dot"></span>
     <span>Nothing uploaded anywhere</span>
     <span class="footer-dot"></span>
-    <span>v0.0.27</span>
+    <span>v0.0.28</span>
   </div>
 </div>
 
@@ -205,7 +205,7 @@ function log(msg,type){logPanel.style.display='block';const s=document.createEle
 function clearLog(){logBox.innerHTML='';logPanel.style.display='none';logPanel.removeAttribute('open')}
 
 function hasAttach(p){return!!(p.data||p._entry||p._fallbackAttach)}
-async function resolveData(p){if(p.data)return p.data;if(p._entry){try{const b=await p._entry.getData(new zip.BlobWriter());p.data=await b.arrayBuffer();delete p._entry;return p.data}catch(e){log('Failed to read attachment: '+e.message,'warn');return null}}if(p._fallbackAttach){try{const ai=p._fallbackAttach;if(!ai.compSize){log('Attachment has unknown size, skipping','warn');return null}const compData=ai.file.slice(ai.zipOffset,ai.zipOffset+ai.compSize);let raw;if(ai.method===8){const ds=new DecompressionStream('deflate-raw');const reader=ds.readable.getReader();const writer=ds.writable.getWriter();const chunks=[];const readAll=(async()=>{while(true){const{done,value}=await reader.read();if(done)break;chunks.push(value)}})();const sr=compData.stream().getReader();while(true){const{done,value}=await sr.read();if(done)break;await writer.write(value)}await writer.close();await readAll;let total=0;for(const c of chunks)total+=c.byteLength;raw=new Uint8Array(total);let off=0;for(const c of chunks){raw.set(c,off);off+=c.byteLength}p.data=raw.buffer}else{p.data=await compData.arrayBuffer()}delete p._fallbackAttach;return p.data}catch(e){log('Failed to read fallback attachment: '+e.message,'warn');return null}}return null}
+async function resolveData(p){if(p.data)return p.data;if(p._entry){try{const b=await p._entry.getData(new zip.BlobWriter());p.data=await b.arrayBuffer();delete p._entry;return p.data}catch(e){log('Failed to read attachment: '+e.message,'warn');return null}}if(p._fallbackAttach){try{const ai=p._fallbackAttach;if(!ai.compSize){log('Attachment has unknown size, skipping: '+(p.cl||'?'),'warn');return null}const compData=ai.file.slice(ai.zipOffset,ai.zipOffset+ai.compSize);let raw;if(ai.method===8){const ds=new DecompressionStream('deflate-raw');const reader=ds.readable.getReader();const writer=ds.writable.getWriter();const chunks=[];const readAll=(async()=>{while(true){const{done,value}=await reader.read();if(done)break;chunks.push(value)}})();const sr=compData.stream().getReader();while(true){const{done,value}=await sr.read();if(done)break;try{await writer.write(value)}catch(we){break}}try{await writer.close()}catch(ce){}await readAll;let total=0;for(const c of chunks)total+=c.byteLength;raw=new Uint8Array(total);let off=0;for(const c of chunks){raw.set(c,off);off+=c.byteLength}p.data=raw.buffer}else{p.data=await compData.arrayBuffer()}delete p._fallbackAttach;return p.data}catch(e){log('Failed to read fallback attachment: '+(p.cl||'?')+' — '+e.message,'warn');return null}}return null}
 
 function formatSize(b){if(b<1048576)return(b/1024).toFixed(0)+' KB';if(b<1073741824)return(b/1048576).toFixed(1)+' MB';return(b/1073741824).toFixed(2)+' GB'}
 function showProgress(l,p){progressEl.style.display='block';progressLabel.textContent=l;progressBar.style.width=p+'%'}
@@ -625,7 +625,9 @@ async function fallbackZipScan(file){
       }
     }
   }
-  log('Fallback scan: found '+messages.length+' messages in '+entryCount+' ZIP entries','ok');
+  let linked=0,unlinked=0;
+  for(const m of messages){if(m.type==='mms')for(const p of m.parts){if(p._fallbackAttach)linked++;else if(p._zipRef)unlinked++}}
+  log('Fallback scan: found '+messages.length+' messages, '+Object.keys(attachMap).length+' attachments in ZIP, '+linked+' linked'+(unlinked?' ('+unlinked+' unlinked!)':''),'ok');
   return{fmt,messages,attachMap,pdfCount,pdfSize};
 }
 
