@@ -178,7 +178,7 @@
     <span class="footer-dot"></span>
     <span>Nothing uploaded anywhere</span>
     <span class="footer-dot"></span>
-    <span>v0.0.18</span>
+    <span>v0.0.19</span>
   </div>
 </div>
 
@@ -360,17 +360,28 @@ async function generateRawStructureReport(file){
 }
 
 function downloadReport(report,origName){
-  const json=JSON.stringify(report,null,2);
-  const blob=new Blob([json],{type:'application/json'});
-  const fn='structure-report-'+origName.replace(/\.[^.]+$/,'')+'.json';
   progressEl.style.display='none';
-  errorBox.innerHTML='<b>This phone format is not supported yet.</b><br><br>Want to help us add support? Download a small structure report (no private messages included) and send it to <a href="mailto:pythonivelt@gmail.com?subject=New phone format report">pythonivelt@gmail.com</a>.<br><br><button id="dlReportBtn" style="padding:8px 20px;border-radius:8px;border:none;background:#4f46e5;color:#fff;font-weight:600;cursor:pointer">Download Structure Report</button>';
+  errorBox.innerHTML='<b>This phone format is not supported yet.</b><br><br>To help us add support, please enter your phone model and click Send. A small structure report will be sent (no private messages are included).<br><br><input id="phoneNameInput" type="text" placeholder="Phone model (e.g. POM, Kosher XL...)" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;margin-bottom:10px;font-size:1rem"><br><button id="sendReportBtn" style="padding:8px 20px;border-radius:8px;border:none;background:#4f46e5;color:#fff;font-weight:600;cursor:pointer">Send Report</button>';
   errorBox.style.display='block';scanBtn.disabled=false;
-  $('dlReportBtn').onclick=function(){
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement('a');a.href=url;a.download=fn;a.click();URL.revokeObjectURL(url);
-    log('Structure report downloaded — no private messages included','ok');
-    this.textContent='Downloaded!';this.disabled=true;
+  $('sendReportBtn').onclick=async function(){
+    const phoneName=($('phoneNameInput').value||'').trim();
+    if(!phoneName){$('phoneNameInput').style.border='2px solid red';$('phoneNameInput').placeholder='Please enter phone model';return}
+    report.phoneName=phoneName;
+    this.textContent='Sending...';this.disabled=true;
+    try{
+      await fetch('https://script.google.com/macros/s/AKfycbzSrDeatu4a0rgT9pkypGDyiWdc-i89XSYoVhnSae7gRUvRaXlHee98ycsDE084TUVN4A/exec',{method:'POST',mode:'no-cors',body:JSON.stringify(report)});
+      this.textContent='Sent! Thank you!';this.style.background='#16a34a';
+      log('Structure report sent — thank you for helping us add support for '+phoneName,'ok');
+    }catch(e){
+      this.textContent='Failed to send';this.style.background='#dc2626';
+      log('Failed to send report: '+e.message,'err');
+      // Fallback: download the file
+      const json=JSON.stringify(report,null,2);
+      const blob=new Blob([json],{type:'application/json'});
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');a.href=url;a.download='structure-report-'+origName.replace(/\.[^.]+$/,'')+'.json';a.click();URL.revokeObjectURL(url);
+      log('Report downloaded instead — please email it to pythonivelt@gmail.com','warn');
+    }
   };
 }
 function escXml(s){if(s==null)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/\r/g,'&#13;').replace(/\n/g,'&#10;')}
