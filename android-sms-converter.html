@@ -178,7 +178,7 @@
     <span class="footer-dot"></span>
     <span>Nothing uploaded anywhere</span>
     <span class="footer-dot"></span>
-    <span>v0.0.21</span>
+    <span>v0.0.22</span>
   </div>
 </div>
 
@@ -197,8 +197,8 @@ const logPanel=$('logPanel'),logBox=$('logBox');
 function log(msg,type){logPanel.style.display='block';const s=document.createElement('span');if(type)s.className='log-'+type;s.textContent=(new Date().toLocaleTimeString('en-US',{hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'}))+' '+msg+'\n';logBox.appendChild(s);logBox.scrollTop=logBox.scrollHeight}
 function clearLog(){logBox.innerHTML='';logPanel.style.display='none';logPanel.removeAttribute('open')}
 
-function hasAttach(p){return!!(p.data||p._entry)}
-async function resolveData(p){if(p.data)return p.data;if(p._entry){try{const b=await p._entry.getData(new zip.BlobWriter());p.data=await b.arrayBuffer();delete p._entry;return p.data}catch(e){log('Failed to read attachment: '+e.message,'warn');return null}}return null}
+function hasAttach(p){return!!(p.data||p._entry||p._fallbackAttach)}
+async function resolveData(p){if(p.data)return p.data;if(p._entry){try{const b=await p._entry.getData(new zip.BlobWriter());p.data=await b.arrayBuffer();delete p._entry;return p.data}catch(e){log('Failed to read attachment: '+e.message,'warn');return null}}if(p._fallbackAttach){try{const ai=p._fallbackAttach;if(!ai.compSize){log('Attachment has unknown size, skipping','warn');return null}const compData=ai.file.slice(ai.zipOffset,ai.zipOffset+ai.compSize);let raw;if(ai.method===8){const ds=new DecompressionStream('deflate-raw');const reader=ds.readable.getReader();const writer=ds.writable.getWriter();const chunks=[];const readAll=(async()=>{while(true){const{done,value}=await reader.read();if(done)break;chunks.push(value)}})();const sr=compData.stream().getReader();while(true){const{done,value}=await sr.read();if(done)break;await writer.write(value)}await writer.close();await readAll;let total=0;for(const c of chunks)total+=c.byteLength;raw=new Uint8Array(total);let off=0;for(const c of chunks){raw.set(c,off);off+=c.byteLength}p.data=raw.buffer}else{p.data=await compData.arrayBuffer()}delete p._fallbackAttach;return p.data}catch(e){log('Failed to read fallback attachment: '+e.message,'warn');return null}}return null}
 
 function formatSize(b){if(b<1048576)return(b/1024).toFixed(0)+' KB';if(b<1073741824)return(b/1048576).toFixed(1)+' MB';return(b/1073741824).toFixed(2)+' GB'}
 function showProgress(l,p){progressEl.style.display='block';progressLabel.textContent=l;progressBar.style.width=p+'%'}
@@ -391,6 +391,186 @@ function fmtDate(ts){const ms=parseInt(ts,10);if(!ms||isNaN(ms))return'';const d
 function ab2b64(buf){const u=new Uint8Array(buf);let b='';for(let i=0;i<u.length;i+=32768)b+=String.fromCharCode.apply(null,u.subarray(i,i+32768));return btoa(b)}
 function b642ab(s){const b=atob(s),a=new Uint8Array(b.length);for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i);return a.buffer}
 
+// Fallback ZIP reader for ZIPs that zip.js can't handle (e.g. POM phones)
+async function fallbackZipScan(file){
+  // Scan local file headers sequentially from the start of the ZIP
+  const messages=[];const attachMap={};let pdfCount=0,pdfSize=0;
+  let fmt=null;let offset=0;const fileSize=file.size;
+  const PK=0x04034b50;
+  log('Fallback: scanning ZIP entries from file start…');
+
+  // Read entries one by one
+  let entryCount=0;let ndjsonFound=false;
+  while(offset<fileSize-30){
+    // Read local file header (30 bytes)
+    const hdrBuf=new Uint8Array(await file.slice(offset,offset+30).arrayBuffer());
+    const sig=hdrBuf[0]|(hdrBuf[1]<<8)|(hdrBuf[2]<<16)|(hdrBuf[3]<<24);
+    if((sig>>>0)!==PK)break; // No more local file headers
+    const method=hdrBuf[8]|(hdrBuf[9]<<8);
+    const flags=hdrBuf[6]|(hdrBuf[7]<<8);
+    const hasDD=(flags&0x08)!==0; // data descriptor follows
+    let compSize=hdrBuf[18]|(hdrBuf[19]<<8)|(hdrBuf[20]<<16)|(hdrBuf[21]<<24);
+    let uncompSize=hdrBuf[22]|(hdrBuf[23]<<8)|(hdrBuf[24]<<16)|(hdrBuf[25]<<24);
+    const fnLen=hdrBuf[26]|(hdrBuf[27]<<8);
+    const exLen=hdrBuf[28]|(hdrBuf[29]<<8);
+    // Read filename
+    const fnBuf=new Uint8Array(await file.slice(offset+30,offset+30+fnLen).arrayBuffer());
+    const fileName=new TextDecoder().decode(fnBuf);
+    const dataStart=offset+30+fnLen+exLen;
+
+    entryCount++;
+    if(entryCount%50===0){showProgress('Scanning entry '+entryCount+'…',Math.min(80,Math.round(offset/fileSize*80)));await tick()}
+
+    // For NDJSON, decompress and parse
+    if(fileName.endsWith('.ndjson')){
+      log('Found '+fileName+' — decompressing…','ok');
+      ndjsonFound=true;fmt='fig';
+      // Need to find the compressed data size
+      if(hasDD&&compSize===0){
+        // Search for next PK signature or data descriptor to find end
+        // Read in chunks to find end of compressed data
+        const chunkSize=1024*1024; // 1MB chunks
+        let searchOffset=dataStart;let found=false;
+        while(searchOffset<fileSize){
+          const readSize=Math.min(chunkSize+4,fileSize-searchOffset);
+          const chunk=new Uint8Array(await file.slice(searchOffset,searchOffset+readSize).arrayBuffer());
+          for(let i=0;i<chunk.length-4;i++){
+            // Look for PK\x03\x04 (next file) or PK\x07\x08 (data descriptor with sig)
+            if(chunk[i]===0x50&&chunk[i+1]===0x4B&&((chunk[i+2]===0x03&&chunk[i+3]===0x04)||(chunk[i+2]===0x07&&chunk[i+3]===0x08))){
+              compSize=searchOffset+i-dataStart;
+              if(chunk[i+2]===0x07)compSize=searchOffset+i-dataStart; // data descriptor sig
+              found=true;break;
+            }
+          }
+          if(found)break;
+          searchOffset+=chunkSize;
+        }
+        if(!found)compSize=fileSize-dataStart;
+      }
+      // Read compressed data and decompress
+      const compData=file.slice(dataStart,dataStart+compSize);
+      let ndjsonText;
+      if(method===8){
+        // DEFLATE — use DecompressionStream
+        try{
+          const ds=new DecompressionStream('deflate-raw');
+          const reader=ds.readable.getReader();
+          const writer=ds.writable.getWriter();
+          const chunks=[];
+          const readAll=(async()=>{while(true){const{done,value}=await reader.read();if(done)break;chunks.push(value)}})();
+          // Feed compressed data in chunks to avoid memory issues
+          const compReader=compData.stream().getReader();
+          while(true){const{done,value}=await compReader.read();if(done)break;await writer.write(value)}
+          await writer.close();await readAll;
+          const dec=new TextDecoder();
+          ndjsonText=chunks.map(c=>dec.decode(c,{stream:true})).join('');
+        }catch(e){log('Decompression failed: '+e.message,'err');return null}
+      }else if(method===0){
+        // STORE — read raw
+        ndjsonText=await compData.text();
+      }else{
+        log('Unsupported compression method: '+method,'err');return null;
+      }
+      // Parse NDJSON lines (same as parseFigZip but from text)
+      log('Parsing NDJSON ('+formatSize(ndjsonText.length)+')…');
+      const lines=ndjsonText.split('\n');
+      for(let li=0;li<lines.length;li++){
+        const line=lines[li].trim();if(!line)continue;
+        try{
+          const obj=JSON.parse(line);
+          if(obj.type!==undefined||obj.body!==undefined){
+            // SMS
+            const t=String(obj.type);
+            messages.push({type:'sms',address:obj.address||'',body:obj.body||'',date:String(obj.date||''),dateSent:String(obj.date_sent||'0'),direction:t==='1'?'in':'out',read:String(obj.read||'0'),contactName:obj.__display_name||'(Unknown)',protocol:obj.protocol,status:obj.status,locked:obj.locked,subId:obj.sub_id,_id:obj._id});
+          }else if(obj.m_type!==undefined||obj.__parts){
+            const isIn=String(obj.msg_box)==='1';
+            const addrs=[];
+            if(obj.__sender_address)addrs.push({address:obj.__sender_address.address,type:parseInt(obj.__sender_address.type)||137});
+            if(obj.__recipient_addresses)for(const a of obj.__recipient_addresses)addrs.push({address:a.address,type:parseInt(a.type)||151});
+            const parts=[];
+            if(obj.__parts)for(const p of obj.__parts){
+              if(p.ct==='application/smil')continue;
+              if(p._data){
+                const pn=p._data.split('/').pop();
+                // Store reference to find in ZIP later — but we can't seek back easily
+                // Mark as needing attachment from ZIP
+                parts.push({ct:p.ct,cl:p.cl||p.name||'',text:p.text||'',_zipRef:pn,seq:parseInt(p.seq)||0});
+              }else{
+                parts.push({ct:p.ct||'text/plain',text:p.text||'',cl:p.cl||'',seq:parseInt(p.seq)||0});
+              }
+            }
+            messages.push({type:'mms',date:String(obj.date||''),dateSent:String(obj.date_sent||'0'),direction:isIn?'in':'out',read:String(obj.read||'0'),address:(addrs[0]||{}).address||'',contactName:obj.__display_name||'(Unknown)',addrs,parts,msgBox:obj.msg_box,ctT:obj.ct_t,mType:obj.m_type,mSize:obj.m_size,mId:obj.m_id,mCls:obj.m_cls,trId:obj.tr_id,v:obj.v,locked:obj.locked,subId:obj.sub_id,seen:obj.seen,creator:obj.creator,_id:obj._id});
+          }
+        }catch(e){}
+        if(li%5000===0&&li>0){showProgress('Parsing messages… '+li+'/'+lines.length,Math.round(li/lines.length*80));await tick()}
+      }
+      // Skip past this entry
+      offset=dataStart+compSize;
+      if(hasDD)offset+=compSize>0xFFFFFFFF?24:hasDD?16:0; // skip data descriptor
+      continue;
+    }
+    // For attachment files (data/PART_xxx), store offset for later resolution
+    if(fileName.startsWith('data/')){
+      const pn=fileName.split('/').pop();
+      if(hasDD&&compSize===0){
+        // Skip — we'll try to resolve attachments after
+        // For now just record that we know about this part
+        attachMap[pn]={zipOffset:dataStart,method,hasDD,file};
+      }else{
+        attachMap[pn]={zipOffset:dataStart,compSize,uncompSize,method,hasDD,file};
+      }
+    }
+    // Move to next entry
+    if(hasDD&&compSize===0){
+      // Need to find end of this entry by scanning for next PK header
+      const scanSize=Math.min(50*1024*1024,fileSize-dataStart);
+      const chunk=new Uint8Array(await file.slice(dataStart,dataStart+Math.min(1024*64,scanSize)).arrayBuffer());
+      let found=false;
+      for(let i=1;i<chunk.length-4;i++){
+        if(chunk[i]===0x50&&chunk[i+1]===0x4B&&chunk[i+2]===0x03&&chunk[i+3]===0x04){
+          if(fileName.startsWith('data/')){
+            // Data descriptor (no sig) is 12 bytes before next header: CRC(4)+compSize(4)+uncompSize(4)
+            const ddOff=i-12;
+            const ddComp=ddOff>=0?(chunk[ddOff+4]|(chunk[ddOff+5]<<8)|(chunk[ddOff+6]<<16)|(chunk[ddOff+7]<<24)):i;
+            const pn=fileName.split('/').pop();
+            attachMap[pn]={zipOffset:dataStart,compSize:ddComp,method,hasDD:true,file};
+          }
+          offset=dataStart+i;found=true;break;
+        }
+        if(chunk[i]===0x50&&chunk[i+1]===0x4B&&chunk[i+2]===0x07&&chunk[i+3]===0x08){
+          // data descriptor with signature — sizes follow
+          const ddBuf=new Uint8Array(await file.slice(dataStart+i+4,dataStart+i+20).arrayBuffer());
+          const ddCompSize=ddBuf[4]|(ddBuf[5]<<8)|(ddBuf[6]<<16)|(ddBuf[7]<<24);
+          attachMap[fileName.split('/').pop()]={zipOffset:dataStart,compSize:ddCompSize,uncompSize:ddBuf[8]|(ddBuf[9]<<8)|(ddBuf[10]<<16)|(ddBuf[11]<<24),method,hasDD:true,file};
+          offset=dataStart+i+20;found=true;break;
+        }
+      }
+      if(!found){
+        log('Could not find end of entry '+fileName+', stopping scan','warn');
+        break;
+      }
+    }else{
+      offset=dataStart+compSize;
+      if(hasDD)offset+=16; // skip data descriptor
+    }
+  }
+  if(!ndjsonFound)return null;
+  // Wire up attachment resolution for MMS parts
+  for(const m of messages){
+    if(m.type==='mms'){
+      for(const p of m.parts){
+        if(p._zipRef&&attachMap[p._zipRef]){
+          const ai=attachMap[p._zipRef];
+          p._fallbackAttach=ai; // store for resolveData
+          delete p._zipRef;
+        }
+      }
+    }
+  }
+  log('Fallback scan: found '+messages.length+' messages in '+entryCount+' ZIP entries','ok');
+  return{fmt,messages,attachMap,pdfCount,pdfSize};
+}
+
 // ===== OPTION UI =====
 function bindRadioGroup(selector){
   document.querySelectorAll(selector).forEach(opt=>{
@@ -451,25 +631,45 @@ async function scan(){
     let messages,attachMap,fmt,pdfCount=0,pdfSize=0;
 
     if(isZip){
-      const br=new zip.BlobReader(selectedFile);
-      zipReader=new zip.ZipReader(br);
-      const entries=await zipReader.getEntries();
-      // Detect format
-      const hasNdjson=entries.some(e=>e.filename.endsWith('.ndjson'));
-      const hasWonderXml=entries.some(e=>e.filename.endsWith('.xml')&&!e.filename.includes('/'));
-      const hasMmsAttach=entries.some(e=>e.filename.startsWith('mms_attachments/'));
+      let entries;
+      try{
+        const br=new zip.BlobReader(selectedFile);
+        zipReader=new zip.ZipReader(br);
+        entries=await zipReader.getEntries();
+      }catch(zipErr){
+        // zip.js failed — try fallback for ZIPs it can't handle (e.g. POM)
+        log('Standard ZIP reader failed: '+zipErr.message,'warn');
+        log('Trying fallback ZIP reader…');
+        const fallback=await fallbackZipScan(selectedFile);
+        if(fallback){
+          fmt=fallback.fmt;
+          messages=fallback.messages;attachMap=fallback.attachMap;
+          pdfCount=fallback.pdfCount||0;pdfSize=fallback.pdfSize||0;
+          entries=null; // skip normal flow
+        }else{
+          log('Fallback failed — generating structure report…','warn');
+          await generateRawStructureReport(selectedFile);
+          return;
+        }
+      }
+      if(entries){
+        // Detect format
+        const hasNdjson=entries.some(e=>e.filename.endsWith('.ndjson'));
+        const hasWonderXml=entries.some(e=>e.filename.endsWith('.xml')&&!e.filename.includes('/'));
+        const hasMmsAttach=entries.some(e=>e.filename.startsWith('mms_attachments/'));
 
-      log('ZIP contains '+entries.length+' entries');
-      if(hasNdjson){
-        fmt='fig';log('Detected Fig format (NDJSON)','ok');
-        ({messages,attachMap,pdfCount,pdfSize}=await parseFigZip(entries));
-      }else if(hasWonderXml){
-        fmt='wonder';log('Detected Wonder format (XML)','ok');
-        ({messages,attachMap,pdfCount,pdfSize}=await parseWonderZip(entries));
-      }else{
-        log('Unknown ZIP format — generating structure report…','warn');
-        await generateStructureReport(entries,selectedFile.name);
-        return;
+        log('ZIP contains '+entries.length+' entries');
+        if(hasNdjson){
+          fmt='fig';log('Detected Fig format (NDJSON)','ok');
+          ({messages,attachMap,pdfCount,pdfSize}=await parseFigZip(entries));
+        }else if(hasWonderXml){
+          fmt='wonder';log('Detected Wonder format (XML)','ok');
+          ({messages,attachMap,pdfCount,pdfSize}=await parseWonderZip(entries));
+        }else{
+          log('Unknown ZIP format — generating structure report…','warn');
+          await generateStructureReport(entries,selectedFile.name);
+          return;
+        }
       }
     }else{
       log('Detected SMS Backup & Restore XML','ok');
