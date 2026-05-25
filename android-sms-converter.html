@@ -185,7 +185,7 @@
     <span class="footer-dot"></span>
     <span>Nothing uploaded anywhere</span>
     <span class="footer-dot"></span>
-    <span>v0.0.25</span>
+    <span>v0.0.26</span>
   </div>
 </div>
 
@@ -717,7 +717,7 @@ async function scan(){
     }
 
     log('Parsed '+messages.length+' messages ('+cIn+' in, '+cOut+' out, '+cMms+' MMS, '+cAttach+' attachments)'+(pdfCount?' + '+pdfCount+' PDFs':''),'ok');
-    $('detectedBadge').textContent=fmt==='fig'?'Fig':fmt==='pom'?'Pom / Fig':fmt==='wonder'?'Wonder':'SMS Backup & Restore';
+    $('detectedBadge').textContent=fmt==='fig'?'Fig':fmt==='pom'?'Pom':fmt==='wonder'?'Wonder':'SMS Backup & Restore';
     $('statIn').textContent=cIn.toLocaleString();
     $('statOut').textContent=cOut.toLocaleString();
     $('statMms').textContent=cMms.toLocaleString();
