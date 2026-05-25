@@ -185,7 +185,7 @@
     <span class="footer-dot"></span>
     <span>Nothing uploaded anywhere</span>
     <span class="footer-dot"></span>
-    <span>v0.0.24</span>
+    <span>v0.0.25</span>
   </div>
 </div>
 
@@ -450,9 +450,9 @@ async function fallbackZipScan(file){
                 found=true;break;
               }
               if(chunk[i+2]===0x03&&chunk[i+3]===0x04){
-                // Next local file header — DD (unsigned, 12 bytes) sits just before this
-                compSize=searchOffset+i-dataStart-12;
-                if(compSize<0)compSize=searchOffset+i-dataStart;
+                // Next local file header — use full distance as compSize
+                // (some ZIPs have unsigned DD before this, some don't — DEFLATE handles either)
+                compSize=searchOffset+i-dataStart;
                 ndjsonNextOffset=searchOffset+i;
                 found=true;break;
               }
@@ -546,14 +546,8 @@ async function fallbackZipScan(file){
           if(chunk[i]===0x50&&chunk[i+1]===0x4B&&chunk[i+2]===0x03&&chunk[i+3]===0x04){
             const absPos=searchOff+i;
             if(fileName.startsWith('data/')){
-              // Read 12-byte unsigned data descriptor just before this header
-              const ddStart=absPos-12;
-              if(ddStart>=dataStart){
-                const ddBuf=new Uint8Array(await file.slice(ddStart,absPos).arrayBuffer());
-                const ddComp=ddBuf[4]|(ddBuf[5]<<8)|(ddBuf[6]<<16)|(ddBuf[7]<<24);
-                const pn=fileName.split('/').pop();
-                attachMap[pn]={zipOffset:dataStart,compSize:ddComp,method,hasDD:true,file};
-              }
+              const pn=fileName.split('/').pop();
+              attachMap[pn]={zipOffset:dataStart,compSize:absPos-dataStart,method,hasDD:true,file};
             }
             offset=absPos;found=true;break;
           }
@@ -574,9 +568,11 @@ async function fallbackZipScan(file){
     }else{
       offset=dataStart+compSize;
       if(hasDD){
-        // Check if DD has PK\x07\x08 signature (16 bytes) or not (12 bytes)
+        // Check what follows: PK0708 DD (16b), PK0304 next entry (0b), or unsigned DD (12b)
         const ddPeek=new Uint8Array(await file.slice(offset,offset+4).arrayBuffer());
-        offset+=(ddPeek[0]===0x50&&ddPeek[1]===0x4B&&ddPeek[2]===0x07&&ddPeek[3]===0x08)?16:12;
+        if(ddPeek[0]===0x50&&ddPeek[1]===0x4B&&ddPeek[2]===0x07&&ddPeek[3]===0x08)offset+=16;
+        else if(ddPeek[0]===0x50&&ddPeek[1]===0x4B&&ddPeek[2]===0x03&&ddPeek[3]===0x04){/* no DD, next header */}
+        else offset+=12;
       }
     }
   }
