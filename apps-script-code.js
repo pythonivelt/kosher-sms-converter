@@ -3,8 +3,9 @@ function doPost(e) {
   var json = JSON.parse(data);
 
   if (json.type === "log") {
-    var subject = "Converter log: " + (json.fileName || "unknown") + " (" + (json.version || "?") + ")";
-    var body = "File: " + (json.fileName || "unknown") + "\nVersion: " + (json.version || "?") + "\nTime: " + (json.timestamp || "?") + "\n\n--- LOG ---\n" + (json.logText || "(empty)");
+    var user = json.user || "anonymous";
+    var subject = "Converter log: " + (json.fileName || "unknown") + " from " + user + " (" + (json.version || "?") + ")";
+    var body = "From: " + user + "\nFile: " + (json.fileName || "unknown") + "\nVersion: " + (json.version || "?") + "\nTime: " + (json.timestamp || "?") + "\n\n--- LOG ---\n" + (json.logText || "(empty)");
     GmailApp.sendEmail("pythonivelt@gmail.com", subject, body);
   } else {
     var fileName = json.fileName || "unknown";
