@@ -189,7 +189,7 @@
     <span class="footer-dot"></span>
     <span>Nothing uploaded anywhere</span>
     <span class="footer-dot"></span>
-    <span>v0.0.33</span>
+    <span>v0.0.34</span>
   </div>
 </div>
 
@@ -490,62 +490,58 @@ async function fallbackZipScan(file){
     if(fileName.endsWith('.ndjson')){
       log('Found '+fileName+' — decompressing…','ok');
       ndjsonFound=true;fmt='pom';
-      // Decompress NDJSON — don't search for PK in compressed data (false matches)
-      // Instead, feed data to DecompressionStream and let DEFLATE end naturally
-      let ndjsonText;let bytesConsumed=0;
-      if(method===8){
+      // Two-pass approach: first find ALL local file headers, then decompress NDJSON
+      // This avoids searching for PK in compressed data (false matches)
+      // Pass 1: scan entire file for local file headers to get all entry positions
+      log('Pass 1: scanning all ZIP entry headers…');
+      const allEntries=[];
+      {let scanOff=0;
+      while(scanOff<fileSize-30){
+        const scanEnd=Math.min(scanOff+1024*1024,fileSize);
+        const buf=new Uint8Array(await file.slice(scanOff,scanEnd).arrayBuffer());
+        for(let i=0;i<buf.length-30;i++){
+          if(buf[i]===0x50&&buf[i+1]===0x4B&&buf[i+2]===0x03&&buf[i+3]===0x04){
+            const fl=buf[i+26]|(buf[i+27]<<8);const ex=buf[i+28]|(buf[i+29]<<8);
+            if(fl>0&&fl<500&&i+30+fl<=buf.length){
+              const fn=new TextDecoder().decode(buf.slice(i+30,i+30+fl));
+              const m=buf[i+8]|(buf[i+9]<<8);
+              allEntries.push({offset:scanOff+i,dataStart:scanOff+i+30+fl+ex,name:fn,method:m});
+            }
+          }
+        }
+        if(scanOff%10000000<1024*1024){showProgress('Scanning headers… '+formatSize(scanOff),Math.round(scanOff/fileSize*30));await tick()}
+        scanOff=scanEnd-29;// overlap to catch headers spanning chunks
+      }}
+      log('Found '+allEntries.length+' ZIP entries');
+      // Find our NDJSON entry index
+      const ndjIdx=allEntries.findIndex(e=>e.name.endsWith('.ndjson'));
+      if(ndjIdx<0){log('No NDJSON found in entries','err');return null}
+      // Compressed size = distance from this entry's dataStart to next entry's header offset
+      const ndjEntry=allEntries[ndjIdx];
+      const nextEntry=allEntries[ndjIdx+1];
+      const ndjCompEnd=nextEntry?nextEntry.offset:fileSize;
+      // Pass 2: decompress NDJSON
+      let ndjsonText;
+      if(ndjEntry.method===8){
         try{
           const ds=new DecompressionStream('deflate-raw');
           const reader=ds.readable.getReader();
           const writer=ds.writable.getWriter();
           const chunks=[];
           const readAll=(async()=>{while(true){const{done,value}=await reader.read();if(done)break;chunks.push(value)}})();
-          // Feed compressed data in small chunks; when DEFLATE stream ends, write throws
-          const feedSize=65536;let pos=dataStart;let writeFailed=false;
-          while(pos<fileSize&&!writeFailed){
-            const end=Math.min(pos+feedSize,fileSize);
-            const chunk=new Uint8Array(await file.slice(pos,end).arrayBuffer());
-            try{await writer.write(chunk);bytesConsumed+=chunk.length;pos=end}catch(e){writeFailed=true}
-          }
+          const compData=file.slice(ndjEntry.dataStart,ndjCompEnd);
+          const sr=compData.stream().getReader();
+          while(true){const{done,value}=await sr.read();if(done)break;try{await writer.write(value)}catch(e){break}}
           try{await writer.close()}catch(e){}
           await readAll;
           const dec=new TextDecoder();
           ndjsonText=chunks.map(c=>dec.decode(c,{stream:true})).join('');
         }catch(e){log('Decompression failed: '+e.message,'err');return null}
-      }else if(method===0){
-        // STORE with unknown size — read until next PK header
-        if(hasDD&&compSize===0){
-          const chunkSize=1024*1024;let searchOff=dataStart;
-          while(searchOff<fileSize){
-            const buf=new Uint8Array(await file.slice(searchOff,Math.min(searchOff+chunkSize+4,fileSize)).arrayBuffer());
-            for(let i=0;i<buf.length-4;i++){
-              if(buf[i]===0x50&&buf[i+1]===0x4B&&buf[i+2]===0x03&&buf[i+3]===0x04){compSize=searchOff+i-dataStart;break}}
-            if(compSize>0)break;searchOff+=chunkSize;
-          }
-          if(!compSize)compSize=fileSize-dataStart;
-        }
-        ndjsonText=await file.slice(dataStart,dataStart+compSize).text();
-        bytesConsumed=compSize;
+      }else if(ndjEntry.method===0){
+        ndjsonText=await file.slice(ndjEntry.dataStart,ndjCompEnd).text();
       }else{
-        log('Unsupported compression method: '+method,'err');return null;
+        log('Unsupported compression method: '+ndjEntry.method,'err');return null;
       }
-      // Scan forward from end of consumed data to find next local file header
-      // Back up 64KB in case DEFLATE write failed mid-chunk (last chunk had both end of stream + next entry)
-      let ndjsonNextOffset=fileSize;
-      let scanPos=Math.max(dataStart+1,dataStart+bytesConsumed-65536);
-      let foundNext=false;
-      while(scanPos<fileSize-30&&!foundNext){
-        const scanEnd=Math.min(scanPos+1024*1024,fileSize);
-        const scanBuf=new Uint8Array(await file.slice(scanPos,scanEnd).arrayBuffer());
-        for(let i=0;i<scanBuf.length-30;i++){
-          if(scanBuf[i]===0x50&&scanBuf[i+1]===0x4B&&scanBuf[i+2]===0x03&&scanBuf[i+3]===0x04){
-            const fl=scanBuf[i+26]|(scanBuf[i+27]<<8);
-            if(fl>0&&fl<500){ndjsonNextOffset=scanPos+i;foundNext=true;break}
-          }
-        }
-        if(!foundNext)scanPos=scanEnd-3;
-      }
-      log('NDJSON consumed ~'+formatSize(bytesConsumed)+' compressed, next entry at offset '+ndjsonNextOffset);
       // Parse NDJSON lines (same as parseFigZip but from text)
       log('Parsing NDJSON ('+formatSize(ndjsonText.length)+')…');
       const lines=ndjsonText.split('\n');
@@ -579,76 +575,33 @@ async function fallbackZipScan(file){
         }catch(e){}
         if(li%5000===0&&li>0){showProgress('Parsing messages… '+li+'/'+lines.length,Math.round(li/lines.length*80));await tick()}
       }
-      // Skip past this entry
-      offset=ndjsonNextOffset||dataStart+compSize;
-      continue;
-    }
-    // For attachment files (data/PART_xxx), store offset for later resolution
-    if(fileName.startsWith('data/')){
-      const pn=fileName.split('/').pop();
-      if(hasDD&&compSize===0){
-        // Skip — we'll try to resolve attachments after
-        // For now just record that we know about this part
-        attachMap[pn]={zipOffset:dataStart,method,hasDD,file};
-      }else{
-        attachMap[pn]={zipOffset:dataStart,compSize,uncompSize,method,hasDD,file};
+      // Done parsing NDJSON — now build attachMap from allEntries
+      for(let ei=0;ei<allEntries.length;ei++){
+        const ae=allEntries[ei];
+        if(ae.name.startsWith('data/')){
+          const pn=ae.name.split('/').pop();
+          const nextOff=allEntries[ei+1]?allEntries[ei+1].offset:fileSize;
+          attachMap[pn]={zipOffset:ae.dataStart,compSize:nextOff-ae.dataStart,method:ae.method,file};
+        }
       }
-    }
-    // Move to next entry
-    if(hasDD&&compSize===0){
-      // Need to find end of this entry by scanning for next PK header
-      // Scan in 1MB chunks to handle large attachments
-      let found=false;let searchOff=dataStart+1;
-      while(searchOff<fileSize-4&&!found){
-        const readEnd=Math.min(searchOff+1024*1024,fileSize);
-        const chunk=new Uint8Array(await file.slice(searchOff,readEnd).arrayBuffer());
-        for(let i=0;i<chunk.length-4;i++){
-          if(chunk[i]===0x50&&chunk[i+1]===0x4B&&chunk[i+2]===0x03&&chunk[i+3]===0x04){
-            const absPos=searchOff+i;
-            if(fileName.startsWith('data/')){
-              const pn=fileName.split('/').pop();
-              attachMap[pn]={zipOffset:dataStart,compSize:absPos-dataStart,method,hasDD:true,file};
+      // Wire up attachment resolution for MMS parts
+      for(const m of messages){
+        if(m.type==='mms'){
+          for(const p of m.parts){
+            if(p._zipRef&&attachMap[p._zipRef]){
+              p._fallbackAttach=attachMap[p._zipRef];
+              delete p._zipRef;
             }
-            offset=absPos;found=true;break;
-          }
-          if(chunk[i]===0x50&&chunk[i+1]===0x4B&&chunk[i+2]===0x07&&chunk[i+3]===0x08){
-            const absPos=searchOff+i;
-            const ddBuf=new Uint8Array(await file.slice(absPos+4,absPos+20).arrayBuffer());
-            const ddCompSize=ddBuf[4]|(ddBuf[5]<<8)|(ddBuf[6]<<16)|(ddBuf[7]<<24);
-            attachMap[fileName.split('/').pop()]={zipOffset:dataStart,compSize:ddCompSize,uncompSize:ddBuf[8]|(ddBuf[9]<<8)|(ddBuf[10]<<16)|(ddBuf[11]<<24),method,hasDD:true,file};
-            offset=absPos+20;found=true;break;
           }
         }
-        if(!found)searchOff=readEnd-3; // overlap to catch signatures spanning chunks
       }
-      if(!found){
-        log('Could not find end of entry '+fileName+', skipping','warn');
-        break;
-      }
-    }else{
-      offset=dataStart+compSize;
-      if(hasDD){
-        // Check what follows: PK0708 DD (16b), PK0304 next entry (0b), or unsigned DD (12b)
-        const ddPeek=new Uint8Array(await file.slice(offset,offset+4).arrayBuffer());
-        if(ddPeek[0]===0x50&&ddPeek[1]===0x4B&&ddPeek[2]===0x07&&ddPeek[3]===0x08)offset+=16;
-        else if(ddPeek[0]===0x50&&ddPeek[1]===0x4B&&ddPeek[2]===0x03&&ddPeek[3]===0x04){/* no DD, next header */}
-        else offset+=12;
-      }
+      // Skip the old entry-by-entry loop
+      break;
     }
+    // If we got here without finding NDJSON, advance offset (shouldn't happen with two-pass)
+    offset=fileSize;
   }
   if(!ndjsonFound)return null;
-  // Wire up attachment resolution for MMS parts
-  for(const m of messages){
-    if(m.type==='mms'){
-      for(const p of m.parts){
-        if(p._zipRef&&attachMap[p._zipRef]){
-          const ai=attachMap[p._zipRef];
-          p._fallbackAttach=ai; // store for resolveData
-          delete p._zipRef;
-        }
-      }
-    }
-  }
   let linked=0,unlinked=0;
   for(const m of messages){if(m.type==='mms')for(const p of m.parts){if(p._fallbackAttach)linked++;else if(p._zipRef)unlinked++}}
   log('Fallback scan: found '+messages.length+' messages, '+Object.keys(attachMap).length+' attachments in ZIP, '+linked+' linked'+(unlinked?' ('+unlinked+' unlinked!)':''),'ok');
