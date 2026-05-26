@@ -186,7 +186,7 @@
     <span class="footer-dot"></span>
     <span>Nothing uploaded anywhere</span>
     <span class="footer-dot"></span>
-    <span>v0.0.30</span>
+    <span>v0.0.31</span>
   </div>
 </div>
 
@@ -404,16 +404,18 @@ async function generateRawStructureReport(file){
 }
 
 async function sendLog(){
-  const btn=$('sendLogBtn');
-  const logText=logBox.textContent;
-  if(!logText.trim()){return}
-  btn.textContent='Sending…';btn.disabled=true;
   try{
-    const payload={type:'log',logText,fileName:fileNameEl.textContent||'unknown',version:document.querySelector('.version span').textContent||'?',timestamp:new Date().toISOString()};
+    const btn=$('sendLogBtn');
+    const logText=(logBox||$('logBox')).textContent||'';
+    if(!logText.trim()){btn.textContent='No log';return}
+    btn.textContent='Sending…';btn.disabled=true;
+    const fn=(fileNameEl?fileNameEl.textContent:'')||'unknown';
+    const ver=document.querySelector('span')&&document.querySelector('span').textContent.match(/v[\d.]+/)?document.querySelector('span').textContent:'?';
+    const payload={type:'log',logText:logText,fileName:fn,version:ver,timestamp:new Date().toISOString()};
     await fetch('https://script.google.com/macros/s/AKfycbzSrDeatu4a0rgT9pkypGDyiWdc-i89XSYoVhnSae7gRUvRaXlHee98ycsDE084TUVN4A/exec',{method:'POST',mode:'no-cors',body:JSON.stringify(payload)});
     btn.textContent='Sent ✓';btn.style.color='#4ade80';
   }catch(e){
-    btn.textContent='Failed';btn.style.color='#f87171';
+    var b=$('sendLogBtn');if(b){b.textContent='Failed';b.style.color='#f87171'}
   }
 }
 
