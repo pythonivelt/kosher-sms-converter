@@ -178,7 +178,7 @@
   <details class="log-panel" id="logPanel" style="display:none">
     <summary>Show log</summary>
     <div class="log-box" id="logBox"></div>
-    <button id="sendLogBtn" style="margin-top:6px;padding:4px 12px;border-radius:6px;border:1px solid #334155;background:#1e293b;color:#94a3b8;font-size:.65rem;cursor:pointer;float:right" onclick="sendLog()">Send log to developer</button>
+    <button id="sendLogBtn" style="margin-top:6px;padding:4px 12px;border-radius:6px;border:1px solid #334155;background:#1e293b;color:#94a3b8;font-size:.65rem;cursor:pointer;float:right">Send log to developer</button>
   </details>
 
   <div class="footer">
@@ -186,7 +186,7 @@
     <span class="footer-dot"></span>
     <span>Nothing uploaded anywhere</span>
     <span class="footer-dot"></span>
-    <span>v0.0.31</span>
+    <span>v0.0.32</span>
   </div>
 </div>
 
@@ -418,6 +418,7 @@ async function sendLog(){
     var b=$('sendLogBtn');if(b){b.textContent='Failed';b.style.color='#f87171'}
   }
 }
+$('sendLogBtn').addEventListener('click',sendLog);
 
 function downloadReport(report,origName){
   progressEl.style.display='none';
