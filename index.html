@@ -178,7 +178,10 @@
   <details class="log-panel" id="logPanel" style="display:none">
     <summary>Show log</summary>
     <div class="log-box" id="logBox"></div>
-    <button id="sendLogBtn" style="margin-top:6px;padding:4px 12px;border-radius:6px;border:1px solid #334155;background:#1e293b;color:#94a3b8;font-size:.65rem;cursor:pointer;float:right">Send log to developer</button>
+    <div style="margin-top:6px;display:flex;gap:6px;align-items:center;justify-content:flex-end">
+      <input id="logUserInput" type="text" placeholder="Your email or iVelt username (optional)" style="flex:1;padding:4px 8px;border-radius:6px;border:1px solid #334155;background:#1e293b;color:#e2e8f0;font-size:.65rem">
+      <button id="sendLogBtn" style="padding:4px 12px;border-radius:6px;border:1px solid #334155;background:#1e293b;color:#94a3b8;font-size:.65rem;cursor:pointer;white-space:nowrap">Send log to developer</button>
+    </div>
   </details>
 
   <div class="footer">
@@ -186,7 +189,7 @@
     <span class="footer-dot"></span>
     <span>Nothing uploaded anywhere</span>
     <span class="footer-dot"></span>
-    <span>v0.0.32</span>
+    <span>v0.0.33</span>
   </div>
 </div>
 
@@ -411,7 +414,8 @@ async function sendLog(){
     btn.textContent='Sending…';btn.disabled=true;
     const fn=(fileNameEl?fileNameEl.textContent:'')||'unknown';
     const ver=document.querySelector('span')&&document.querySelector('span').textContent.match(/v[\d.]+/)?document.querySelector('span').textContent:'?';
-    const payload={type:'log',logText:logText,fileName:fn,version:ver,timestamp:new Date().toISOString()};
+    const user=($('logUserInput')||{}).value||'';
+    const payload={type:'log',logText:logText,fileName:fn,version:ver,user:user,timestamp:new Date().toISOString()};
     await fetch('https://script.google.com/macros/s/AKfycbzSrDeatu4a0rgT9pkypGDyiWdc-i89XSYoVhnSae7gRUvRaXlHee98ycsDE084TUVN4A/exec',{method:'POST',mode:'no-cors',body:JSON.stringify(payload)});
     btn.textContent='Sent ✓';btn.style.color='#4ade80';
   }catch(e){
