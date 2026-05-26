@@ -185,7 +185,7 @@
     <span class="footer-dot"></span>
     <span>Nothing uploaded anywhere</span>
     <span class="footer-dot"></span>
-    <span>v0.0.28</span>
+    <span>v0.0.29</span>
   </div>
 </div>
 
@@ -468,60 +468,62 @@ async function fallbackZipScan(file){
     if(fileName.endsWith('.ndjson')){
       log('Found '+fileName+' — decompressing…','ok');
       ndjsonFound=true;fmt='pom';
-      // Need to find the compressed data size
-      let ndjsonNextOffset=0; // where to resume scanning after this entry
-      if(hasDD&&compSize===0){
-        // Search for next PK signature or data descriptor to find end
-        const chunkSize=1024*1024;
-        let searchOffset=dataStart;let found=false;
-        while(searchOffset<fileSize&&!found){
-          const readSize=Math.min(chunkSize+4,fileSize-searchOffset);
-          const chunk=new Uint8Array(await file.slice(searchOffset,searchOffset+readSize).arrayBuffer());
-          for(let i=0;i<chunk.length-4;i++){
-            if(chunk[i]===0x50&&chunk[i+1]===0x4B){
-              if(chunk[i+2]===0x07&&chunk[i+3]===0x08){
-                // Data descriptor with signature: compressed data ends here
-                compSize=searchOffset+i-dataStart;
-                ndjsonNextOffset=searchOffset+i+20; // skip PK0708(4)+CRC(4)+comp(4)+uncomp(4)
-                found=true;break;
-              }
-              if(chunk[i+2]===0x03&&chunk[i+3]===0x04){
-                // Next local file header — use full distance as compSize
-                // (some ZIPs have unsigned DD before this, some don't — DEFLATE handles either)
-                compSize=searchOffset+i-dataStart;
-                ndjsonNextOffset=searchOffset+i;
-                found=true;break;
-              }
-            }
-          }
-          if(!found)searchOffset+=chunkSize; // no overlap needed — PK is 2 bytes
-        }
-        if(!found){compSize=fileSize-dataStart;ndjsonNextOffset=fileSize}
-      }
-      // Read compressed data and decompress
-      const compData=file.slice(dataStart,dataStart+compSize);
-      let ndjsonText;
+      // Decompress NDJSON — don't search for PK in compressed data (false matches)
+      // Instead, feed data to DecompressionStream and let DEFLATE end naturally
+      let ndjsonText;let bytesConsumed=0;
       if(method===8){
-        // DEFLATE — use DecompressionStream
         try{
           const ds=new DecompressionStream('deflate-raw');
           const reader=ds.readable.getReader();
           const writer=ds.writable.getWriter();
           const chunks=[];
           const readAll=(async()=>{while(true){const{done,value}=await reader.read();if(done)break;chunks.push(value)}})();
-          // Feed compressed data in chunks to avoid memory issues
-          const compReader=compData.stream().getReader();
-          while(true){const{done,value}=await compReader.read();if(done)break;await writer.write(value)}
-          await writer.close();await readAll;
+          // Feed compressed data in small chunks; when DEFLATE stream ends, write throws
+          const feedSize=65536;let pos=dataStart;let writeFailed=false;
+          while(pos<fileSize&&!writeFailed){
+            const end=Math.min(pos+feedSize,fileSize);
+            const chunk=new Uint8Array(await file.slice(pos,end).arrayBuffer());
+            try{await writer.write(chunk);bytesConsumed+=chunk.length;pos=end}catch(e){writeFailed=true}
+          }
+          try{await writer.close()}catch(e){}
+          await readAll;
           const dec=new TextDecoder();
           ndjsonText=chunks.map(c=>dec.decode(c,{stream:true})).join('');
         }catch(e){log('Decompression failed: '+e.message,'err');return null}
       }else if(method===0){
-        // STORE — read raw
-        ndjsonText=await compData.text();
+        // STORE with unknown size — read until next PK header
+        if(hasDD&&compSize===0){
+          const chunkSize=1024*1024;let searchOff=dataStart;
+          while(searchOff<fileSize){
+            const buf=new Uint8Array(await file.slice(searchOff,Math.min(searchOff+chunkSize+4,fileSize)).arrayBuffer());
+            for(let i=0;i<buf.length-4;i++){
+              if(buf[i]===0x50&&buf[i+1]===0x4B&&buf[i+2]===0x03&&buf[i+3]===0x04){compSize=searchOff+i-dataStart;break}}
+            if(compSize>0)break;searchOff+=chunkSize;
+          }
+          if(!compSize)compSize=fileSize-dataStart;
+        }
+        ndjsonText=await file.slice(dataStart,dataStart+compSize).text();
+        bytesConsumed=compSize;
       }else{
         log('Unsupported compression method: '+method,'err');return null;
       }
+      // Scan forward from end of consumed data to find next local file header
+      // Back up 64KB in case DEFLATE write failed mid-chunk (last chunk had both end of stream + next entry)
+      let ndjsonNextOffset=fileSize;
+      let scanPos=Math.max(dataStart+1,dataStart+bytesConsumed-65536);
+      let foundNext=false;
+      while(scanPos<fileSize-30&&!foundNext){
+        const scanEnd=Math.min(scanPos+1024*1024,fileSize);
+        const scanBuf=new Uint8Array(await file.slice(scanPos,scanEnd).arrayBuffer());
+        for(let i=0;i<scanBuf.length-30;i++){
+          if(scanBuf[i]===0x50&&scanBuf[i+1]===0x4B&&scanBuf[i+2]===0x03&&scanBuf[i+3]===0x04){
+            const fl=scanBuf[i+26]|(scanBuf[i+27]<<8);
+            if(fl>0&&fl<500){ndjsonNextOffset=scanPos+i;foundNext=true;break}
+          }
+        }
+        if(!foundNext)scanPos=scanEnd-3;
+      }
+      log('NDJSON consumed ~'+formatSize(bytesConsumed)+' compressed, next entry at offset '+ndjsonNextOffset);
       // Parse NDJSON lines (same as parseFigZip but from text)
       log('Parsing NDJSON ('+formatSize(ndjsonText.length)+')…');
       const lines=ndjsonText.split('\n');
