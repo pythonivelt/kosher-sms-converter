@@ -456,7 +456,7 @@ function fmtDate(ts){const ms=parseInt(ts,10);if(!ms||isNaN(ms))return'';const d
 function ab2b64(buf){const u=new Uint8Array(buf);let b='';for(let i=0;i<u.length;i+=32768)b+=String.fromCharCode.apply(null,u.subarray(i,i+32768));return btoa(b)}
 function b642ab(s){const b=atob(s),a=new Uint8Array(b.length);for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i);return a.buffer}
 
-// Fallback ZIP reader for ZIPs that zip.js can't handle (e.g. POM phones)
+// Fallback ZIP reader — reads central directory (fast) instead of scanning full file
 async function fallbackZipScan(file){
   const messages=[];const attachMap={};let pdfCount=0,pdfSize=0;
   let fmt=null;const fileSize=file.size;
