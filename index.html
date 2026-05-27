@@ -189,7 +189,7 @@
     <span class="footer-dot"></span>
     <span>Nothing uploaded anywhere</span>
     <span class="footer-dot"></span>
-    <span>v0.0.35</span>
+    <span>v0.0.36</span>
   </div>
 </div>
 
@@ -209,7 +209,12 @@ function log(msg,type){logPanel.style.display='block';const s=document.createEle
 function clearLog(){logBox.innerHTML='';logPanel.style.display='none';logPanel.removeAttribute('open')}
 
 function hasAttach(p){return!!(p.data||p._entry||p._fallbackAttach)}
-async function resolveData(p){if(p.data)return p.data;if(p._entry){try{const b=await p._entry.getData(new zip.BlobWriter());p.data=await b.arrayBuffer();delete p._entry;return p.data}catch(e){log('Failed to read attachment: '+e.message,'warn');return null}}if(p._fallbackAttach){try{const ai=p._fallbackAttach;if(!ai.compSize){log('Attachment has unknown size, skipping: '+(p.cl||'?'),'warn');return null}const compData=ai.file.slice(ai.zipOffset,ai.zipOffset+ai.compSize);let raw;if(ai.method===8){const ds=new DecompressionStream('deflate-raw');const reader=ds.readable.getReader();const writer=ds.writable.getWriter();const chunks=[];const readAll=(async()=>{while(true){const{done,value}=await reader.read();if(done)break;chunks.push(value)}})();const sr=compData.stream().getReader();while(true){const{done,value}=await sr.read();if(done)break;try{await writer.write(value)}catch(we){break}}try{await writer.close()}catch(ce){}await readAll;let total=0;for(const c of chunks)total+=c.byteLength;raw=new Uint8Array(total);let off=0;for(const c of chunks){raw.set(c,off);off+=c.byteLength}p.data=raw.buffer}else{p.data=await compData.arrayBuffer()}delete p._fallbackAttach;return p.data}catch(e){log('Failed to read fallback attachment: '+(p.cl||'?')+' — '+e.message,'warn');return null}}return null}
+async function resolveData(p){if(p.data)return p.data;if(p._entry){try{const b=await p._entry.getData(new zip.BlobWriter());p.data=await b.arrayBuffer();delete p._entry;return p.data}catch(e){log('Failed to read attachment: '+e.message,'warn');return null}}if(p._fallbackAttach){try{const ai=p._fallbackAttach;if(!ai.compSize&&ai._needsScan){
+// Scan forward from zipOffset to find next PK header for compSize
+const scanSize=Math.min(10*1024*1024,ai.file.size-ai.zipOffset);const sb=new Uint8Array(await ai.file.slice(ai.zipOffset,ai.zipOffset+scanSize).arrayBuffer());
+for(let si=1;si<sb.length-4;si++){if(sb[si]===0x50&&sb[si+1]===0x4B&&((sb[si+2]===0x03&&sb[si+3]===0x04)||(sb[si+2]===0x01&&sb[si+3]===0x02))){ai.compSize=si;break}}
+if(!ai.compSize)ai.compSize=scanSize;delete ai._needsScan}
+if(!ai.compSize){log('Attachment has unknown size, skipping: '+(p.cl||'?'),'warn');return null}const compData=ai.file.slice(ai.zipOffset,ai.zipOffset+ai.compSize);let raw;if(ai.method===8){const ds=new DecompressionStream('deflate-raw');const reader=ds.readable.getReader();const writer=ds.writable.getWriter();const chunks=[];const readAll=(async()=>{while(true){const{done,value}=await reader.read();if(done)break;chunks.push(value)}})();const sr=compData.stream().getReader();while(true){const{done,value}=await sr.read();if(done)break;try{await writer.write(value)}catch(we){break}}try{await writer.close()}catch(ce){}await readAll;let total=0;for(const c of chunks)total+=c.byteLength;raw=new Uint8Array(total);let off=0;for(const c of chunks){raw.set(c,off);off+=c.byteLength}p.data=raw.buffer}else{p.data=await compData.arrayBuffer()}delete p._fallbackAttach;return p.data}catch(e){log('Failed to read fallback attachment: '+(p.cl||'?')+' — '+e.message,'warn');return null}}return null}
 
 function formatSize(b){if(b<1048576)return(b/1024).toFixed(0)+' KB';if(b<1073741824)return(b/1048576).toFixed(1)+' MB';return(b/1073741824).toFixed(2)+' GB'}
 function showProgress(l,p){progressEl.style.display='block';progressLabel.textContent=l;progressBar.style.width=p+'%'}
@@ -508,35 +513,20 @@ async function fallbackZipScan(file){
     }
   }
 
-  // If no central directory found, fall back to scanning local headers (slow)
+  // If no central directory found, just read the NDJSON (first entry) and defer attachments
   if(cdirEntries.length===0){
-    log('No central directory — scanning local headers (slow)…','warn');
-    const allEntries=[];let scanOff=0;
-    while(scanOff<fileSize-30){
-      const scanEnd=Math.min(scanOff+1024*1024,fileSize);
-      const buf=new Uint8Array(await file.slice(scanOff,scanEnd).arrayBuffer());
-      for(let i=0;i<buf.length-30;i++){
-        if(buf[i]===0x50&&buf[i+1]===0x4B&&buf[i+2]===0x03&&buf[i+3]===0x04){
-          const fl=buf[i+26]|(buf[i+27]<<8);const ex=buf[i+28]|(buf[i+29]<<8);
-          if(fl>0&&fl<500&&i+30+fl<=buf.length){
-            const fn=new TextDecoder().decode(buf.slice(i+30,i+30+fl));
-            const m=buf[i+8]|(buf[i+9]<<8);
-            allEntries.push({name:fn,method:m,localOffset:scanOff+i,compSize:0});
-          }
-        }
-      }
-      if(scanOff%10000000<1024*1024){showProgress('Scanning… '+formatSize(scanOff),Math.round(scanOff/fileSize*30));await tick()}
-      scanOff=scanEnd-29;
+    log('No central directory — reading NDJSON from start, attachments deferred…','warn');
+    // Read first local file header (NDJSON is always first in POM)
+    const hdr=new Uint8Array(await file.slice(0,30).arrayBuffer());
+    if(hdr[0]===0x50&&hdr[1]===0x4B&&hdr[2]===0x03&&hdr[3]===0x04){
+      const fl=hdr[26]|(hdr[27]<<8);const ex=hdr[28]|(hdr[29]<<8);
+      const m=hdr[8]|(hdr[9]<<8);
+      const fnBuf=new Uint8Array(await file.slice(30,30+fl).arrayBuffer());
+      const fn=new TextDecoder().decode(fnBuf);
+      cdirEntries.push({name:fn,method:m,localOffset:0,compSize:0});
     }
-    // Estimate compSize from gaps between entries
-    for(let i=0;i<allEntries.length;i++){
-      const ae=allEntries[i];const fl=ae.name.length;
-      ae.dataStart=ae.localOffset+30+fl; // approximate (ignores extra field)
-      const nextOff=allEntries[i+1]?allEntries[i+1].localOffset:fileSize;
-      ae.compSize=nextOff-ae.dataStart;
-    }
-    cdirEntries=allEntries;
-    log('Local header scan: '+cdirEntries.length+' entries');
+    // Mark that we need lazy attachment resolution
+    cdirEntries._lazyAttach=true;
   }
 
   // Step 2: Find NDJSON entry and get its data offset from local header
@@ -553,7 +543,8 @@ async function fallbackZipScan(file){
   // Find next entry to know where NDJSON compressed data ends
   const ndjIdx=cdirEntries.indexOf(ndjEntry);
   const nextEntry=cdirEntries[ndjIdx+1];
-  const ndjCompEnd=nextEntry?nextEntry.localOffset:(ndjEntry.compSize>0?ndjDataStart+ndjEntry.compSize:fileSize);
+  // For lazy path (no central dir, only 1 entry), cap at 50MB — DEFLATE will stop naturally
+  const ndjCompEnd=nextEntry?nextEntry.localOffset:(ndjEntry.compSize>0?ndjDataStart+ndjEntry.compSize:Math.min(ndjDataStart+50*1024*1024,fileSize));
 
   log('Found '+ndjEntry.name+' — decompressing ('+formatSize(ndjCompEnd-ndjDataStart)+' compressed)…','ok');
 
@@ -611,21 +602,58 @@ async function fallbackZipScan(file){
     if(li%5000===0&&li>0){showProgress('Parsing messages… '+li+'/'+lines.length,Math.round(li/lines.length*80));await tick()}
   }
 
-  // Step 5: Build attachMap from central directory entries
-  for(let ei=0;ei<cdirEntries.length;ei++){
-    const ae=cdirEntries[ei];
-    if(ae.name.startsWith('data/')){
-      const pn=ae.name.split('/').pop();
-      // Read local header to get exact data offset
-      const lh=new Uint8Array(await file.slice(ae.localOffset,ae.localOffset+30).arrayBuffer());
-      const fl=lh[26]|(lh[27]<<8);const ex=lh[28]|(lh[29]<<8);
-      const ds=ae.localOffset+30+fl+ex;
-      // Use compSize from central directory, or estimate from next entry
-      let cs=ae.compSize;
-      if(!cs){const next=cdirEntries[ei+1];cs=next?(next.localOffset-ds):(fileSize-ds)}
-      attachMap[pn]={zipOffset:ds,compSize:cs,method:ae.method,file};
+  // Step 5: Build attachMap
+  if(!cdirEntries._lazyAttach){
+    // Fast path: central directory has all entries with offsets
+    for(let ei=0;ei<cdirEntries.length;ei++){
+      const ae=cdirEntries[ei];
+      if(ae.name.startsWith('data/')){
+        const pn=ae.name.split('/').pop();
+        const lh=new Uint8Array(await file.slice(ae.localOffset,ae.localOffset+30).arrayBuffer());
+        const fl=lh[26]|(lh[27]<<8);const ex=lh[28]|(lh[29]<<8);
+        const ds=ae.localOffset+30+fl+ex;
+        let cs=ae.compSize;
+        if(!cs){const next=cdirEntries[ei+1];cs=next?(next.localOffset-ds):(fileSize-ds)}
+        attachMap[pn]={zipOffset:ds,compSize:cs,method:ae.method,file};
+      }
+      if(ei%500===0&&ei>0){showProgress('Indexing attachments… '+ei+'/'+cdirEntries.length,Math.round(ei/cdirEntries.length*10)+85);await tick()}
     }
-    if(ei%500===0&&ei>0){showProgress('Indexing attachments… '+ei+'/'+cdirEntries.length,Math.round(ei/cdirEntries.length*10)+85);await tick()}
+  }else{
+    // Lazy path: no central directory — collect needed PART names, then scan file once
+    const needed=new Set();
+    for(const m of messages){if(m.type==='mms')for(const p of m.parts){if(p._zipRef)needed.add(p._zipRef)}}
+    if(needed.size>0){
+      log('Scanning file for '+needed.size+' attachments…');
+      // Scan sequentially from after NDJSON, following local file headers
+      let scanOff=ndjCompEnd||ndjDataStart;let found=0;
+      while(scanOff<fileSize-30&&found<needed.size){
+        // Read a chunk to search for PK headers
+        const chunkEnd=Math.min(scanOff+256*1024,fileSize);
+        const chunk=new Uint8Array(await file.slice(scanOff,chunkEnd).arrayBuffer());
+        for(let i=0;i<chunk.length-30;i++){
+          if(chunk[i]===0x50&&chunk[i+1]===0x4B&&chunk[i+2]===0x03&&chunk[i+3]===0x04){
+            const fl=chunk[i+26]|(chunk[i+27]<<8);const ex=chunk[i+28]|(chunk[i+29]<<8);
+            if(fl>0&&fl<500&&i+30+fl<=chunk.length){
+              const fn=new TextDecoder().decode(chunk.slice(i+30,i+30+fl));
+              const pn=fn.split('/').pop();
+              if(needed.has(pn)){
+                const m=chunk[i+8]|(chunk[i+9]<<8);
+                const absOff=scanOff+i;
+                const ds=absOff+30+fl+ex;
+                // compSize unknown — will be resolved by scanning for next PK during resolve
+                attachMap[pn]={zipOffset:ds,compSize:0,method:m,file,_needsScan:true};
+                found++;
+              }
+            }
+            // Skip past this header to avoid re-matching
+            i+=29;
+          }
+        }
+        if(found%100===0&&found>0){showProgress('Found '+found+'/'+needed.size+' attachments…',Math.round(found/needed.size*15)+85);await tick()}
+        scanOff=chunkEnd-29;
+      }
+      log('Found '+found+'/'+needed.size+' attachment entries');
+    }
   }
 
   // Wire up attachment resolution for MMS parts
