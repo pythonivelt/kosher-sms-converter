@@ -189,7 +189,7 @@
     <span class="footer-dot"></span>
     <span>Nothing uploaded anywhere</span>
     <span class="footer-dot"></span>
-    <span>v0.0.36</span>
+    <span>v0.0.37</span>
   </div>
 </div>
 
@@ -432,7 +432,7 @@ $('sendLogBtn').addEventListener('click',sendLog);
 function downloadReport(report,origName){
   progressEl.style.display='none';
   errorBox.innerHTML='<b>This phone format is not supported yet.</b><br><br>Help us add support for your phone! A small structure report will be sent (no private messages are included).<br><br><input id="phoneBrandInput" type="text" placeholder="Phone brand (e.g. POM, Kosher XL...)" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;margin-bottom:8px;font-size:1rem"><input id="userEmailInput" type="email" placeholder="Your email (optional, if you want to help test)" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;margin-bottom:10px;font-size:1rem"><br><button id="sendReportBtn" style="padding:8px 20px;border-radius:8px;border:none;background:#4f46e5;color:#fff;font-weight:600;cursor:pointer">Send Report</button>';
-  errorBox.style.display='block';scanBtn.disabled=false;
+  errorBox.style.display='block';scanBtn.disabled=false;cancelBtn.style.display='none';
   $('sendReportBtn').onclick=async function(){
     const brand=($('phoneBrandInput').value||'').trim();
     if(!brand){$('phoneBrandInput').style.border='2px solid red';$('phoneBrandInput').focus();return}
@@ -599,7 +599,7 @@ async function fallbackZipScan(file){
         messages.push({type:'mms',date:String(obj.date||''),dateSent:String(obj.date_sent||'0'),direction:isIn?'in':'out',read:String(obj.read||'0'),address:(addrs[0]||{}).address||'',contactName:obj.__display_name||'(Unknown)',addrs,parts,msgBox:obj.msg_box,ctT:obj.ct_t,mType:obj.m_type,mSize:obj.m_size,mId:obj.m_id,mCls:obj.m_cls,trId:obj.tr_id,v:obj.v,locked:obj.locked,subId:obj.sub_id,seen:obj.seen,creator:obj.creator,_id:obj._id});
       }
     }catch(e){}
-    if(li%5000===0&&li>0){showProgress('Parsing messages… '+li+'/'+lines.length,Math.round(li/lines.length*80));await tick()}
+    if(li%5000===0&&li>0){if(cancelled){log('Cancelled','warn');return null}showProgress('Parsing messages… '+li+'/'+lines.length,Math.round(li/lines.length*80));await tick()}
   }
 
   // Step 5: Build attachMap
@@ -649,7 +649,7 @@ async function fallbackZipScan(file){
             i+=29;
           }
         }
-        if(found%100===0&&found>0){showProgress('Found '+found+'/'+needed.size+' attachments…',Math.round(found/needed.size*15)+85);await tick()}
+        if(found%100===0&&found>0){if(cancelled){log('Cancelled','warn');return null}showProgress('Found '+found+'/'+needed.size+' attachments…',Math.round(found/needed.size*15)+85);await tick()}
         scanOff=chunkEnd-29;
       }
       log('Found '+found+'/'+needed.size+' attachment entries');
@@ -712,7 +712,7 @@ function pickFile(f){
   selectedFile=f;
   fileNameEl.textContent=f.name+' ('+formatSize(f.size)+')';
   fileNameEl.style.display='block';
-  scanBtn.disabled=false;
+  scanBtn.disabled=false;cancelBtn.style.display='none';
   scanResults.style.display='none';optionsEl.style.display='none';infoBox.style.display='none';errorBox.style.display='none';progressEl.style.display='none';
   dropZone.classList.remove('done');parsedData=null;
   if(zipReader){try{zipReader.close()}catch{}zipReader=null}
@@ -721,7 +721,7 @@ function pickFile(f){
 // ===== SCAN =====
 scanBtn.addEventListener('click',()=>{
   if(!selectedFile)return;
-  scanBtn.disabled=true;errorBox.style.display='none';infoBox.style.display='none';scanResults.style.display='none';optionsEl.style.display='none';
+  scanBtn.disabled=true;cancelled=false;cancelBtn.style.display='block';errorBox.style.display='none';infoBox.style.display='none';scanResults.style.display='none';optionsEl.style.display='none';
   scan();
 });
 
@@ -845,7 +845,7 @@ async function scan(){
     scanResults.style.display='block';
     dropZone.classList.add('done');
     optionsEl.style.display='block';
-    scanBtn.disabled=false;
+    scanBtn.disabled=false;cancelBtn.style.display='none';
     sourceFormat=fmt;
     updateUI();
   }catch(err){
@@ -859,7 +859,7 @@ async function scan(){
       return;
     }
     errorBox.textContent=msg;
-    errorBox.style.display='block';scanBtn.disabled=false;
+    errorBox.style.display='block';scanBtn.disabled=false;cancelBtn.style.display='none';
   }
 }
 
