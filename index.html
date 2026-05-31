@@ -189,7 +189,7 @@
     <span class="footer-dot"></span>
     <span>Nothing uploaded anywhere</span>
     <span class="footer-dot"></span>
-    <span>v0.0.37</span>
+    <span>v0.0.38</span>
   </div>
 </div>
 
@@ -556,7 +556,7 @@ async function fallbackZipScan(file){
       const reader=ds.readable.getReader();
       const writer=ds.writable.getWriter();
       const chunks=[];
-      const readAll=(async()=>{while(true){const{done,value}=await reader.read();if(done)break;chunks.push(value)}})();
+      const readAll=(async()=>{try{while(true){const{done,value}=await reader.read();if(done)break;chunks.push(value)}}catch(e){}})();
       const compData=file.slice(ndjDataStart,ndjCompEnd);
       const sr=compData.stream().getReader();
       while(true){const{done,value}=await sr.read();if(done)break;try{await writer.write(value)}catch(e){break}}
@@ -564,6 +564,7 @@ async function fallbackZipScan(file){
       await readAll;
       const dec=new TextDecoder();
       ndjsonText=chunks.map(c=>dec.decode(c,{stream:true})).join('');
+      if(!ndjsonText){log('Decompression produced no data','err');return null}
     }catch(e){log('Decompression failed: '+e.message,'err');return null}
   }else if(ndjEntry.method===0){
     ndjsonText=await file.slice(ndjDataStart,ndjCompEnd).text();
