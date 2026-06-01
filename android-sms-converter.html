@@ -189,7 +189,7 @@
     <span class="footer-dot"></span>
     <span>Nothing uploaded anywhere</span>
     <span class="footer-dot"></span>
-    <span>v0.0.38</span>
+    <span>v0.0.39</span>
   </div>
 </div>
 
@@ -543,8 +543,36 @@ async function fallbackZipScan(file){
   // Find next entry to know where NDJSON compressed data ends
   const ndjIdx=cdirEntries.indexOf(ndjEntry);
   const nextEntry=cdirEntries[ndjIdx+1];
-  // For lazy path (no central dir, only 1 entry), cap at 50MB — DEFLATE will stop naturally
-  const ndjCompEnd=nextEntry?nextEntry.localOffset:(ndjEntry.compSize>0?ndjDataStart+ndjEntry.compSize:Math.min(ndjDataStart+50*1024*1024,fileSize));
+  let ndjCompEnd;
+  if(nextEntry){
+    ndjCompEnd=nextEntry.localOffset;
+  }else if(ndjEntry.compSize>0){
+    ndjCompEnd=ndjDataStart+ndjEntry.compSize;
+  }else{
+    // No central directory, no compSize — scan forward for next valid PK header
+    log('Scanning for NDJSON boundary…');
+    ndjCompEnd=fileSize;
+    let scanPos=ndjDataStart;
+    while(scanPos<fileSize-30){
+      const scanEnd=Math.min(scanPos+1024*1024,fileSize);
+      const buf=new Uint8Array(await file.slice(scanPos,scanEnd).arrayBuffer());
+      let found=false;
+      for(let i=(scanPos===ndjDataStart?1:0);i<buf.length-30;i++){
+        if(buf[i]===0x50&&buf[i+1]===0x4B&&buf[i+2]===0x03&&buf[i+3]===0x04){
+          const fl=buf[i+26]|(buf[i+27]<<8);
+          if(fl>0&&fl<500&&i+30+fl<=buf.length){
+            const fn=new TextDecoder().decode(buf.slice(i+30,i+30+fl));
+            if(fn.startsWith('data/')||fn.endsWith('.ndjson')){
+              ndjCompEnd=scanPos+i;found=true;break;
+            }
+          }
+        }
+      }
+      if(found)break;
+      scanPos=scanEnd-29;
+    }
+    log('NDJSON boundary found at offset '+ndjCompEnd+' ('+formatSize(ndjCompEnd-ndjDataStart)+' compressed)');
+  }
 
   log('Found '+ndjEntry.name+' — decompressing ('+formatSize(ndjCompEnd-ndjDataStart)+' compressed)…','ok');
 
