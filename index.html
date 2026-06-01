@@ -189,7 +189,7 @@
     <span class="footer-dot"></span>
     <span>Nothing uploaded anywhere</span>
     <span class="footer-dot"></span>
-    <span>v0.0.40</span>
+    <span>v0.0.41</span>
   </div>
 </div>
 
@@ -711,6 +711,26 @@ async function scan(){
           }
         }else if(hasWonderXml){
           fmt='wonder';log('Detected Wonder format (XML)','ok');
+          // Log Wonder ZIP structure for analysis
+          log('Wonder ZIP entries: '+entries.map(e=>e.filename+' ('+formatSize(e.uncompressedSize)+')').join(', '));
+          const xmlEntry=entries.find(e=>e.filename.endsWith('.xml')&&!e.filename.includes('/'));
+          if(xmlEntry){
+            const sample=await xmlEntry.getData(new zip.BlobWriter());
+            const sampleText=await sample.slice(0,10000).text();
+            // Log tag names, attribute names, structure — no private data
+            const tags=[...new Set((sampleText.match(/<(\w[\w:-]*)/g)||[]).map(m=>m.slice(1)))];
+            const attrs=[...new Set((sampleText.match(/\s(\w[\w:-]*)=/g)||[]).map(m=>m.trim().replace('=','')))];
+            log('Wonder XML tags: '+tags.join(', '));
+            log('Wonder XML attrs: '+attrs.join(', '));
+            // Log first SMS/MMS element structure (redacted values)
+            const firstMsg=sampleText.match(/<(sms|mms)[^>]*>/i);
+            if(firstMsg){
+              const redacted=firstMsg[0].replace(/="[^"]*"/g,'="[redacted]"');
+              log('Sample element: '+redacted);
+            }
+          }
+          const mmsDir=entries.filter(e=>e.filename.startsWith('mms_attachments/'));
+          if(mmsDir.length)log('MMS attachment entries: '+mmsDir.length+' (e.g. '+mmsDir.slice(0,3).map(e=>e.filename).join(', ')+')');
           ({messages,attachMap,pdfCount,pdfSize}=await parseWonderZip(entries));
         }else{
           log('Unknown ZIP format — generating structure report…','warn');
