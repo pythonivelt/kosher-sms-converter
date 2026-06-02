@@ -189,7 +189,7 @@
     <span class="footer-dot"></span>
     <span>Nothing uploaded anywhere</span>
     <span class="footer-dot"></span>
-    <span>v0.0.47</span>
+    <span>v0.0.48</span>
   </div>
 </div>
 
@@ -483,7 +483,7 @@ async function fallbackZipScan(file){
   // Step 2: Determine NDJSON compressed data end
   // Don't scan for PK in compressed data — false positives are unavoidable
   // Just cap at 50MB and let DEFLATE stop naturally (reader catches trailing junk)
-  let ndjCompEnd=Math.min(ndjDataStart+50*1024*1024,fileSize);
+  let ndjCompEnd=Math.min(ndjDataStart+15*1024*1024,fileSize);
   log('NDJSON: feeding up to '+formatSize(ndjCompEnd-ndjDataStart)+' to decompressor…');
 
   // Step 3: Decompress NDJSON
