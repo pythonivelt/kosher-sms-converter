@@ -189,7 +189,7 @@
     <span class="footer-dot"></span>
     <span>Nothing uploaded anywhere</span>
     <span class="footer-dot"></span>
-    <span>v0.0.46</span>
+    <span>v0.0.47</span>
   </div>
 </div>
 
@@ -480,31 +480,11 @@ async function fallbackZipScan(file){
   fmt='pom';
   log('Found '+ndjName+' at offset 0');
 
-  // Step 2: Find where NDJSON compressed data ends
-  // Scan forward in 4MB chunks looking for next valid PK header with data/ filename
-  let ndjCompEnd=fileSize;
-  let scanPos=ndjDataStart+1;
-  showProgress('Finding NDJSON boundary...',5);await tick();
-  while(scanPos<fileSize-60){
-    if(cancelled){log('Cancelled','warn');return null}
-    const scanEnd=Math.min(scanPos+4*1024*1024,fileSize);
-    const buf=new Uint8Array(await file.slice(scanPos,scanEnd).arrayBuffer());
-    let found=false;
-    for(let i=0;i<buf.length-60;i++){
-      if(buf[i]===0x50&&buf[i+1]===0x4B&&buf[i+2]===0x03&&buf[i+3]===0x04){
-        const fl=buf[i+26]|(buf[i+27]<<8);
-        const method=buf[i+8]|(buf[i+9]<<8);
-        // Strict validation: filename must be data/PART_, method must be 0 or 8
-        if(fl>10&&fl<100&&(method===0||method===8)&&i+30+fl<=buf.length){
-          const fn=new TextDecoder().decode(buf.slice(i+30,i+30+Math.min(fl,30)));
-          if(fn.startsWith('data/PART_')){ndjCompEnd=scanPos+i;found=true;break}
-        }
-      }
-    }
-    if(found)break;
-    scanPos=scanEnd-59;
-  }
-  log('NDJSON compressed: '+formatSize(ndjCompEnd-ndjDataStart));
+  // Step 2: Determine NDJSON compressed data end
+  // Don't scan for PK in compressed data — false positives are unavoidable
+  // Just cap at 50MB and let DEFLATE stop naturally (reader catches trailing junk)
+  let ndjCompEnd=Math.min(ndjDataStart+50*1024*1024,fileSize);
+  log('NDJSON: feeding up to '+formatSize(ndjCompEnd-ndjDataStart)+' to decompressor…');
 
   // Step 3: Decompress NDJSON
   showProgress('Decompressing NDJSON...',10);await tick();
