@@ -13,7 +13,6 @@ Convert SMS/MMS backups between kosher phone formats. Runs 100% in your browser 
 | Wonder | ✅ SMS + MMS | ❌ Not yet |
 | Pom | ⚠️ SMS only | ❓ Not tested |
 
-![Compatibility Chart](https://pythonivelt.github.io/kosher-sms-converter/chart.svg)
 
 ## Features
 

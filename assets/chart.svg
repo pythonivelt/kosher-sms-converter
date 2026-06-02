@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="520" height="260" viewBox="0 0 520 260">
+  <style>
+    text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; fill: #1e293b; }
+    .header { font-weight: 700; font-size: 15px; fill: #fff; }
+    .phone { font-weight: 600; }
+    .yes { fill: #16a34a; font-weight: 600; }
+    .no { fill: #dc2626; font-weight: 600; }
+    .warn { fill: #d97706; font-weight: 600; }
+    .unknown { fill: #6b7280; font-weight: 600; }
+    .title { font-size: 18px; font-weight: 700; fill: #1e293b; }
+  </style>
+  <!-- Title -->
+  <text x="260" y="28" text-anchor="middle" class="title">Kosher Phone SMS Converter</text>
+  <!-- Header row -->
+  <rect x="10" y="42" width="500" height="32" rx="6" fill="#4f46e5"/>
+  <text x="110" y="63" text-anchor="middle" class="header">Phone</text>
+  <text x="300" y="63" text-anchor="middle" class="header">Out (from phone)</text>
+  <text x="450" y="63" text-anchor="middle" class="header">In (to phone)</text>
+  <!-- Rows -->
+  <rect x="10" y="78" width="500" height="36" rx="0" fill="#f8fafc"/>
+  <text x="110" y="101" text-anchor="middle" class="phone">SMS Backup &amp; Restore</text>
+  <text x="300" y="101" text-anchor="middle" class="yes">SMS + MMS</text>
+  <text x="450" y="101" text-anchor="middle" class="yes">SMS + MMS</text>
+
+  <rect x="10" y="114" width="500" height="36" rx="0" fill="#f1f5f9"/>
+  <text x="110" y="137" text-anchor="middle" class="phone">Fig</text>
+  <text x="300" y="137" text-anchor="middle" class="yes">SMS + MMS</text>
+  <text x="450" y="137" text-anchor="middle" class="yes">SMS + MMS</text>
+
+  <rect x="10" y="150" width="500" height="36" rx="0" fill="#f8fafc"/>
+  <text x="110" y="173" text-anchor="middle" class="phone">Wonder</text>
+  <text x="300" y="173" text-anchor="middle" class="yes">SMS + MMS</text>
+  <text x="450" y="173" text-anchor="middle" class="no">Not yet</text>
+
+  <rect x="10" y="186" width="500" height="36" rx="0" fill="#f1f5f9"/>
+  <text x="110" y="209" text-anchor="middle" class="phone">Pom</text>
+  <text x="300" y="209" text-anchor="middle" class="warn">SMS only</text>
+  <text x="450" y="209" text-anchor="middle" class="unknown">Not tested</text>
+
+  <!-- Footer -->
+  <text x="260" y="245" text-anchor="middle" font-size="11" fill="#94a3b8">pythonivelt.github.io/kosher-sms-converter</text>
+</svg>
