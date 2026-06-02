@@ -189,7 +189,7 @@
     <span class="footer-dot"></span>
     <span>Nothing uploaded anywhere</span>
     <span class="footer-dot"></span>
-    <span>v0.0.42</span>
+    <span>v0.0.43</span>
   </div>
 </div>
 
@@ -1204,12 +1204,11 @@ async function buildWonderZip(messages){
   xmlParts.push('</messages>\n');
   xmlParts[0]=xmlParts[0].replace('__SMS__',String(smsCount)).replace('__MMS__',String(mmsCount));
 
-  const zw=new zip.ZipWriter(new zip.BlobWriter('application/zip'));
-  const xmlBlob=new Blob(xmlParts,{type:'text/xml;charset=utf-8'});
   const dateStr=new Date().toISOString().slice(0,10);
-  await zw.add('Messages_Backup_'+dateStr+'.xml',new zip.BlobReader(xmlBlob));
-  for(const af of attachFiles)await zw.add('mms_attachments/'+af.fn,new zip.BlobReader(new Blob([af.data])));
-  return await zw.close();
+  const xmlData=new TextEncoder().encode(xmlParts.join(''));
+  const zipFiles=[{name:'Messages_Backup_'+dateStr+'.xml',data:xmlData}];
+  for(const af of attachFiles)zipFiles.push({name:'mms_attachments/'+af.fn,data:new Uint8Array(af.data)});
+  return await buildRawZip(zipFiles);
 }
 
 // ===== BUILD =====
