@@ -121,8 +121,8 @@
     <label class="option" data-value="wonder" id="optWonder">
       <input type="radio" name="target" value="wonder" />
       <div>
-        <div class="option-label">Wonder <span style="font-size:.7rem;color:#94a3b8;font-weight:400">(beta — help us test!)</span></div>
-        <div class="option-desc">Export will send a test log to the developer to help make Wonder work</div>
+        <div class="option-label">Wonder <span style="font-size:.7rem;color:#94a3b8;font-weight:400">(SMS only)</span></div>
+        <div class="option-desc">MMS/pictures coming soon — SMS works</div>
       </div>
     </label>
 
@@ -189,7 +189,7 @@
     <span class="footer-dot"></span>
     <span>Nothing uploaded anywhere</span>
     <span class="footer-dot"></span>
-    <span>v0.0.41</span>
+    <span>v0.0.42</span>
   </div>
 </div>
 
@@ -636,6 +636,16 @@ function updateUI(){
   pc.style.display=needsPdfChoice()?'block':'none';
   const t=document.querySelector('input[name="target"]:checked');
   buildBtn.disabled=!t;
+  // Wonder: force SMS only, disable MMS options
+  const isWonder=t&&t.value==='wonder';
+  if(isWonder){
+    document.querySelectorAll('.option[data-value="all"],.option[data-value="mms"]').forEach(o=>{o.style.opacity='.4';o.style.pointerEvents='none'});
+    $('optAll').querySelector('input').checked=false;$('optAll').classList.remove('selected');
+    $('optMmsOnly').querySelector('input').checked=false;$('optMmsOnly').classList.remove('selected');
+    $('optText').querySelector('input').checked=true;$('optText').classList.add('selected');
+  }else{
+    document.querySelectorAll('.option[data-value="all"],.option[data-value="mms"]').forEach(o=>{o.style.opacity='';o.style.pointerEvents=''});
+  }
 }
 
 // ===== FILE PICKING =====
@@ -1241,17 +1251,9 @@ async function build(target){
       blob=await buildFigZip(msgs);
       filename=(target==='pom'?'pom':'fig')+'-'+baseName+'.zip';
     }else if(target==='wonder'){
-      log('Wonder export: collecting info for developer…','ok');
-      log('Source format: '+sourceFormat+', messages: '+msgs.length+' (SMS: '+msgs.filter(m=>m.type==='sms').length+', MMS: '+msgs.filter(m=>m.type==='mms').length+')');
-      // Log a sample MMS structure (first MMS, no private content)
-      const sampleMms=msgs.find(m=>m.type==='mms');
-      if(sampleMms){const s={...sampleMms,body:undefined,address:'[redacted]',contactName:'[redacted]'};if(s.addrs)s.addrs=s.addrs.map(a=>({...a,address:'[redacted]'}));if(s.parts)s.parts=s.parts.map(p=>({ct:p.ct,cl:p.cl,seq:p.seq,hasData:!!(p.data||p._entry||p._fallbackAttach)}));log('Sample MMS structure: '+JSON.stringify(s))}
-      progressEl.style.display='none';
-      logPanel.style.display='block';logPanel.setAttribute('open','');
-      errorBox.innerHTML='<b>Wonder export is not ready yet — but you can help!</b><br><br>Click "Send log to developer" below to send us info about your backup. This helps us build Wonder support faster.<br><br>No private messages are included.';
-      errorBox.style.display='block';
-      buildBtn.disabled=false;cancelBtn.style.display='none';
-      return;
+      showProgress('Building Wonder ZIP (SMS only)…',40);await tick();
+      blob=await buildWonderZip(msgs);
+      filename='wonder-'+baseName+'.zip';
     }
 
     if(cancelled){log('Build cancelled by user','warn');cancelBtn.style.display='none';progressEl.style.display='none';infoBox.textContent='Cancelled.';infoBox.style.display='block';buildBtn.disabled=false;return}
