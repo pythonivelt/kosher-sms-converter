@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="520" height="260" font-family="Arial,sans-serif">
+  <style>
+    .hdr{fill:#4f46e5;font-weight:700;font-size:13px;fill:#fff}
+    .row{font-size:12px;fill:#1e293b}
+    .yes{fill:#16a34a;font-weight:600}
+    .no{fill:#dc2626;font-weight:600}
+    .partial{fill:#d97706;font-weight:600}
+    .unknown{fill:#94a3b8;font-weight:600}
+    .title{font-size:15px;font-weight:700;fill:#1e293b}
+  </style>
+  <!-- Background -->
+  <rect width="520" height="260" rx="12" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
+  <!-- Title -->
+  <text x="260" y="30" text-anchor="middle" class="title">Kosher Phone SMS Converter — Compatibility</text>
+  <!-- Header row -->
+  <rect x="10" y="45" width="500" height="30" rx="6" fill="#4f46e5"/>
+  <text x="120" y="65" text-anchor="middle" class="hdr">Phone</text>
+  <text x="310" y="65" text-anchor="middle" class="hdr">Out (from phone)</text>
+  <text x="460" y="65" text-anchor="middle" class="hdr">In (to phone)</text>
+  <!-- Row 1: SMS Backup & Restore -->
+  <rect x="10" y="80" width="500" height="32" rx="4" fill="#fff" stroke="#e2e8f0" stroke-width="0.5"/>
+  <text x="120" y="101" text-anchor="middle" class="row">SMS Backup &amp; Restore</text>
+  <text x="310" y="101" text-anchor="middle" class="yes">✅ SMS + MMS</text>
+  <text x="460" y="101" text-anchor="middle" class="yes">✅ SMS + MMS</text>
+  <!-- Row 2: Fig -->
+  <rect x="10" y="114" width="500" height="32" rx="4" fill="#f1f5f9" stroke="#e2e8f0" stroke-width="0.5"/>
+  <text x="120" y="135" text-anchor="middle" class="row">Fig</text>
+  <text x="310" y="135" text-anchor="middle" class="yes">✅ SMS + MMS</text>
+  <text x="460" y="135" text-anchor="middle" class="yes">✅ SMS + MMS</text>
+  <!-- Row 3: Wonder -->
+  <rect x="10" y="148" width="500" height="32" rx="4" fill="#fff" stroke="#e2e8f0" stroke-width="0.5"/>
+  <text x="120" y="169" text-anchor="middle" class="row">Wonder</text>
+  <text x="310" y="169" text-anchor="middle" class="yes">✅ SMS + MMS</text>
+  <text x="460" y="169" text-anchor="middle" class="no">❌ Not yet</text>
+  <!-- Row 4: Pom -->
+  <rect x="10" y="182" width="500" height="32" rx="4" fill="#f1f5f9" stroke="#e2e8f0" stroke-width="0.5"/>
+  <text x="120" y="203" text-anchor="middle" class="row">Pom</text>
+  <text x="310" y="203" text-anchor="middle" class="partial">⚠️ SMS only</text>
+  <text x="460" y="203" text-anchor="middle" class="unknown">❓ Not tested</text>
+  <!-- Footer -->
+  <text x="260" y="240" text-anchor="middle" font-size="10" fill="#94a3b8">pythonivelt.github.io/kosher-sms-converter</text>
+</svg>
