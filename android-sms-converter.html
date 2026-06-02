@@ -189,7 +189,7 @@
     <span class="footer-dot"></span>
     <span>Nothing uploaded anywhere</span>
     <span class="footer-dot"></span>
-    <span>v0.0.44</span>
+    <span>v0.0.45</span>
   </div>
 </div>
 
@@ -493,9 +493,11 @@ async function fallbackZipScan(file){
     for(let i=0;i<buf.length-60;i++){
       if(buf[i]===0x50&&buf[i+1]===0x4B&&buf[i+2]===0x03&&buf[i+3]===0x04){
         const fl=buf[i+26]|(buf[i+27]<<8);
-        if(fl>4&&fl<500&&i+30+fl<=buf.length){
+        const method=buf[i+8]|(buf[i+9]<<8);
+        // Strict validation: filename must be data/PART_, method must be 0 or 8
+        if(fl>10&&fl<100&&(method===0||method===8)&&i+30+fl<=buf.length){
           const fn=new TextDecoder().decode(buf.slice(i+30,i+30+Math.min(fl,30)));
-          if(fn.startsWith('data/')){ndjCompEnd=scanPos+i;found=true;break}
+          if(fn.startsWith('data/PART_')){ndjCompEnd=scanPos+i;found=true;break}
         }
       }
     }
