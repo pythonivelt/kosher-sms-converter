@@ -6,12 +6,14 @@ Convert SMS/MMS backups between kosher phone formats. Runs 100% in your browser 
 
 ## Supported Formats
 
-| Format | Import (read) | Export (write) |
-|--------|:---:|:---:|
-| SMS Backup & Restore (XML) | Yes | Yes |
-| Fig | Yes | Yes |
-| Pom | Yes | Yes |
-| Wonder | Yes | SMS only (MMS coming soon) |
+| Phone | Out (from phone) | In (to phone) |
+|-------|:---:|:---:|
+| SMS Backup & Restore | ✅ SMS + MMS | ✅ SMS + MMS |
+| Fig | ✅ SMS + MMS | ✅ SMS + MMS |
+| Wonder | ✅ SMS + MMS | ❌ Not yet |
+| Pom | ⚠️ SMS only | ❓ Not tested |
+
+![Compatibility Chart](https://pythonivelt.github.io/kosher-sms-converter/chart.svg)
 
 ## Features
 
