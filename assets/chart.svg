@@ -34,7 +34,7 @@
 
   <rect x="10" y="186" width="500" height="36" rx="0" fill="#f1f5f9"/>
   <text x="110" y="209" text-anchor="middle" class="phone">Pom</text>
-  <text x="300" y="209" text-anchor="middle" class="warn">SMS only</text>
+  <text x="300" y="209" text-anchor="middle" class="no">Fixing...</text>
   <text x="450" y="209" text-anchor="middle" class="unknown">Not tested</text>
 
   <!-- Footer -->
