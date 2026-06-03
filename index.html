@@ -189,7 +189,7 @@
     <span class="footer-dot"></span>
     <span>Nothing uploaded anywhere</span>
     <span class="footer-dot"></span>
-    <span>v0.0.51</span>
+    <span>v0.0.52</span>
   </div>
 </div>
 
@@ -522,23 +522,67 @@ async function fallbackZipScan(file){
   let fmt=null;const fileSize=file.size;
   log('Fallback ZIP reader...');
 
-  // Step 1: Read first local header (NDJSON is always first in POM/Fig ZIPs)
-  const hdr=new Uint8Array(await file.slice(0,30).arrayBuffer());
-  if(hdr[0]!==0x50||hdr[1]!==0x4B||hdr[2]!==0x03||hdr[3]!==0x04){log('Not a ZIP','err');return null}
-  const method=hdr[8]|(hdr[9]<<8);
-  const fnLen=hdr[26]|(hdr[27]<<8);const exLen=hdr[28]|(hdr[29]<<8);
-  const fnBuf=new Uint8Array(await file.slice(30,30+fnLen).arrayBuffer());
-  const ndjName=new TextDecoder().decode(fnBuf);
-  if(!ndjName.endsWith('.ndjson')){log('First entry is not NDJSON: '+ndjName,'err');return null}
-  const ndjDataStart=30+fnLen+exLen;
-  fmt='pom';
-  log('Found '+ndjName+' at offset 0');
+  // Step 1: Try to find central directory by scanning the last 20MB for PK\x01\x02
+  // This gives us ALL entries with correct sizes in one read
+  let cdEntries=null;
+  const cdScanSize=Math.min(20*1024*1024,fileSize);
+  const cdScanStart=fileSize-cdScanSize;
+  log('Scanning last '+formatSize(cdScanSize)+' for central directory...');
+  showProgress('Reading central directory...',5);await tick();
+  const cdBuf=new Uint8Array(await file.slice(cdScanStart,fileSize).arrayBuffer());
+  // Find first PK\x01\x02 signature
+  let cdStart=-1;
+  for(let i=0;i<cdBuf.length-46;i++){
+    if(cdBuf[i]===0x50&&cdBuf[i+1]===0x4B&&cdBuf[i+2]===0x01&&cdBuf[i+3]===0x02){cdStart=i;break}
+  }
+  if(cdStart>=0){
+    cdEntries=[];
+    let pos=cdStart;
+    while(pos+46<=cdBuf.length){
+      if(cdBuf[pos]!==0x50||cdBuf[pos+1]!==0x4B||cdBuf[pos+2]!==0x01||cdBuf[pos+3]!==0x02)break;
+      const method=cdBuf[pos+10]|(cdBuf[pos+11]<<8);
+      const compSize=cdBuf[pos+20]|(cdBuf[pos+21]<<8)|(cdBuf[pos+22]<<16)|(cdBuf[pos+23]<<24);
+      const fl=cdBuf[pos+28]|(cdBuf[pos+29]<<8);
+      const exLen=cdBuf[pos+30]|(cdBuf[pos+31]<<8);
+      const cmtLen=cdBuf[pos+32]|(cdBuf[pos+33]<<8);
+      const localOff=cdBuf[pos+42]|(cdBuf[pos+43]<<8)|(cdBuf[pos+44]<<16)|(cdBuf[pos+45]<<24);
+      if(pos+46+fl>cdBuf.length)break;
+      const fn=new TextDecoder().decode(cdBuf.slice(pos+46,pos+46+fl));
+      cdEntries.push({name:fn,method,compSize,localOffset:localOff});
+      pos+=46+fl+exLen+cmtLen;
+    }
+    log('Central directory: '+cdEntries.length+' entries found!','ok');
+  }else{
+    log('No central directory found in last '+formatSize(cdScanSize),'warn');
+  }
 
-  // Step 2: Determine NDJSON compressed data end
-  // Don't scan for PK in compressed data — false positives are unavoidable
-  // Just cap at 50MB and let DEFLATE stop naturally (reader catches trailing junk)
-  let ndjCompEnd=Math.min(ndjDataStart+15*1024*1024,fileSize);
-  log('NDJSON: feeding up to '+formatSize(ndjCompEnd-ndjDataStart)+' to decompressor…');
+  // Step 2: Get NDJSON entry info
+  fmt='pom';
+  let ndjDataStart,ndjCompEnd,method;
+  if(cdEntries){
+    // Use central directory — we have exact sizes
+    const ndjEntry=cdEntries.find(e=>e.name.endsWith('.ndjson'));
+    if(!ndjEntry){log('No NDJSON in central directory','err');return null}
+    // Read local header to get dataStart
+    const lh=new Uint8Array(await file.slice(ndjEntry.localOffset,ndjEntry.localOffset+30).arrayBuffer());
+    const fl=lh[26]|(lh[27]<<8);const ex=lh[28]|(lh[29]<<8);
+    ndjDataStart=ndjEntry.localOffset+30+fl+ex;
+    ndjCompEnd=ndjDataStart+ndjEntry.compSize;
+    method=ndjEntry.method;
+    log('Found '+ndjEntry.name+': '+formatSize(ndjEntry.compSize)+' compressed (from central directory)');
+  }else{
+    // No central directory — read first header and cap
+    const hdr=new Uint8Array(await file.slice(0,30).arrayBuffer());
+    if(hdr[0]!==0x50||hdr[1]!==0x4B||hdr[2]!==0x03||hdr[3]!==0x04){log('Not a ZIP','err');return null}
+    method=hdr[8]|(hdr[9]<<8);
+    const fnLen=hdr[26]|(hdr[27]<<8);const exLen=hdr[28]|(hdr[29]<<8);
+    const fnBuf=new Uint8Array(await file.slice(30,30+fnLen).arrayBuffer());
+    const ndjName=new TextDecoder().decode(fnBuf);
+    if(!ndjName.endsWith('.ndjson')){log('First entry is not NDJSON: '+ndjName,'err');return null}
+    ndjDataStart=30+fnLen+exLen;
+    ndjCompEnd=Math.min(ndjDataStart+15*1024*1024,fileSize);
+    log('Found '+ndjName+' (no central directory, feeding up to '+formatSize(ndjCompEnd-ndjDataStart)+')');
+  }
 
   // Step 3: Decompress NDJSON
   showProgress('Decompressing NDJSON...',10);await tick();
@@ -605,13 +649,26 @@ async function fallbackZipScan(file){
   const needed=new Set();
   for(const m of messages){if(m.type==='mms')for(const p of m.parts){if(p._zipRef)needed.add(p._zipRef)}}
   if(needed.size>0){
-    log('Indexing '+needed.size+' attachments...');
-    // Don't scan whole file — just record that each needed part exists
-    // and resolve its exact position on-demand during export
-    for(const pn of needed){
-      attachMap[pn]={zipOffset:0,compSize:0,method:8,file,_needsFullScan:true};
+    if(cdEntries){
+      // Fast path: central directory has everything
+      log('Indexing '+needed.size+' attachments from central directory...');
+      for(const ce of cdEntries){
+        if(!ce.name.startsWith('data/'))continue;
+        const pn=ce.name.split('/').pop();
+        if(!needed.has(pn))continue;
+        // Read local header for exact dataStart
+        const lh=new Uint8Array(await file.slice(ce.localOffset,ce.localOffset+30).arrayBuffer());
+        const fl=lh[26]|(lh[27]<<8);const ex=lh[28]|(lh[29]<<8);
+        attachMap[pn]={zipOffset:ce.localOffset+30+fl+ex,compSize:ce.compSize,method:ce.method,file};
+      }
+      log('Indexed '+Object.keys(attachMap).length+'/'+needed.size+' attachments','ok');
+    }else{
+      // No central directory — defer to on-demand resolution
+      log('Deferring '+needed.size+' attachments for on-demand resolution...');
+      for(const pn of needed){
+        attachMap[pn]={zipOffset:0,compSize:0,method:8,file,_needsFullScan:true};
+      }
     }
-    log('Deferred '+needed.size+' attachments for on-demand resolution');
   }
 
   // Wire up attachment resolution for MMS parts
