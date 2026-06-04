@@ -189,7 +189,7 @@
     <span class="footer-dot"></span>
     <span>Nothing uploaded anywhere</span>
     <span class="footer-dot"></span>
-    <span>v0.0.52</span>
+    <span>v0.0.53</span>
   </div>
 </div>
 
@@ -209,59 +209,61 @@ function log(msg,type){logPanel.style.display='block';const s=document.createEle
 function clearLog(){logBox.innerHTML='';logPanel.style.display='none';logPanel.removeAttribute('open')}
 
 function hasAttach(p){return!!(p.data||p._entry||p._fallbackAttach)}
-let _entryIndex=null;
-async function _buildEntryIndex(file){
+// Shared index: built once during export, caches all entry positions
+let _entryIndex=null;let _indexBuilding=false;
+async function _buildEntryIndex(file,needed){
   if(_entryIndex)return _entryIndex;
-  log('Building attachment index (one-time scan)...');
+  if(_indexBuilding)return null;// prevent re-entry
+  _indexBuilding=true;
+  log('Building attachment index in 4MB chunks...');
   _entryIndex={};const fileSize=file.size;
-  // Sequential scan: read headers one by one following the chain
-  let off=0;let count=0;const startTime=Date.now();
-  while(off<fileSize-30){
-    const hdr=new Uint8Array(await file.slice(off,off+30).arrayBuffer());
-    if(hdr[0]!==0x50||hdr[1]!==0x4B||hdr[2]!==0x03||hdr[3]!==0x04)break;
-    const method=hdr[8]|(hdr[9]<<8);
-    const compSize=hdr[18]|(hdr[19]<<8)|(hdr[20]<<16)|(hdr[21]<<24);
-    const fl=hdr[26]|(hdr[27]<<8);const ex=hdr[28]|(hdr[29]<<8);
-    const fnBuf=new Uint8Array(await file.slice(off+30,off+30+fl).arrayBuffer());
-    const fn=new TextDecoder().decode(fnBuf);
-    const dataStart=off+30+fl+ex;
-    const pn=fn.split('/').pop();
-    _entryIndex[pn]={offset:off,dataStart,method,compSize};
-    count++;
-    // Advance: if compSize known, jump. Otherwise scan for next PK header.
-    if(compSize>0){
-      off=dataStart+compSize;
-      // Skip possible data descriptor
-      const peek=new Uint8Array(await file.slice(off,off+4).arrayBuffer());
-      if(peek[0]===0x50&&peek[1]===0x4B&&peek[2]===0x07&&peek[3]===0x08)off+=16;
-      else if(peek[0]===0x50&&peek[1]===0x4B&&peek[2]===0x03&&peek[3]===0x04){/*next entry*/}
-      else off+=12;// unsigned DD
-    }else{
-      // Unknown size — scan forward for next PK\x03\x04
-      off=dataStart+1;
-      const scanBuf=new Uint8Array(await file.slice(off,Math.min(off+20*1024*1024,fileSize)).arrayBuffer());
-      let found=false;
-      for(let i=0;i<scanBuf.length-4;i++){
-        if(scanBuf[i]===0x50&&scanBuf[i+1]===0x4B&&scanBuf[i+2]===0x03&&scanBuf[i+3]===0x04){
-          off=off+i;found=true;break;
+  const startTime=Date.now();let found=0;
+  // Scan file in 4MB chunks looking for PK\x03\x04 headers with data/PART_ names
+  let scanOff=0;
+  while(scanOff<fileSize-60&&found<needed.size){
+    const chunkEnd=Math.min(scanOff+4*1024*1024,fileSize);
+    const buf=new Uint8Array(await file.slice(scanOff,chunkEnd).arrayBuffer());
+    for(let i=0;i<buf.length-60;i++){
+      if(buf[i]===0x50&&buf[i+1]===0x4B&&buf[i+2]===0x03&&buf[i+3]===0x04){
+        const fl=buf[i+26]|(buf[i+27]<<8);const ex=buf[i+28]|(buf[i+29]<<8);
+        if(fl>10&&fl<100&&i+30+fl<=buf.length){
+          const fn=new TextDecoder().decode(buf.slice(i+30,i+30+fl));
+          if(fn.startsWith('data/PART_')){
+            const pn=fn.split('/').pop();
+            if(needed.has(pn)){
+              const m=buf[i+8]|(buf[i+9]<<8);
+              _entryIndex[pn]={dataStart:scanOff+i+30+fl+ex,method:m,compSize:0};
+              found++;
+            }
+          }
+          i+=29;
         }
       }
-      if(!found)break;
     }
-    if(count%200===0){showProgress('Indexing entries... '+count,Math.round(off/fileSize*90));await tick()}
+    if(scanOff%(16*1024*1024)<4*1024*1024){
+      showProgress('Indexing attachments... '+found+'/'+needed.size+' ('+Math.round(scanOff/fileSize*100)+'%)',Math.round(scanOff/fileSize*90));
+      await tick();
+    }
+    scanOff=chunkEnd-59;
   }
-  log('Indexed '+count+' entries in '+((Date.now()-startTime)/1000).toFixed(1)+'s');
+  log('Indexed '+found+'/'+needed.size+' entries in '+((Date.now()-startTime)/1000).toFixed(1)+'s','ok');
+  _indexBuilding=false;
   return _entryIndex;
 }
 async function resolveData(p){if(p.data)return p.data;if(p._entry){try{const b=await p._entry.getData(new zip.BlobWriter());p.data=await b.arrayBuffer();delete p._entry;return p.data}catch(e){log('Failed to read attachment: '+e.message,'warn');return null}}if(p._fallbackAttach){try{const ai=p._fallbackAttach;
 // If needs full scan, look up from the shared entry index
 if(ai._needsFullScan){
-  const idx=await _buildEntryIndex(ai.file);
-  const pn=Object.keys(attachMap||{}).find(k=>attachMap[k]===ai);
-  const entry=pn&&idx[pn];
-  if(entry){ai.zipOffset=entry.dataStart;ai.method=entry.method;ai.compSize=entry.compSize;ai._needsScan=!ai.compSize}
-  else{log('Attachment not in index: '+(p.cl||'?'),'warn');return null}
-  delete ai._needsFullScan;
+  const needed=new Set();for(const k in attachMap)if(attachMap[k]._needsFullScan)needed.add(k);
+  const idx=await _buildEntryIndex(ai.file,needed);
+  if(!idx){log('Index build failed','warn');return null}
+  // Update ALL deferred entries from the index at once
+  for(const k in attachMap){
+    if(attachMap[k]._needsFullScan&&idx[k]){
+      attachMap[k].zipOffset=idx[k].dataStart;attachMap[k].method=idx[k].method;attachMap[k].compSize=idx[k].compSize;
+      attachMap[k]._needsScan=!idx[k].compSize;delete attachMap[k]._needsFullScan;
+    }
+  }
+  if(ai._needsFullScan){log('Attachment not in index: '+(p.cl||'?'),'warn');return null}
 }
 if(!ai.compSize&&ai._needsScan){
 // Scan forward from zipOffset to find next PK header for compSize
