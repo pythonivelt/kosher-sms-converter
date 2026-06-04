@@ -189,7 +189,7 @@
     <span class="footer-dot"></span>
     <span>Nothing uploaded anywhere</span>
     <span class="footer-dot"></span>
-    <span>v0.0.53</span>
+    <span>v0.0.54</span>
   </div>
 </div>
 
@@ -596,13 +596,12 @@ async function fallbackZipScan(file){
       const writer=ds.writable.getWriter();
       const chunks=[];
       const readAll=(async()=>{try{while(true){const{done,value}=await reader.read();if(done)break;chunks.push(value)}}catch(e){}})();
-      // Feed in 64KB slices from file
-      const feedSize=65536;let pos=ndjDataStart;
-      while(pos<ndjCompEnd){
-        const end=Math.min(pos+feedSize,ndjCompEnd);
-        const chunk=new Uint8Array(await file.slice(pos,end).arrayBuffer());
-        try{await writer.write(chunk)}catch(e){break}
-        pos=end;
+      // Read compressed data into memory first, then feed in 64KB slices
+      const compBuf=new Uint8Array(await file.slice(ndjDataStart,ndjCompEnd).arrayBuffer());
+      const feedSize=65536;
+      for(let pos=0;pos<compBuf.length;pos+=feedSize){
+        const slice=compBuf.subarray(pos,Math.min(pos+feedSize,compBuf.length));
+        try{await writer.write(slice)}catch(e){break}
       }
       try{await writer.close()}catch(e){}
       await readAll;
