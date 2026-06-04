@@ -189,7 +189,7 @@
     <span class="footer-dot"></span>
     <span>Nothing uploaded anywhere</span>
     <span class="footer-dot"></span>
-    <span>v0.0.54</span>
+    <span>v0.0.55</span>
   </div>
 </div>
 
@@ -1243,7 +1243,7 @@ async function buildWonderZip(messages){
 
   for(const m of messages){
     if(m.type==='sms'){
-      xmlParts.push(`  <sms address="${escXml(m.address)}" body="${escXml(m.body)}" date="${escXml(m.date)}" date_sent="${escXml(m.dateSent||'0')}" type="${m.direction==='in'?'1':'2'}" read="${escXml(m.read||'1')}" seen="1" />\n`);
+      xmlParts.push(`  <sms address="${escXml(m.address)}" body="${escXml(m.body)}" date="${escXml(m.date)}" date_sent="0" type="${m.direction==='in'?'1':'2'}" read="${escXml(m.read||'1')}" seen="1" />\n`);
       smsCount++;
     }else{
       const mb=m.direction==='in'?'1':'2';
