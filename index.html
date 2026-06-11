@@ -4,75 +4,139 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Kosher Phone SMS Converter</title>
+<meta name="description" content="Convert SMS/MMS backups between Fig, Wonder, Pom and SMS Backup &amp; Restore — 100% in your browser, nothing uploaded." />
+<meta name="color-scheme" content="light dark" />
+<meta name="theme-color" content="#f3f4fb" media="(prefers-color-scheme: light)" />
+<meta name="theme-color" content="#0a0d18" media="(prefers-color-scheme: dark)" />
+<script>(function(){var t='light';try{t=localStorage.getItem('theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light')}catch(e){}document.documentElement.setAttribute('data-theme',t)})();</script>
 <script src="https://cdn.jsdelivr.net/npm/@zip.js/zip.js@2.7.52/dist/zip.min.js"></script>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:linear-gradient(135deg,#eef2ff 0%,#f0f4ff 50%,#e8ecf8 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
-  .card{background:#fff;border:1px solid #e2e8f0;border-radius:20px;padding:36px;max-width:520px;width:100%;box-shadow:0 10px 40px rgba(0,0,0,.08),0 1px 3px rgba(0,0,0,.04)}
-  .logo{display:flex;align-items:center;gap:12px;margin-bottom:8px}
-  .logo-icon{width:44px;height:44px;background:linear-gradient(135deg,#3b82f6,#6366f1);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;box-shadow:0 4px 12px rgba(59,130,246,.25)}
-  h1{font-size:1.2rem;color:#1e293b;font-weight:700;letter-spacing:-.01em}
-  .subtitle{font-size:.82rem;color:#64748b;margin-bottom:24px;line-height:1.5}
-  .drop-zone{border:2px dashed #cbd5e0;border-radius:16px;padding:40px 20px;text-align:center;cursor:pointer;transition:all .25s;background:#f8fafc}
-  .drop-zone:hover{border-color:#818cf8;background:#f5f3ff}
-  .drop-zone.active{border-color:#6366f1;background:#eef2ff}
-  .drop-zone.done{border-color:#22c55e;border-style:solid;background:#f0fdf4}
+  :root{--accent:#6366f1;--accent-2:#8b5cf6;--accent-grad:linear-gradient(135deg,#6366f1,#8b5cf6);--ok:#10b981;--ok-2:#059669;--danger:#ef4444;--danger-2:#dc2626}
+  [data-theme="light"]{
+    --bg:#f3f4fb;--glow-1:rgba(99,102,241,.14);--glow-2:rgba(16,185,129,.10);
+    --card:#ffffff;--card-border:rgba(15,23,42,.08);
+    --surface:#f8fafc;--surface-2:#eef1f6;--surface-border:rgba(15,23,42,.08);
+    --text:#0f172a;--text-2:#475569;--text-3:#94a3b8;
+    --accent-soft:rgba(99,102,241,.08);--accent-border:rgba(99,102,241,.45);
+    --shadow:0 1px 2px rgba(15,23,42,.04),0 12px 40px -8px rgba(15,23,42,.12);
+    --btn-glow:0 8px 24px -6px rgba(99,102,241,.5);
+    --ok-soft:#ecfdf5;--ok-border:#a7f3d0;--ok-text:#065f46;
+    --warn-soft:#fffbeb;--warn-border:#fde68a;--warn-text:#92400e;--warn-text-2:#b45309;
+    --err-soft:#fef2f2;--err-border:#fecaca;--err-text:#991b1b;
+    --field:#ffffff;--field-border:rgba(15,23,42,.16)
+  }
+  [data-theme="dark"]{
+    --bg:#0a0d18;--glow-1:rgba(99,102,241,.17);--glow-2:rgba(16,185,129,.09);
+    --card:#10152a;--card-border:rgba(148,163,184,.13);
+    --surface:rgba(148,163,184,.06);--surface-2:rgba(148,163,184,.12);--surface-border:rgba(148,163,184,.14);
+    --text:#e8ecf8;--text-2:#9aa6c0;--text-3:#5e6b8c;
+    --accent-soft:rgba(99,102,241,.15);--accent-border:rgba(129,140,248,.55);
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 16px 48px -8px rgba(0,0,0,.55);
+    --btn-glow:0 8px 24px -6px rgba(99,102,241,.35);
+    --ok-soft:rgba(16,185,129,.1);--ok-border:rgba(16,185,129,.3);--ok-text:#6ee7b7;
+    --warn-soft:rgba(245,158,11,.09);--warn-border:rgba(245,158,11,.3);--warn-text:#fcd34d;--warn-text-2:#fbbf24;
+    --err-soft:rgba(239,68,68,.1);--err-border:rgba(239,68,68,.32);--err-text:#fca5a5;
+    --field:rgba(148,163,184,.07);--field-border:rgba(148,163,184,.22)
+  }
+  html{color-scheme:light}
+  [data-theme="dark"]{color-scheme:dark}
+  body{font-family:'Segoe UI',system-ui,-apple-system,'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:20px;transition:background .3s}
+  body::before{content:'';position:fixed;inset:0;background:radial-gradient(620px 440px at 10% -8%,var(--glow-1),transparent 65%),radial-gradient(560px 400px at 95% 108%,var(--glow-2),transparent 65%);pointer-events:none;z-index:0}
+  .card{position:relative;z-index:1;background:var(--card);border:1px solid var(--card-border);border-radius:24px;padding:34px 32px;max-width:540px;width:100%;box-shadow:var(--shadow);transition:background .3s,border-color .3s}
+  .top-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:8px}
+  .logo{display:flex;align-items:center;gap:13px;min-width:0}
+  .logo-icon{width:46px;height:46px;flex:0 0 46px;background:var(--accent-grad);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.45rem;box-shadow:0 6px 18px -4px rgba(99,102,241,.5)}
+  h1{font-size:1.22rem;color:var(--text);font-weight:700;letter-spacing:-.02em;line-height:1.25}
+  .theme-toggle{flex:0 0 auto;width:38px;height:38px;border-radius:12px;border:1px solid var(--surface-border);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-2);transition:border-color .2s,color .2s,transform .15s;padding:0}
+  .theme-toggle:hover{border-color:var(--accent-border);color:var(--accent)}
+  .theme-toggle:active{transform:scale(.92)}
+  .theme-toggle svg{width:18px;height:18px;display:block}
+  [data-theme="light"] .icon-sun{display:none}
+  [data-theme="dark"] .icon-moon{display:none}
+  .subtitle{font-size:.84rem;color:var(--text-2);margin-bottom:24px;line-height:1.55}
+  .drop-zone{border:1.5px dashed var(--field-border);border-radius:18px;padding:38px 20px;text-align:center;cursor:pointer;transition:border-color .25s,background .25s;background:var(--surface)}
+  .drop-zone:hover{border-color:var(--accent-border);background:var(--accent-soft)}
+  .drop-zone.active{border-color:var(--accent);background:var(--accent-soft)}
+  .drop-zone.done{border-color:var(--ok);border-style:solid;background:var(--ok-soft)}
   .drop-zone input{display:none}
-  .drop-icon{font-size:2.5rem;margin-bottom:10px}
-  .drop-text{color:#334155;font-size:.92rem;font-weight:500}
-  .drop-hint{font-size:.75rem;color:#94a3b8;margin-top:6px}
-  .btn{display:block;width:100%;padding:14px;border:none;border-radius:12px;font-size:.95rem;font-weight:600;cursor:pointer;margin-top:16px;transition:all .2s;letter-spacing:.01em}
-  .btn-primary{background:linear-gradient(135deg,#3b82f6,#6366f1);color:#fff;box-shadow:0 4px 15px rgba(99,102,241,.25)}
-  .btn-primary:hover{box-shadow:0 6px 20px rgba(99,102,241,.35);transform:translateY(-1px)}
-  .btn-primary:disabled{background:#cbd5e1;color:#94a3b8;box-shadow:none;transform:none;cursor:not-allowed}
-  .btn-success{background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;box-shadow:0 4px 15px rgba(34,197,94,.25)}
-  .btn-success:hover{box-shadow:0 6px 20px rgba(34,197,94,.35);transform:translateY(-1px)}
-  .btn-cancel{background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;box-shadow:0 4px 15px rgba(239,68,68,.25)}
-  .btn-cancel:hover{box-shadow:0 6px 20px rgba(239,68,68,.35);transform:translateY(-1px)}
+  .drop-icon{font-size:2.4rem;margin-bottom:10px}
+  .drop-text{color:var(--text);font-size:.92rem;font-weight:500}
+  .drop-hint{font-size:.75rem;color:var(--text-3);margin-top:6px}
+  .btn{display:block;width:100%;padding:14px;border:none;border-radius:14px;font-size:.95rem;font-weight:600;cursor:pointer;margin-top:16px;transition:filter .2s,transform .15s,box-shadow .2s;letter-spacing:.01em}
+  .btn:active{transform:scale(.985)}
+  .btn-primary{background:var(--accent-grad);color:#fff;box-shadow:var(--btn-glow)}
+  .btn-primary:hover{filter:brightness(1.07)}
+  .btn-primary:disabled{background:var(--surface-2);color:var(--text-3);box-shadow:none;cursor:not-allowed;filter:none;transform:none}
+  .btn-success{background:linear-gradient(135deg,var(--ok),var(--ok-2));color:#fff;box-shadow:0 8px 24px -6px rgba(16,185,129,.45)}
+  .btn-success:hover{filter:brightness(1.07)}
+  .btn-success:disabled{background:var(--surface-2);color:var(--text-3);box-shadow:none;cursor:not-allowed;filter:none;transform:none}
+  .btn-cancel{background:linear-gradient(135deg,var(--danger),var(--danger-2));color:#fff;box-shadow:0 8px 24px -6px rgba(239,68,68,.4)}
+  .btn-cancel:hover{filter:brightness(1.07)}
   .progress{margin-top:16px;display:none}
-  .progress-bar-wrap{background:#e2e8f0;border-radius:99px;height:6px;overflow:hidden;margin-top:8px}
-  .progress-bar{height:100%;background:linear-gradient(90deg,#3b82f6,#6366f1);width:0;transition:width .15s;border-radius:99px}
-  .progress-label{font-size:.78rem;color:#64748b}
-  .scan-results{margin-top:20px;padding:16px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;font-size:.84rem;color:#475569;display:none}
-  .scan-results h3{font-size:.9rem;color:#1e293b;margin-bottom:10px;font-weight:600}
-  .scan-results div.stat{margin:4px 0;display:flex;align-items:center;gap:8px}
-  .scan-results strong{color:#1e293b}
-  .detected-badge{display:inline-block;padding:3px 10px;border-radius:6px;font-size:.75rem;font-weight:600;background:#eef2ff;color:#4f46e5;margin-left:6px}
-  .section-label{font-size:.8rem;font-weight:600;color:#475569;margin:14px 0 8px;text-transform:uppercase;letter-spacing:.04em}
-  .options{margin-top:18px;display:none}
-  .option{display:flex;align-items:flex-start;gap:12px;padding:14px;border:1px solid #e2e8f0;border-radius:12px;margin-bottom:8px;cursor:pointer;transition:all .2s;background:#fff}
-  .option:hover{border-color:#818cf8;background:#f5f3ff}
-  .option.selected{border-color:#6366f1;background:#eef2ff;box-shadow:0 0 0 1px rgba(99,102,241,.15)}
-  .option input[type="radio"]{margin-top:3px;accent-color:#6366f1;width:16px;height:16px}
-  .option-label{font-weight:600;font-size:.88rem;color:#1e293b}
-  .option-desc{font-size:.76rem;color:#64748b;margin-top:2px;line-height:1.4}
-  .pdf-panel{margin-top:14px;padding:16px;background:#fffbeb;border:1px solid #fde68a;border-radius:14px;transition:all .3s}
-  .pdf-panel-title{font-weight:600;font-size:.88rem;color:#92400e;margin-bottom:4px}
-  .pdf-panel-info{font-size:.78rem;color:#b45309;margin-bottom:10px;line-height:1.5}
-  .pdf-panel-desc{font-size:.78rem;color:#92400e;margin-bottom:12px;line-height:1.5}
-  .info{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 14px;font-size:.82rem;color:#166534;margin-top:14px;display:none;line-height:1.5}
-  .error{background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:12px 14px;font-size:.82rem;color:#991b1b;margin-top:14px;display:none;line-height:1.5}
-  .file-name{font-size:.78rem;color:#6366f1;margin-top:10px;word-break:break-all;display:none;font-weight:500}
-  .footer{margin-top:24px;font-size:.72rem;color:#94a3b8;text-align:center;display:flex;align-items:center;justify-content:center;gap:6px}
-  .footer-dot{width:4px;height:4px;border-radius:50%;background:#cbd5e1}
+  .progress-bar-wrap{background:var(--surface-2);border-radius:99px;height:7px;overflow:hidden;margin-top:8px}
+  .progress-bar{height:100%;background:var(--accent-grad);width:0;transition:width .15s;border-radius:99px}
+  .progress-label{font-size:.78rem;color:var(--text-2)}
+  .scan-results{margin-top:20px;padding:18px;background:var(--surface);border:1px solid var(--surface-border);border-radius:16px;font-size:.84rem;color:var(--text-2);display:none}
+  .scan-results h3{font-size:.92rem;color:var(--text);margin-bottom:12px;font-weight:600}
+  .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .scan-results div.stat{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--surface-border);border-radius:10px;padding:9px 12px;margin:0}
+  .scan-results strong{color:var(--text)}
+  .detected-badge{display:inline-block;padding:3px 10px;border-radius:7px;font-size:.75rem;font-weight:600;background:var(--accent-soft);color:var(--accent);border:1px solid var(--accent-border);margin-left:6px}
+  .section-label{font-size:.76rem;font-weight:600;color:var(--text-2);margin:18px 0 8px;text-transform:uppercase;letter-spacing:.07em}
+  .options{margin-top:14px;display:none}
+  .option{display:flex;align-items:flex-start;gap:12px;padding:14px 15px;border:1px solid var(--surface-border);border-radius:14px;margin-bottom:9px;cursor:pointer;transition:border-color .18s,background .18s,box-shadow .18s;background:var(--card)}
+  .option:hover{border-color:var(--accent-border)}
+  .option.selected{border-color:var(--accent-border);background:var(--accent-soft);box-shadow:0 0 0 3px var(--accent-soft)}
+  .option input[type="radio"]{margin-top:3px;accent-color:var(--accent);width:16px;height:16px}
+  .option-label{font-weight:600;font-size:.88rem;color:var(--text)}
+  .option-desc{font-size:.76rem;color:var(--text-2);margin-top:2px;line-height:1.4}
+  .opt-note{font-size:.7rem;color:var(--text-3);font-weight:400}
+  .pdf-panel{margin-top:14px;padding:16px;background:var(--warn-soft);border:1px solid var(--warn-border);border-radius:14px;transition:all .3s}
+  .pdf-panel-title{font-weight:600;font-size:.88rem;color:var(--warn-text);margin-bottom:4px}
+  .pdf-panel-info{font-size:.78rem;color:var(--warn-text-2);margin-bottom:10px;line-height:1.5}
+  .pdf-panel-desc{font-size:.78rem;color:var(--warn-text);margin-bottom:12px;line-height:1.5}
+  .info{background:var(--ok-soft);border:1px solid var(--ok-border);border-radius:12px;padding:12px 14px;font-size:.82rem;color:var(--ok-text);margin-top:14px;display:none;line-height:1.5}
+  .error{background:var(--err-soft);border:1px solid var(--err-border);border-radius:12px;padding:12px 14px;font-size:.82rem;color:var(--err-text);margin-top:14px;display:none;line-height:1.5}
+  .report-input{width:100%;padding:9px 12px;border-radius:10px;border:1px solid var(--field-border);background:var(--field);color:var(--text);margin-bottom:8px;font-size:1rem}
+  .report-btn{padding:9px 22px;border-radius:10px;border:none;background:var(--accent-grad);color:#fff;font-weight:600;cursor:pointer}
+  .file-name{font-size:.78rem;color:var(--accent);margin-top:10px;word-break:break-all;display:none;font-weight:500}
+  .footer{margin-top:26px;font-size:.72rem;color:var(--text-3);text-align:center;display:flex;flex-direction:column;gap:8px;align-items:center}
+  .footer-line{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap}
+  .footer-dot{width:3px;height:3px;border-radius:50%;background:var(--text-3);opacity:.7}
+  .gh-link{display:inline-flex;align-items:center;gap:5px;color:var(--text-3);text-decoration:none;transition:color .2s}
+  .gh-link:hover{color:var(--accent)}
+  .gh-link svg{width:13px;height:13px;display:block}
   .log-panel{margin-top:14px}
-  .log-panel summary{font-size:.7rem;color:#94a3b8;cursor:pointer;user-select:none;text-align:center;list-style:none}
+  .log-panel summary{font-size:.7rem;color:var(--text-3);cursor:pointer;user-select:none;text-align:center;list-style:none}
   .log-panel summary::-webkit-details-marker{display:none}
   .log-panel summary::before{content:'▸ ';font-size:.65rem}
   .log-panel[open] summary::before{content:'▾ '}
-  .log-panel .log-box{max-height:120px;overflow-y:auto;background:#1e293b;color:#94a3b8;font-family:'Cascadia Code',Consolas,monospace;font-size:.65rem;line-height:1.5;padding:8px 10px;border-radius:8px;margin-top:6px;white-space:pre-wrap;word-break:break-all}
+  .log-panel .log-box{max-height:120px;overflow-y:auto;background:#0d1322;color:#8b97b5;border:1px solid rgba(148,163,184,.15);font-family:'Cascadia Code',Consolas,monospace;font-size:.65rem;line-height:1.5;padding:8px 10px;border-radius:10px;margin-top:6px;white-space:pre-wrap;word-break:break-all}
   .log-panel .log-box .log-warn{color:#facc15}
   .log-panel .log-box .log-err{color:#f87171}
   .log-panel .log-box .log-ok{color:#4ade80}
+  .log-row{margin-top:6px;display:flex;gap:6px;align-items:center;justify-content:flex-end}
+  .log-input{flex:1;padding:6px 10px;border-radius:8px;border:1px solid var(--field-border);background:var(--field);color:var(--text);font-size:.68rem}
+  .log-btn{padding:6px 12px;border-radius:8px;border:1px solid var(--field-border);background:var(--surface);color:var(--text-2);font-size:.68rem;cursor:pointer;white-space:nowrap;transition:border-color .2s,color .2s}
+  .log-btn:hover{border-color:var(--accent-border);color:var(--accent)}
   @keyframes shake{0%,100%{transform:translateX(0)}15%{transform:translateX(-6px)}30%{transform:translateX(5px)}45%{transform:translateX(-4px)}60%{transform:translateX(3px)}75%{transform:translateX(-2px)}}
   .shake{animation:shake .5s ease-in-out}
+  @media (max-width:480px){.card{padding:26px 18px;border-radius:20px}.stats-grid{grid-template-columns:1fr}}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
 <body>
 <div class="card">
-  <div class="logo">
-    <div class="logo-icon">📱</div>
-    <h1>Kosher Phone SMS Converter</h1>
+  <div class="top-row">
+    <div class="logo">
+      <div class="logo-icon">📱</div>
+      <h1>Kosher Phone SMS Converter</h1>
+    </div>
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch between dark and light mode">
+      <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+    </button>
   </div>
   <p class="subtitle">Convert message backups between Fig, Wonder, and SMS Backup &amp; Restore. Works with any file size.</p>
 
@@ -88,11 +152,13 @@
 
   <div class="scan-results" id="scanResults">
     <h3>What's inside <span class="detected-badge" id="detectedBadge"></span></h3>
-    <div class="stat">📩 Received: <strong id="statIn">0</strong></div>
-    <div class="stat">📤 Sent: <strong id="statOut">0</strong></div>
-    <div class="stat" id="statMmsRow">📎 MMS: <strong id="statMms">0</strong></div>
-    <div class="stat" id="statAttachRow">🖼️ Attachments: <strong id="statAttach">0</strong></div>
-    <div class="stat" id="statPdfRow" style="display:none">📄 PDFs: <strong id="statPdf">0</strong></div>
+    <div class="stats-grid">
+      <div class="stat">📩 Received: <strong id="statIn">0</strong></div>
+      <div class="stat">📤 Sent: <strong id="statOut">0</strong></div>
+      <div class="stat" id="statMmsRow">📎 MMS: <strong id="statMms">0</strong></div>
+      <div class="stat" id="statAttachRow">🖼️ Attachments: <strong id="statAttach">0</strong></div>
+      <div class="stat" id="statPdfRow" style="display:none">📄 PDFs: <strong id="statPdf">0</strong></div>
+    </div>
   </div>
 
   <div class="options" id="options">
@@ -121,7 +187,7 @@
     <label class="option" data-value="wonder" id="optWonder">
       <input type="radio" name="target" value="wonder" />
       <div>
-        <div class="option-label">Wonder <span style="font-size:.7rem;color:#94a3b8;font-weight:400">(SMS only)</span></div>
+        <div class="option-label">Wonder <span class="opt-note">(SMS only)</span></div>
         <div class="option-desc">MMS/pictures coming soon — SMS works</div>
       </div>
     </label>
@@ -178,20 +244,32 @@
   <details class="log-panel" id="logPanel" style="display:none">
     <summary>Show log</summary>
     <div class="log-box" id="logBox"></div>
-    <div style="margin-top:6px;display:flex;gap:6px;align-items:center;justify-content:flex-end">
-      <input id="logUserInput" type="text" placeholder="Your email or iVelt username (optional)" style="flex:1;padding:4px 8px;border-radius:6px;border:1px solid #334155;background:#1e293b;color:#e2e8f0;font-size:.65rem">
-      <button id="sendLogBtn" style="padding:4px 12px;border-radius:6px;border:1px solid #334155;background:#1e293b;color:#94a3b8;font-size:.65rem;cursor:pointer;white-space:nowrap">Send log to developer</button>
+    <div class="log-row">
+      <input id="logUserInput" type="text" class="log-input" placeholder="Your email or iVelt username (optional)">
+      <button id="sendLogBtn" class="log-btn">Send log to developer</button>
     </div>
   </details>
 
   <div class="footer">
-    <span>Runs 100% on your device</span>
-    <span class="footer-dot"></span>
-    <span>Nothing uploaded anywhere</span>
-    <span class="footer-dot"></span>
-    <span>v0.0.56</span>
+    <div class="footer-line">
+      <span>Runs 100% on your device</span>
+      <span class="footer-dot"></span>
+      <span>Nothing uploaded anywhere</span>
+    </div>
+    <div class="footer-line">
+      <span id="verSpan">v0.0.57</span>
+      <span class="footer-dot"></span>
+      <a class="gh-link" href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener">
+        <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+        GitHub
+      </a>
+    </div>
   </div>
 </div>
+
+<script>
+document.getElementById('themeToggle').addEventListener('click',function(){var h=document.documentElement,t=h.getAttribute('data-theme')==='dark'?'light':'dark';h.setAttribute('data-theme',t);try{localStorage.setItem('theme',t)}catch(e){}});
+</script>
 
 <script>
 (function(){
@@ -474,7 +552,7 @@ async function sendLog(){
     if(!logText.trim()){btn.textContent='No log';return}
     btn.textContent='Sending…';btn.disabled=true;
     const fn=(fileNameEl?fileNameEl.textContent:'')||'unknown';
-    const ver=document.querySelector('span')&&document.querySelector('span').textContent.match(/v[\d.]+/)?document.querySelector('span').textContent:'?';
+    const ver=(document.getElementById('verSpan')&&document.getElementById('verSpan').textContent)||'?';
     const user=($('logUserInput')||{}).value||'';
     const payload={type:'log',logText:logText,fileName:fn,version:ver,user:user,timestamp:new Date().toISOString()};
     await fetch('https://script.google.com/macros/s/AKfycbzSrDeatu4a0rgT9pkypGDyiWdc-i89XSYoVhnSae7gRUvRaXlHee98ycsDE084TUVN4A/exec',{method:'POST',mode:'no-cors',body:JSON.stringify(payload)});
@@ -487,7 +565,7 @@ $('sendLogBtn').addEventListener('click',sendLog);
 
 function downloadReport(report,origName){
   progressEl.style.display='none';
-  errorBox.innerHTML='<b>This phone format is not supported yet.</b><br><br>Help us add support for your phone! A small structure report will be sent (no private messages are included).<br><br><input id="phoneBrandInput" type="text" placeholder="Phone brand (e.g. POM, Kosher XL...)" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;margin-bottom:8px;font-size:1rem"><input id="userEmailInput" type="email" placeholder="Your email (optional, if you want to help test)" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;margin-bottom:10px;font-size:1rem"><br><button id="sendReportBtn" style="padding:8px 20px;border-radius:8px;border:none;background:#4f46e5;color:#fff;font-weight:600;cursor:pointer">Send Report</button>';
+  errorBox.innerHTML='<b>This phone format is not supported yet.</b><br><br>Help us add support for your phone! A small structure report will be sent (no private messages are included).<br><br><input id="phoneBrandInput" type="text" class="report-input" placeholder="Phone brand (e.g. POM, Kosher XL...)"><input id="userEmailInput" type="email" class="report-input" placeholder="Your email (optional, if you want to help test)"><br><button id="sendReportBtn" class="report-btn">Send Report</button>';
   errorBox.style.display='block';scanBtn.disabled=false;cancelBtn.style.display='none';
   $('sendReportBtn').onclick=async function(){
     const brand=($('phoneBrandInput').value||'').trim();
@@ -1452,11 +1530,16 @@ async function build(target){
     }else if(target==='fig'||target==='pom'){
       showProgress('Building '+(target==='pom'?'Pom':'Fig')+' ZIP…',40);await tick();
       blob=await buildFigZip(msgs);
-      filename=(target==='pom'?'pom':'fig')+'-'+baseName+'.zip';
+      if(target==='pom'){
+        // POM names its own backups last_HHMMSS.zip — mimic it so POM's restore screen lists the file
+        const n=new Date(),p=x=>String(x).padStart(2,'0');
+        filename='last_'+p(n.getHours())+p(n.getMinutes())+p(n.getSeconds())+'.zip';
+      }else filename='fig-'+baseName+'.zip';
     }else if(target==='wonder'){
       showProgress('Building Wonder ZIP (SMS only)…',40);await tick();
       blob=await buildWonderZip(msgs);
-      filename='wonder-'+baseName+'.zip';
+      const d=new Date(),p=x=>String(x).padStart(2,'0');
+      filename='Messages_Backup_'+d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+'.zip';
     }
 
     if(cancelled){log('Build cancelled by user','warn');cancelBtn.style.display='none';progressEl.style.display='none';infoBox.textContent='Cancelled.';infoBox.style.display='block';buildBtn.disabled=false;return}
