@@ -189,7 +189,7 @@
     <span class="footer-dot"></span>
     <span>Nothing uploaded anywhere</span>
     <span class="footer-dot"></span>
-    <span>v0.0.55</span>
+    <span>v0.0.56</span>
   </div>
 </div>
 
@@ -517,6 +517,111 @@ function fmtDate(ts){const ms=parseInt(ts,10);if(!ms||isNaN(ms))return'';const d
 function ab2b64(buf){const u=new Uint8Array(buf);let b='';for(let i=0;i<u.length;i+=32768)b+=String.fromCharCode.apply(null,u.subarray(i,i+32768));return btoa(b)}
 function b642ab(s){const b=atob(s),a=new Uint8Array(b.length);for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i);return a.buffer}
 
+// Walk every ZIP entry sequentially using VALIDATED data descriptors.
+// POM writes streaming ZIPs: local headers have zero sizes and there is no
+// central directory. Each entry's data is followed by a data descriptor
+// holding the real compressed size. A boundary candidate only counts if that
+// size field equals the actual distance from the entry's data start — a PK
+// signature inside compressed data can never pass this check, so no false
+// positives and no junk is ever fed to the decompressor.
+async function walkZipEntries(file){
+  const fileSize=file.size;
+  const entries=[];
+  const CHUNK=8*1024*1024;
+  let chunkStart=-1,chunk=null;
+  async function loadChunk(pos){
+    chunkStart=pos;
+    chunk=new Uint8Array(await file.slice(pos,Math.min(pos+CHUNK,fileSize)).arrayBuffer());
+  }
+  async function readU32(abs){
+    if(chunk&&abs>=chunkStart&&abs+4<=chunkStart+chunk.length){
+      const i=abs-chunkStart;
+      return(chunk[i]|(chunk[i+1]<<8)|(chunk[i+2]<<16)|(chunk[i+3]<<24))>>>0;
+    }
+    const b=new Uint8Array(await file.slice(abs,abs+4).arrayBuffer());
+    return(b[0]|(b[1]<<8)|(b[2]<<16)|(b[3]<<24))>>>0;
+  }
+  let off=0,lastPct=-1;
+  while(off<=fileSize-30){
+    if(cancelled)return null;
+    // Parse local file header at off — from the current chunk when possible
+    let hdr,fnBase;
+    if(chunk&&off>=chunkStart&&off+700<=chunkStart+chunk.length){
+      hdr=chunk.subarray(off-chunkStart,off-chunkStart+30);fnBase=off-chunkStart+30;
+    }else{
+      await loadChunk(off);
+      hdr=chunk.subarray(0,30);fnBase=30;
+    }
+    if(!(hdr[0]===0x50&&hdr[1]===0x4B&&hdr[2]===0x03&&hdr[3]===0x04))break;
+    const method=hdr[8]|(hdr[9]<<8);
+    const flags=hdr[6]|(hdr[7]<<8);
+    const compSize=(hdr[18]|(hdr[19]<<8)|(hdr[20]<<16)|(hdr[21]<<24))>>>0;
+    const fnLen=hdr[26]|(hdr[27]<<8);
+    const exLen=hdr[28]|(hdr[29]<<8);
+    if(fnLen===0||fnLen>600)break;
+    const name=new TextDecoder().decode(chunk.subarray(fnBase,fnBase+fnLen));
+    const dataStart=off+30+fnLen+exLen;
+    if(compSize>0||!(flags&8)){
+      // Sizes present in the local header — trust them and jump
+      entries.push({name,method,dataStart,compSize});
+      off=dataStart+compSize;
+      if(flags&8){
+        const sig=await readU32(off);
+        if(sig===0x08074b50)off+=16;else if(sig!==0x04034b50)off+=12;
+      }
+      continue;
+    }
+    // Sizes unknown — scan forward for the validated data descriptor
+    let scanPos=Math.max(0,dataStart-20);
+    let found=false;
+    while(!found){
+      if(cancelled)return null;
+      if(!chunk||scanPos<chunkStart||scanPos>chunkStart+chunk.length-40)await loadChunk(scanPos);
+      const margin=chunk.length-20;
+      let from=Math.max(12,scanPos-chunkStart);
+      while(true){
+        const pi=chunk.indexOf(0x50,from);
+        if(pi===-1||pi>margin)break;
+        from=pi+1;
+        if(chunk[pi+1]!==0x4B)continue;
+        const abs=chunkStart+pi;
+        if(chunk[pi+2]===0x07&&chunk[pi+3]===0x08){
+          // Signed descriptor: PK\x07\x08 + crc(4) + compSize(4) + uncompSize(4)
+          const comp=(chunk[pi+8]|(chunk[pi+9]<<8)|(chunk[pi+10]<<16)|(chunk[pi+11]<<24))>>>0;
+          if(comp===abs-dataStart){
+            entries.push({name,method,dataStart,compSize:comp});
+            off=abs+16;found=true;break;
+          }
+        }else if(chunk[pi+2]===0x03&&chunk[pi+3]===0x04&&abs-12>=dataStart){
+          // Next local header with an unsigned 12-byte descriptor before it
+          const comp=(chunk[pi-8]|(chunk[pi-7]<<8)|(chunk[pi-6]<<16)|(chunk[pi-5]<<24))>>>0;
+          if(comp===abs-12-dataStart){
+            entries.push({name,method,dataStart,compSize:comp});
+            off=abs;found=true;break;
+          }
+        }
+      }
+      if(found)break;
+      if(chunkStart+chunk.length>=fileSize){
+        // EOF — last entry's descriptor sits at the very end of the file
+        const sigPos=fileSize-16;
+        if(sigPos>dataStart&&(await readU32(sigPos))===0x08074b50){
+          const comp=await readU32(fileSize-8);
+          if(comp===sigPos-dataStart)entries.push({name,method,dataStart,compSize:comp});
+        }else if(fileSize-12>dataStart){
+          const comp=await readU32(fileSize-8);
+          if(comp===fileSize-12-dataStart)entries.push({name,method,dataStart,compSize:comp});
+        }
+        off=fileSize;found=true;break;
+      }
+      scanPos=chunkStart+chunk.length-40;
+      const pct=Math.min(45,Math.round(scanPos/fileSize*40)+5);
+      if(pct!==lastPct){lastPct=pct;showProgress('Indexing ZIP... '+formatSize(scanPos)+' / '+formatSize(fileSize)+' ('+entries.length+' entries)',pct);await tick()}
+    }
+  }
+  return entries;
+}
+
 // Fallback ZIP reader for POM/unusual ZIPs
 // Scan phase: only reads NDJSON (fast). Attachments resolved during export.
 async function fallbackZipScan(file){
@@ -561,6 +666,7 @@ async function fallbackZipScan(file){
   // Step 2: Get NDJSON entry info
   fmt='pom';
   let ndjDataStart,ndjCompEnd,method;
+  let walkedEntries=null;
   if(cdEntries){
     // Use central directory — we have exact sizes
     const ndjEntry=cdEntries.find(e=>e.name.endsWith('.ndjson'));
@@ -573,17 +679,20 @@ async function fallbackZipScan(file){
     method=ndjEntry.method;
     log('Found '+ndjEntry.name+': '+formatSize(ndjEntry.compSize)+' compressed (from central directory)');
   }else{
-    // No central directory — read first header and cap
-    const hdr=new Uint8Array(await file.slice(0,30).arrayBuffer());
-    if(hdr[0]!==0x50||hdr[1]!==0x4B||hdr[2]!==0x03||hdr[3]!==0x04){log('Not a ZIP','err');return null}
-    method=hdr[8]|(hdr[9]<<8);
-    const fnLen=hdr[26]|(hdr[27]<<8);const exLen=hdr[28]|(hdr[29]<<8);
-    const fnBuf=new Uint8Array(await file.slice(30,30+fnLen).arrayBuffer());
-    const ndjName=new TextDecoder().decode(fnBuf);
-    if(!ndjName.endsWith('.ndjson')){log('First entry is not NDJSON: '+ndjName,'err');return null}
-    ndjDataStart=30+fnLen+exLen;
-    ndjCompEnd=Math.min(ndjDataStart+15*1024*1024,fileSize);
-    log('Found '+ndjName+' (no central directory, feeding up to '+formatSize(ndjCompEnd-ndjDataStart)+')');
+    // No central directory — walk the whole file once. Entry boundaries are
+    // confirmed by the data descriptor's size field matching the real offset,
+    // so every entry gets an EXACT compressed size (no guessing, no junk).
+    log('No central directory — indexing entries by walking the file...');
+    walkedEntries=await walkZipEntries(file);
+    if(cancelled){log('Cancelled','warn');return null}
+    if(!walkedEntries||!walkedEntries.length){log('Walk found no ZIP entries','err');return null}
+    log('Indexed '+walkedEntries.length+' ZIP entries','ok');
+    const ndjE=walkedEntries.find(e=>e.name.endsWith('.ndjson'));
+    if(!ndjE){log('No NDJSON entry found in ZIP','err');return null}
+    method=ndjE.method;
+    ndjDataStart=ndjE.dataStart;
+    ndjCompEnd=ndjE.dataStart+ndjE.compSize;
+    log('Found '+ndjE.name+': '+formatSize(ndjE.compSize)+' compressed (exact size)','ok');
   }
 
   // Step 3: Decompress NDJSON
@@ -663,12 +772,15 @@ async function fallbackZipScan(file){
         attachMap[pn]={zipOffset:ce.localOffset+30+fl+ex,compSize:ce.compSize,method:ce.method,file};
       }
       log('Indexed '+Object.keys(attachMap).length+'/'+needed.size+' attachments','ok');
-    }else{
-      // No central directory — defer to on-demand resolution
-      log('Deferring '+needed.size+' attachments for on-demand resolution...');
-      for(const pn of needed){
-        attachMap[pn]={zipOffset:0,compSize:0,method:8,file,_needsFullScan:true};
+    }else if(walkedEntries){
+      // Walk gave exact offsets + sizes for every entry
+      for(const e of walkedEntries){
+        if(!e.name.startsWith('data/'))continue;
+        const pn=e.name.split('/').pop();
+        if(!needed.has(pn))continue;
+        attachMap[pn]={zipOffset:e.dataStart,compSize:e.compSize,method:e.method,file};
       }
+      log('Indexed '+Object.keys(attachMap).length+'/'+needed.size+' attachments (exact sizes)','ok');
     }
   }
 
