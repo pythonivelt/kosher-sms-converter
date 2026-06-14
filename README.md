@@ -1,31 +1,31 @@
 # Kosher Phone SMS Converter
 
-Convert SMS/MMS backups between kosher phone formats. Runs 100% in your browser — nothing gets uploaded anywhere.
+Switching kosher phones? This tool converts your text messages (SMS) and picture messages (MMS) so they transfer between phones — even when the phones use completely different backup formats.
 
-**[Use the converter](https://pythonivelt.github.io/kosher-sms-converter/)**
+**[Open the converter](https://pythonivelt.github.io/kosher-sms-converter/)** — runs 100% in your browser, nothing gets uploaded.
 
-## Supported Formats
+## What works
 
-| Phone | Out (from phone) | In (to phone) |
+| Phone | Read backup (out) | Import (in) |
 |-------|:---:|:---:|
-| SMS Backup & Restore | ✅ SMS + MMS | ✅ SMS + MMS |
+| SMS Backup & Restore * | ✅ SMS + MMS | ✅ SMS + MMS |
 | Fig | ✅ SMS + MMS | ✅ SMS + MMS |
 | Wonder | ✅ SMS + MMS | ❌ Not yet |
-| Pom | ⚠️ SMS only | ❓ Not tested |
+| Pom | ⚠️ Temporarily down | ❓ Not tested |
 
+\* SMS Backup & Restore is an app that works on any open Android phone and some kosher phones.
 
-## Features
+## How it works
 
-- Converts SMS and MMS messages with images/attachments
-- Handles large files (2+ GB) using streaming — works on low-end phones
-- Filter by SMS only, MMS only, or all messages
-- Option to skip PDF attachments
-- No server, no uploads — everything stays on your device
+1. Open the converter in your phone's browser (or on a computer)
+2. Pick your backup file (ZIP or XML)
+3. The converter scans it and shows you what's inside
+4. Choose the phone you want to convert to
+5. Download the converted file and import it on your new phone
 
-## How to Use
+## Key details
 
-1. Open the [converter](https://pythonivelt.github.io/kosher-sms-converter/)
-2. Select your backup file (ZIP or XML)
-3. Choose the output format
-4. Download the converted file
-5. Import on your phone
+- **Large files** — handles 2+ GB backups by streaming, works even on low-end phones
+- **MMS support** — pictures, voice notes, and other attachments all transfer
+- **Privacy** — your messages never leave your device, everything runs locally in the browser
+- **Filtering** — convert just SMS, just MMS, or everything; option to skip PDFs

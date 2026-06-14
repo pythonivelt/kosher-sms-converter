@@ -88,6 +88,8 @@
   .option{display:flex;align-items:flex-start;gap:12px;padding:14px 15px;border:1px solid var(--surface-border);border-radius:14px;margin-bottom:9px;cursor:pointer;transition:border-color .18s,background .18s,box-shadow .18s;background:var(--card)}
   .option:hover{border-color:var(--accent-border)}
   .option.selected{border-color:var(--accent-border);background:var(--accent-soft);box-shadow:0 0 0 3px var(--accent-soft)}
+  .option.disabled{opacity:.4;pointer-events:none;cursor:not-allowed}
+  .option.disabled .option-desc{color:var(--text-3)}
   .option input[type="radio"]{margin-top:3px;accent-color:var(--accent);width:16px;height:16px}
   .option-label{font-weight:600;font-size:.88rem;color:var(--text)}
   .option-desc{font-size:.76rem;color:var(--text-2);margin-top:2px;line-height:1.4}
@@ -187,8 +189,8 @@
     <label class="option" data-value="wonder" id="optWonder">
       <input type="radio" name="target" value="wonder" />
       <div>
-        <div class="option-label">Wonder <span class="opt-note">(SMS only)</span></div>
-        <div class="option-desc">MMS/pictures coming soon — SMS works</div>
+        <div class="option-label">Wonder</div>
+        <div class="option-desc">Import to Wonder not yet supported</div>
       </div>
     </label>
 
@@ -257,7 +259,7 @@
       <span>Nothing uploaded anywhere</span>
     </div>
     <div class="footer-line">
-      <span id="verSpan">v0.0.57</span>
+      <span id="verSpan">v0.0.58</span>
       <span class="footer-dot"></span>
       <a class="gh-link" href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener">
         <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
@@ -276,6 +278,16 @@ document.getElementById('themeToggle').addEventListener('click',function(){var h
 'use strict';
 
 let selectedFile=null, zipReader=null, parsedData=null, cancelled=false, hasPdfs=false, sourceFormat='';
+
+// SUPPORT MATRIX — keep in sync with assets/chart.svg
+// out = can read backups from this format, in = can write files that import on this phone
+const SUPPORT_MATRIX={
+  smsbackup:{out:true, in:true},
+  fig:      {out:true, in:true},
+  wonder:   {out:true, in:false},
+  pom:      {out:'down', in:'untested'}
+};
+const TEST_MODE=new URLSearchParams(location.search).has('test');
 
 const $=id=>document.getElementById(id);
 const dropZone=$('dropZone'),fileInput=$('fileInput'),scanBtn=$('scanBtn'),buildBtn=$('buildBtn'),
@@ -1054,19 +1066,20 @@ async function scan(){
       $('statPdfRow').style.display='none';hasPdfs=false;$('pdfChoice').style.display='none';
     }
 
-    // Hide source format from targets, show others
-    const hide=fmt;
-    ['smsbackup','fig','wonder'].forEach(v=>{
-      const el=$('opt'+v.charAt(0).toUpperCase()+v.slice(1));
-      // Fix IDs: optSms, optFig, optWonder
-    });
-    $('optSms').style.display=fmt==='smsbackup'?'none':'';
-    $('optFig').style.display=fmt==='fig'?'none':'';
-    $('optPom').style.display=fmt==='pom'?'none':'';
-    $('optWonder').style.display=fmt==='wonder'?'none':'';
+    // Hide source format from targets; disable unsupported targets unless ?test mode
+    const targets={smsbackup:'optSms',fig:'optFig',pom:'optPom',wonder:'optWonder'};
+    for(const[k,elId]of Object.entries(targets)){
+      const el=$(elId), sup=SUPPORT_MATRIX[k];
+      el.style.display=k===fmt?'none':'';
+      el.classList.remove('selected','disabled');
+      el.querySelector('input').disabled=false;
+      if(k!==fmt&&sup.in===false&&!TEST_MODE){
+        el.classList.add('disabled');
+        el.querySelector('input').disabled=true;
+      }
+    }
     // Reset target selection
     document.querySelectorAll('input[name="target"]').forEach(r=>r.checked=false);
-    document.querySelectorAll('.option[data-value="smsbackup"],.option[data-value="fig"],.option[data-value="pom"],.option[data-value="wonder"]').forEach(o=>o.classList.remove('selected'));
 
     // Hide MMS content options if no MMS
     $('optAll').style.display=cMms>0?'':'none';
