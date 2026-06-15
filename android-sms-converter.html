@@ -183,7 +183,7 @@
       <input type="radio" name="target" value="pom" />
       <div>
         <div class="option-label">Pom</div>
-        <div class="option-desc">NDJSON ZIP — for Pom phones</div>
+        <div class="option-desc">Import to Pom not tested yet</div>
       </div>
     </label>
     <label class="option" data-value="wonder" id="optWonder">
@@ -1073,7 +1073,7 @@ async function scan(){
       el.style.display=k===fmt?'none':'';
       el.classList.remove('selected','disabled');
       el.querySelector('input').disabled=false;
-      if(k!==fmt&&sup.in===false&&!TEST_MODE){
+      if(k!==fmt&&sup.in!==true&&!TEST_MODE){
         el.classList.add('disabled');
         el.querySelector('input').disabled=true;
       }
