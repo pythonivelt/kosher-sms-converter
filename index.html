@@ -344,7 +344,7 @@
 </section>
 
 <footer class="site-footer">
-  <p><span id="verSpan">v0.0.61</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener">Source code on GitHub</a></p>
+  <p><span id="verSpan">v0.0.62</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener">Source code on GitHub</a></p>
   <p style="margin-top:6px">Free and open source · Nothing gets uploaded</p>
 </footer>
 
@@ -1028,8 +1028,8 @@ function pickFile(f){
 // ===== SCAN =====
 scanBtn.addEventListener('click',()=>{
   if(!selectedFile)return;
-  scanBtn.disabled=true;cancelled=false;processing=true;cancelBtn.style.display='block';cancelBtn.innerHTML='Cancel';delete cancelBtn.dataset.confirm;errorBox.style.display='none';infoBox.style.display='none';scanResults.style.display='none';optionsEl.style.display='none';$('downloadBtn').style.display='none';
-  scan().finally(()=>{processing=false});
+  scanBtn.disabled=true;cancelled=false;processing=true;$('themeToggle').style.pointerEvents='none';$('themeToggle').style.opacity='.4';cancelBtn.style.display='block';cancelBtn.innerHTML='Cancel';delete cancelBtn.dataset.confirm;errorBox.style.display='none';infoBox.style.display='none';scanResults.style.display='none';optionsEl.style.display='none';$('downloadBtn').style.display='none';
+  scan().finally(()=>{processing=false;$('themeToggle').style.pointerEvents='';$('themeToggle').style.opacity=''});
 });
 
 async function scan(){
@@ -1602,8 +1602,8 @@ buildBtn.addEventListener('click',()=>{
     pc.scrollIntoView({behavior:'smooth',block:'center'});
     return;
   }
-  buildBtn.disabled=true;buildBtn.style.display='';cancelled=false;processing=true;cancelBtn.style.display='block';cancelBtn.innerHTML='Cancel';delete cancelBtn.dataset.confirm;errorBox.style.display='none';infoBox.style.display='none';$('downloadBtn').style.display='none';
-  build(t.value).finally(()=>{processing=false});
+  buildBtn.disabled=true;buildBtn.style.display='';cancelled=false;processing=true;$('themeToggle').style.pointerEvents='none';$('themeToggle').style.opacity='.4';cancelBtn.style.display='block';cancelBtn.innerHTML='Cancel';delete cancelBtn.dataset.confirm;errorBox.style.display='none';infoBox.style.display='none';$('downloadBtn').style.display='none';
+  build(t.value).finally(()=>{processing=false;$('themeToggle').style.pointerEvents='';$('themeToggle').style.opacity=''});
 });
 
 cancelBtn.addEventListener('click',()=>{
