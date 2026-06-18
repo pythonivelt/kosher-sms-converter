@@ -349,7 +349,7 @@
 </footer>
 
 <script>
-document.getElementById('themeToggle').addEventListener('click',function(){if(processing)return;var h=document.documentElement,t=h.getAttribute('data-theme')==='dark'?'light':'dark';h.setAttribute('data-theme',t);try{localStorage.setItem('theme',t)}catch(e){}});
+document.getElementById('themeToggle').addEventListener('click',function(){var h=document.documentElement,t=h.getAttribute('data-theme')==='dark'?'light':'dark';h.setAttribute('data-theme',t);try{localStorage.setItem('theme',t)}catch(e){}});
 </script>
 
 <script>
