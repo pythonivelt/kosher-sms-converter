@@ -55,13 +55,16 @@
   [data-theme="light"] .icon-sun{display:none}
   [data-theme="dark"] .icon-moon{display:none}
   .subtitle{font-size:.84rem;color:var(--text-2);margin-bottom:24px;line-height:1.55}
-  .drop-zone{border:1.5px dashed var(--field-border);border-radius:18px;padding:38px 20px;text-align:center;cursor:pointer;transition:border-color .25s,background .25s;background:var(--surface)}
-  .drop-zone:hover{border-color:var(--accent-border);background:var(--accent-soft)}
-  .drop-zone.active{border-color:var(--accent);background:var(--accent-soft)}
-  .drop-zone.done{border-color:var(--ok);border-style:solid;background:var(--ok-soft)}
+  .drop-zone{border:1px solid rgba(99,102,241,.15);border-radius:20px;padding:48px 24px;text-align:center;cursor:pointer;transition:all .35s cubic-bezier(.4,0,.2,1);background:linear-gradient(145deg,rgba(99,102,241,.04),rgba(99,102,241,.08));box-shadow:0 2px 8px rgba(99,102,241,.06);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);position:relative;overflow:hidden}
+  .drop-zone::before{content:'';position:absolute;inset:0;border-radius:20px;background:linear-gradient(135deg,rgba(255,255,255,.12),transparent);pointer-events:none}
+  .drop-zone:hover{border-color:rgba(99,102,241,.3);box-shadow:0 8px 32px rgba(99,102,241,.12);transform:translateY(-2px)}
+  .drop-zone.active{border-color:var(--accent);box-shadow:0 8px 32px rgba(99,102,241,.2);transform:scale(1.01)}
+  .drop-zone.done{border-color:rgba(22,163,74,.25);background:linear-gradient(145deg,rgba(22,163,74,.04),rgba(22,163,74,.08));box-shadow:0 2px 12px rgba(22,163,74,.08)}
   .drop-zone input{display:none}
-  .drop-icon{font-size:2.4rem;margin-bottom:10px}
-  .drop-text{color:var(--text);font-size:.92rem;font-weight:500}
+  .drop-icon{margin-bottom:12px;opacity:.7;transition:opacity .3s}
+  .drop-zone:hover .drop-icon{opacity:1}
+  .drop-text{color:var(--text);font-size:.95rem;font-weight:600;letter-spacing:-.02em}
+  .drop-sub{color:var(--text-3);font-size:.78rem;margin-top:6px;font-weight:400}
   .drop-hint{font-size:.75rem;color:var(--text-3);margin-top:6px}
   .btn{display:block;width:100%;padding:14px;border:none;border-radius:14px;font-size:.95rem;font-weight:600;cursor:pointer;margin-top:16px;transition:filter .2s,transform .15s,box-shadow .2s;letter-spacing:.01em}
   .btn:active{transform:scale(.985)}
@@ -219,8 +222,9 @@
 
   <div class="drop-zone" id="dropZone">
     <input type="file" id="fileInput" accept=".zip,.xml" />
-    <div class="drop-icon">📦</div>
-    <div class="drop-text">Tap to choose your backup file</div>
+    <div class="drop-icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><polyline points="12 12 12 21"/><polyline points="16 16 12 12 8 16"/></svg></div>
+    <div class="drop-text">Upload your backup</div>
+    <div class="drop-sub">ZIP or XML · drag & drop or tap to browse</div>
     <div class="file-name" id="fileName"></div>
   </div>
 
@@ -335,7 +339,7 @@
   <div class="features-grid">
     <div class="feature-card"><div class="feature-icon">🔒</div><div class="feature-title">Completely private</div><div class="feature-desc">Everything runs in your browser. Your messages never leave your device.</div></div>
     <div class="feature-card"><div class="feature-icon">📎</div><div class="feature-title">Full MMS support</div><div class="feature-desc">Pictures, voice notes, and attachments all transfer — not just texts.</div></div>
-    <div class="feature-card"><div class="feature-icon">📱</div><div class="feature-title">Works on any device</div><div class="feature-desc">Works with large backups — even thousands of messages.</div></div>
+    <div class="feature-card"><div class="feature-icon">📱</div><div class="feature-title">Works on any device</div><div class="feature-desc">No downloads, no installs — runs entirely in your browser on any device.</div></div>
   </div>
 </section>
 
@@ -1024,8 +1028,9 @@ function pickFile(f){
 // ===== SCAN =====
 scanBtn.addEventListener('click',()=>{
   if(!selectedFile)return;
-  scanBtn.disabled=true;cancelled=false;cancelBtn.style.display='block';errorBox.style.display='none';infoBox.style.display='none';scanResults.style.display='none';optionsEl.style.display='none';
-  scan();
+  scanBtn.disabled=true;cancelled=false;cancelBtn.style.display='block';cancelBtn.innerHTML='Cancel';delete cancelBtn.dataset.confirm;errorBox.style.display='none';infoBox.style.display='none';scanResults.style.display='none';optionsEl.style.display='none';$('downloadBtn').style.display='none';
+  $('themeToggle').disabled=true;
+  scan().finally(()=>{$('themeToggle').disabled=false});
 });
 
 async function scan(){
@@ -1173,6 +1178,7 @@ async function scan(){
     sourceFormat=fmt;
     updateUI();
   }catch(err){
+    if(err&&err.cancelled){log('Scan cancelled by user','warn');progressEl.style.display='none';infoBox.textContent='Cancelled.';infoBox.style.display='block';scanBtn.disabled=false;cancelBtn.style.display='none';return}
     const msg=err.message||String(err);
     log('Scan failed: '+msg,'err');
     progressEl.style.display='none';
@@ -1203,7 +1209,7 @@ async function parseFigZip(entries){
   let buf='',bytesRead=0,lastPct=0;
   const messages=[];let pdfCount=0,pdfSize=0;
 
-  async function yld(){const p=Math.min(90,Math.round(bytesRead/(totalSize||1)*80)+15);if(p>lastPct+1){lastPct=p;showProgress('Parsing… '+messages.length.toLocaleString()+' messages ('+formatSize(bytesRead)+' / '+formatSize(totalSize)+')',p);await tick()}}
+  async function yld(){if(cancelled)throw{cancelled:true};const p=Math.min(90,Math.round(bytesRead/(totalSize||1)*80)+15);if(p>lastPct+1){lastPct=p;showProgress('Parsing… '+messages.length.toLocaleString()+' messages ('+formatSize(bytesRead)+' / '+formatSize(totalSize)+')',p);await tick()}}
 
   while(true){
     const{done,value}=await reader.read();
@@ -1257,6 +1263,7 @@ async function parseWonderZip(entries){
   const attachEntries={};
   for(const e of entries){if(e.filename.startsWith('mms_attachments/'))attachEntries[e.filename.split('/').pop()]=e}
 
+  if(cancelled)throw{cancelled:true};
   showProgress('Parsing messages…',50);await tick();
   const parser=new DOMParser();
   const doc=parser.parseFromString(text,'text/xml');
@@ -1305,7 +1312,7 @@ async function parseSmsBackupXmlStream(file){
   function ux(s){return s?s.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&apos;/g,"'").replace(/&#13;/g,'\r').replace(/&#10;/g,'\n').replace(/&#x([0-9a-fA-F]+);/g,(_,h)=>String.fromCharCode(parseInt(h,16))).replace(/&#(\d+);/g,(_,d)=>String.fromCharCode(parseInt(d))):''}
   function fc(from,pat){let q=0;for(let i=from;i<=buf.length-pat.length;i++){const c=buf[i];if(q){if(c===(q===1?'"':"'"))q=0}else if(c==='"')q=1;else if(c==="'")q=2;else if(buf.startsWith(pat,i))return i+pat.length}return -1}
 
-  async function yld(){const p=Math.min(90,Math.round(bytesRead/tot*80)+15);if(p>lastPct+1){lastPct=p;showProgress('Parsing… '+formatSize(bytesRead)+' / '+formatSize(tot),p);await tick()}}
+  async function yld(){if(cancelled)throw{cancelled:true};const p=Math.min(90,Math.round(bytesRead/tot*80)+15);if(p>lastPct+1){lastPct=p;showProgress('Parsing… '+formatSize(bytesRead)+' / '+formatSize(tot),p);await tick()}}
 
   while(true){
     const{done,value}=await reader.read();
@@ -1597,7 +1604,8 @@ buildBtn.addEventListener('click',()=>{
     return;
   }
   buildBtn.disabled=true;buildBtn.style.display='';cancelled=false;cancelBtn.style.display='block';cancelBtn.innerHTML='Cancel';delete cancelBtn.dataset.confirm;errorBox.style.display='none';infoBox.style.display='none';$('downloadBtn').style.display='none';
-  build(t.value);
+  $('themeToggle').disabled=true;
+  build(t.value).finally(()=>{$('themeToggle').disabled=false});
 });
 
 cancelBtn.addEventListener('click',()=>{
