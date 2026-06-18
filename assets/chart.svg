@@ -39,5 +39,5 @@
   <text x="300" y="209" text-anchor="middle" class="warn">Temporarily down</text>
   <text x="450" y="209" text-anchor="middle" class="no">Not yet</text>
 
-  <text x="260" y="245" text-anchor="middle" class="footnote">This chart updates automatically as more phones are added</text>
+  <text x="260" y="245" text-anchor="middle" class="footnote">This chart updates automatically as more phones get supported</text>
 </svg>
