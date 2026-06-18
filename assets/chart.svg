@@ -41,6 +41,4 @@
 
   <!-- Footnote -->
   <text x="20" y="240" class="footnote">* SMS Backup &amp; Restore is an app that works on any open Android phone and some kosher phones</text>
-  <!-- Footer -->
-  <text x="260" y="268" text-anchor="middle" font-size="11" fill="#94a3b8">Keep in sync with android-sms-converter.html</text>
 </svg>
