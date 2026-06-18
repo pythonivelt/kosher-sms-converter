@@ -185,7 +185,7 @@
   <div class="hero-badges">
     <span class="hero-badge">SMS &amp; MMS</span>
     <span class="hero-badge">Pictures &amp; voice notes</span>
-    <span class="hero-badge">Handles 2+ GB files</span>
+    <span class="hero-badge">Works with large backups</span>
     <span class="hero-badge">100% private</span>
   </div>
   <a href="#converter" class="hero-cta">Start converting</a>
@@ -292,8 +292,7 @@
       </label>
     </div>
 
-    <button class="btn btn-success" id="buildBtn" disabled>Build &amp; Download</button>
-    <a class="btn btn-success" id="downloadBtn" style="display:none;text-decoration:none;text-align:center;margin-top:8px" download="">Download</a>
+    <button class="btn btn-success" id="buildBtn" disabled>Convert</button>
   </div>
 
   <div class="progress" id="progress">
@@ -303,6 +302,7 @@
   <button class="btn btn-cancel" id="cancelBtn" style="display:none">Cancel</button>
 
   <div class="info" id="infoBox"></div>
+  <a class="btn btn-success" id="downloadBtn" style="display:none;text-decoration:none;text-align:center;margin-top:8px" download="">Download</a>
   <div class="error" id="errorBox"></div>
 
   <details class="log-panel" id="logPanel" style="display:none">
@@ -320,15 +320,15 @@
 <section class="compat-section">
   <h2 class="site-section-title">What's supported</h2>
   <table class="compat-table">
-    <thead><tr><th>Phone</th><th>Read backup</th><th>Import</th></tr></thead>
+    <thead><tr><th>Phone</th><th>Convert from</th><th>Convert to</th></tr></thead>
     <tbody>
-      <tr><td>SMS Backup &amp; Restore *</td><td class="c-yes">SMS + MMS</td><td class="c-yes">SMS + MMS</td></tr>
-      <tr><td>Fig</td><td class="c-yes">SMS + MMS</td><td class="c-yes">SMS + MMS</td></tr>
-      <tr><td>Wonder</td><td class="c-yes">SMS + MMS</td><td class="c-no">Not yet</td></tr>
-      <tr><td>Pom</td><td class="c-warn">Temporarily down</td><td class="c-unk">Not tested</td></tr>
+      <tr><td>SMS Backup &amp; Restore *</td><td class="c-yes">✅ SMS + MMS</td><td class="c-yes">✅ SMS + MMS</td></tr>
+      <tr><td>Fig</td><td class="c-yes">✅ SMS + MMS</td><td class="c-yes">✅ SMS + MMS</td></tr>
+      <tr><td>Wonder</td><td class="c-yes">✅ SMS + MMS</td><td class="c-no">❌ Not yet</td></tr>
+      <tr><td>Pom</td><td class="c-warn">⚠️ Temporarily down</td><td class="c-unk">❓ Not tested</td></tr>
     </tbody>
   </table>
-  <p style="font-size:.72rem;color:var(--text-3);margin-top:12px">* SMS Backup &amp; Restore works on any open Android phone and some kosher phones</p>
+  <p style="font-size:.72rem;color:var(--text-3);margin-top:12px">* <a href="https://play.google.com/store/apps/details?id=com.riteshsahu.SMSBackupRestore" target="_blank" rel="noopener" style="color:inherit">SMS Backup &amp; Restore</a> works on any open Android phone and some kosher phones</p>
 </section>
 
 <section class="site-section">
@@ -336,7 +336,7 @@
   <div class="features-grid">
     <div class="feature-card"><div class="feature-icon">🔒</div><div class="feature-title">Completely private</div><div class="feature-desc">Everything runs in your browser. Your messages never leave your device.</div></div>
     <div class="feature-card"><div class="feature-icon">📎</div><div class="feature-title">Full MMS support</div><div class="feature-desc">Pictures, voice notes, and attachments all transfer — not just texts.</div></div>
-    <div class="feature-card"><div class="feature-icon">📱</div><div class="feature-title">Works on any device</div><div class="feature-desc">Handles 2+ GB files using streaming. Works even on low-end phones.</div></div>
+    <div class="feature-card"><div class="feature-icon">📱</div><div class="feature-title">Works on any device</div><div class="feature-desc">Works with large backups — even thousands of messages.</div></div>
   </div>
 </section>
 
@@ -1638,9 +1638,11 @@ async function build(target){
     }
 
     cancelBtn.style.display='none';
-    showProgress('Done! '+formatSize(blob.size),100);
+    progressEl.style.display='none';
+    const smsC=msgs.filter(m=>m.type==='sms').length,mmsC=msgs.length-smsC;
+    const parts=[smsC?smsC.toLocaleString()+' SMS':null,mmsC?mmsC.toLocaleString()+' MMS':null].filter(Boolean).join(' + ');
     log('Export complete: '+msgs.length+' messages, '+formatSize(blob.size)+' → '+filename,'ok');
-    infoBox.textContent='Converted '+msgs.length.toLocaleString()+' messages ('+formatSize(blob.size)+') successfully!';
+    infoBox.textContent='Converted '+(parts||msgs.length.toLocaleString()+' messages')+' ('+formatSize(blob.size)+') successfully!';
     infoBox.style.display='block';
     const dlBtn=$('downloadBtn');
     if(dlBtn._blobUrl)URL.revokeObjectURL(dlBtn._blobUrl);
