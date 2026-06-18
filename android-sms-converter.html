@@ -349,14 +349,14 @@
 </footer>
 
 <script>
-document.getElementById('themeToggle').addEventListener('click',function(){var h=document.documentElement,t=h.getAttribute('data-theme')==='dark'?'light':'dark';h.setAttribute('data-theme',t);try{localStorage.setItem('theme',t)}catch(e){}});
+document.getElementById('themeToggle').addEventListener('click',function(){if(processing)return;var h=document.documentElement,t=h.getAttribute('data-theme')==='dark'?'light':'dark';h.setAttribute('data-theme',t);try{localStorage.setItem('theme',t)}catch(e){}});
 </script>
 
 <script>
 (function(){
 'use strict';
 
-let selectedFile=null, zipReader=null, parsedData=null, cancelled=false, hasPdfs=false, sourceFormat='';
+let selectedFile=null, zipReader=null, parsedData=null, cancelled=false, hasPdfs=false, sourceFormat='', processing=false;
 
 // SUPPORT MATRIX — keep in sync with assets/chart.svg
 // out = can read backups from this format, in = can write files that import on this phone
@@ -1028,9 +1028,8 @@ function pickFile(f){
 // ===== SCAN =====
 scanBtn.addEventListener('click',()=>{
   if(!selectedFile)return;
-  scanBtn.disabled=true;cancelled=false;cancelBtn.style.display='block';cancelBtn.innerHTML='Cancel';delete cancelBtn.dataset.confirm;errorBox.style.display='none';infoBox.style.display='none';scanResults.style.display='none';optionsEl.style.display='none';$('downloadBtn').style.display='none';
-  $('themeToggle').disabled=true;
-  scan().finally(()=>{$('themeToggle').disabled=false});
+  scanBtn.disabled=true;cancelled=false;processing=true;cancelBtn.style.display='block';cancelBtn.innerHTML='Cancel';delete cancelBtn.dataset.confirm;errorBox.style.display='none';infoBox.style.display='none';scanResults.style.display='none';optionsEl.style.display='none';$('downloadBtn').style.display='none';
+  scan().finally(()=>{processing=false});
 });
 
 async function scan(){
@@ -1603,9 +1602,8 @@ buildBtn.addEventListener('click',()=>{
     pc.scrollIntoView({behavior:'smooth',block:'center'});
     return;
   }
-  buildBtn.disabled=true;buildBtn.style.display='';cancelled=false;cancelBtn.style.display='block';cancelBtn.innerHTML='Cancel';delete cancelBtn.dataset.confirm;errorBox.style.display='none';infoBox.style.display='none';$('downloadBtn').style.display='none';
-  $('themeToggle').disabled=true;
-  build(t.value).finally(()=>{$('themeToggle').disabled=false});
+  buildBtn.disabled=true;buildBtn.style.display='';cancelled=false;processing=true;cancelBtn.style.display='block';cancelBtn.innerHTML='Cancel';delete cancelBtn.dataset.confirm;errorBox.style.display='none';infoBox.style.display='none';$('downloadBtn').style.display='none';
+  build(t.value).finally(()=>{processing=false});
 });
 
 cancelBtn.addEventListener('click',()=>{
