@@ -293,6 +293,7 @@
     </div>
 
     <button class="btn btn-success" id="buildBtn" disabled>Build &amp; Download</button>
+    <a class="btn btn-success" id="downloadBtn" style="display:none;text-decoration:none;text-align:center;margin-top:8px" download="">Download</a>
   </div>
 
   <div class="progress" id="progress">
@@ -340,7 +341,7 @@
 </section>
 
 <footer class="site-footer">
-  <p><span id="verSpan">v0.0.59</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener">Source code on GitHub</a></p>
+  <p><span id="verSpan">v0.0.60</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener">Source code on GitHub</a></p>
   <p style="margin-top:6px">Free and open source · Nothing gets uploaded</p>
 </footer>
 
@@ -1016,7 +1017,7 @@ function pickFile(f){
   fileNameEl.textContent=f.name+' ('+formatSize(f.size)+')';
   fileNameEl.style.display='block';
   scanBtn.disabled=false;cancelBtn.style.display='none';
-  scanResults.style.display='none';optionsEl.style.display='none';infoBox.style.display='none';errorBox.style.display='none';progressEl.style.display='none';
+  scanResults.style.display='none';optionsEl.style.display='none';infoBox.style.display='none';errorBox.style.display='none';progressEl.style.display='none';$('downloadBtn').style.display='none';
   dropZone.classList.remove('done');parsedData=null;
   if(zipReader){try{zipReader.close()}catch{}zipReader=null}
 }
@@ -1390,7 +1391,7 @@ async function writeToSmsBackup(messages){
   </mms>\n`);
       count++;
     }
-    if(++i%500===0){showProgress('Building… '+i.toLocaleString()+' / '+messages.length.toLocaleString(),Math.round(i/messages.length*80)+10);await tick()}
+    if(++i%200===0){if(cancelled)throw{cancelled:true};showProgress('Building… '+i.toLocaleString()+' / '+messages.length.toLocaleString(),Math.round(i/messages.length*80)+10);await tick()}
   }
   parts.push('</smses>\n');
   parts[0]=parts[0].replace('__COUNT__',String(count));
@@ -1414,7 +1415,7 @@ async function buildFigZip(messages){
     const id=String(msgId++);
     const addr=(m.address||'').replace(/[^\d+]/g,'');
     const tid=threadMap[addr]||'1';
-    if(mi%200===0){const pct=Math.round(mi/messages.length*50);showProgress('Building messages… '+mi+'/'+messages.length,50+pct);await tick()}
+    if(mi%50===0){if(cancelled)throw{cancelled:true};const pct=Math.round(mi/messages.length*50);showProgress('Building messages… '+mi+'/'+messages.length,50+pct);await tick()}
 
     if(m.type==='sms'){
       lines.push(JSON.stringify({_id:id,thread_id:tid,address:m.address,date:m.date,date_sent:m.dateSent||'0',protocol:m.protocol||'0',read:m.read||'0',status:m.status||'-1',type:m.direction==='in'?'1':'2',reply_path_present:'0',body:m.body||'',locked:m.locked||'0',sub_id:m.subId||'1',error_code:'-1',creator:'com.figmessenger',seen:'1',ipmsg_id:'0',__display_name:m.contactName||'(Unknown)'}));
@@ -1518,7 +1519,7 @@ async function buildRawZip(files){
     const cd=new Uint8Array([0x50,0x4B,0x01,0x02,...u16(20),...u16(20),...u16(0),...u16(method),...u16(0),...u16(0),...u32(crc),...u32(csz),...u32(sz),...u16(nameBytes.length),...u16(0),...u16(0),...u16(0),...u16(0),...u32(0),...u32(offset)]);
     cdirs.push(cd,nameBytes);
     offset+=lh.length+nameBytes.length+cData.length;
-    if(fi%5===0){const pct=Math.round(fi/files.length*100);showProgress('Building ZIP… '+pct+'%',90+Math.round(pct/10));await tick()}
+    if(cancelled)throw{cancelled:true};if(fi%2===0){const pct=Math.round(fi/files.length*100);showProgress('Building ZIP… '+pct+'%',90+Math.round(pct/10));await tick()}
   }
   const cdirOffset=offset;let cdirSize=0;
   for(const c of cdirs)cdirSize+=c.length;
@@ -1532,7 +1533,9 @@ async function buildWonderZip(messages){
   const attachFiles=[];
   xmlParts.push('<?xml version="1.0" encoding="UTF-8"?>\n<messages sms_count="__SMS__" mms_count="__MMS__">\n');
 
-  for(const m of messages){
+  for(let wi=0;wi<messages.length;wi++){
+    if(wi%50===0){if(cancelled)throw{cancelled:true};showProgress('Building Wonder… '+wi+'/'+messages.length,Math.round(wi/messages.length*80)+10);await tick()}
+    const m=messages[wi];
     if(m.type==='sms'){
       xmlParts.push(`  <sms address="${escXml(m.address)}" body="${escXml(m.body)}" date="${escXml(m.date)}" date_sent="0" type="${m.direction==='in'?'1':'2'}" read="${escXml(m.read||'1')}" seen="1" />\n`);
       smsCount++;
@@ -1594,11 +1597,15 @@ buildBtn.addEventListener('click',()=>{
     pc.scrollIntoView({behavior:'smooth',block:'center'});
     return;
   }
-  buildBtn.disabled=true;cancelled=false;cancelBtn.style.display='block';errorBox.style.display='none';infoBox.style.display='none';
+  buildBtn.disabled=true;cancelled=false;cancelBtn.style.display='block';cancelBtn.innerHTML='Cancel';delete cancelBtn.dataset.confirm;errorBox.style.display='none';infoBox.style.display='none';$('downloadBtn').style.display='none';
   build(t.value);
 });
 
-cancelBtn.addEventListener('click',()=>{cancelled=true;cancelBtn.style.display='none'});
+cancelBtn.addEventListener('click',()=>{
+  if(cancelBtn.dataset.confirm){cancelled=true;cancelBtn.style.display='none';return}
+  cancelBtn.dataset.confirm='1';cancelBtn.textContent='Are you sure? Tap again to cancel';
+  setTimeout(()=>{if(!cancelled){delete cancelBtn.dataset.confirm;cancelBtn.innerHTML='Cancel'}},3000);
+});
 
 async function build(target){
   try{
@@ -1630,20 +1637,18 @@ async function build(target){
       filename='Messages_Backup_'+d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+'.zip';
     }
 
-    if(cancelled){log('Build cancelled by user','warn');cancelBtn.style.display='none';progressEl.style.display='none';infoBox.textContent='Cancelled.';infoBox.style.display='block';buildBtn.disabled=false;return}
-
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();
-    setTimeout(()=>{URL.revokeObjectURL(url);a.remove()},2000);
-
     cancelBtn.style.display='none';
     showProgress('Done! '+formatSize(blob.size),100);
     log('Export complete: '+msgs.length+' messages, '+formatSize(blob.size)+' → '+filename,'ok');
-    infoBox.textContent='Exported '+msgs.length.toLocaleString()+' messages ('+formatSize(blob.size)+') as '+target.toUpperCase()+'.';
+    infoBox.textContent='Converted '+msgs.length.toLocaleString()+' messages ('+formatSize(blob.size)+') successfully!';
     infoBox.style.display='block';
+    const dlBtn=$('downloadBtn');
+    if(dlBtn._blobUrl)URL.revokeObjectURL(dlBtn._blobUrl);
+    const url=URL.createObjectURL(blob);dlBtn._blobUrl=url;
+    dlBtn.href=url;dlBtn.download=filename;dlBtn.style.display='block';
   }catch(err){
-    log('Build failed: '+(err.message||err),'err');
-    progressEl.style.display='none';errorBox.textContent=err.message||String(err);errorBox.style.display='block';
+    if(err&&err.cancelled){log('Build cancelled by user','warn');progressEl.style.display='none';infoBox.textContent='Cancelled.';infoBox.style.display='block';}
+    else{log('Build failed: '+(err.message||err),'err');progressEl.style.display='none';errorBox.textContent=err.message||String(err);errorBox.style.display='block';}
   }
   cancelBtn.style.display='none';buildBtn.disabled=false;
 }
