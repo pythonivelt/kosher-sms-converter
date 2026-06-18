@@ -148,10 +148,10 @@
   .compat-table th{text-align:left;font-weight:600;color:var(--text);padding:10px 12px;border-bottom:2px solid var(--surface-border)}
   .compat-table td{padding:10px 12px;border-bottom:1px solid var(--surface-border);color:var(--text-2)}
   .compat-table tr:last-child td{border-bottom:none}
-  .c-yes{color:var(--ok);font-weight:600}
-  .c-no{color:var(--danger);font-weight:500}
-  .c-warn{color:#d97706;font-weight:500}
-  .c-unk{color:var(--text-3);font-weight:500}
+  td.c-yes{color:var(--ok);font-weight:600}
+  td.c-no{color:var(--danger);font-weight:500}
+  td.c-warn{color:#d97706;font-weight:500}
+  td.c-unk{color:var(--text-3);font-weight:500}
   .features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;max-width:680px;margin:0 auto}
   .feature-card{padding:20px;background:var(--card);border:1px solid var(--card-border);border-radius:16px}
   .feature-icon{font-size:1.4rem;margin-bottom:8px}
@@ -169,12 +169,8 @@
 </head>
 <body>
 <nav class="site-nav">
-  <a href="#" class="nav-logo">📱 Kosher Phone SMS Converter</a>
+  <a href="#" class="nav-logo">Kosher Phone SMS Converter</a>
   <div class="nav-right">
-    <a class="gh-link" href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener">
-      <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
-      GitHub
-    </a>
     <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch between dark and light mode">
       <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
       <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
@@ -199,13 +195,13 @@
   <table class="compat-table">
     <thead><tr><th>Phone</th><th>Convert from</th><th>Convert to</th></tr></thead>
     <tbody>
-      <tr><td>SMS Backup &amp; Restore *</td><td class="c-yes">✅ SMS + MMS</td><td class="c-yes">✅ SMS + MMS</td></tr>
-      <tr><td>Fig</td><td class="c-yes">✅ SMS + MMS</td><td class="c-yes">✅ SMS + MMS</td></tr>
-      <tr><td>Wonder</td><td class="c-yes">✅ SMS + MMS</td><td class="c-no">❌ Not yet</td></tr>
-      <tr><td>Pom</td><td class="c-warn">⚠️ Temporarily down</td><td class="c-no">❌ Not yet</td></tr>
+      <tr><td>SMS Backup &amp; Restore *</td><td class="c-yes">SMS + MMS</td><td class="c-yes">SMS + MMS</td></tr>
+      <tr><td>Fig</td><td class="c-yes">SMS + MMS</td><td class="c-yes">SMS + MMS</td></tr>
+      <tr><td>Wonder</td><td class="c-yes">SMS + MMS</td><td class="c-no">Not yet</td></tr>
+      <tr><td>Pom</td><td class="c-warn">Temporarily down</td><td class="c-no">Not yet</td></tr>
     </tbody>
   </table>
-  <p style="font-size:.72rem;color:var(--text-3);margin-top:12px">* <a href="https://play.google.com/store/apps/details?id=com.riteshsahu.SMSBackupRestore" target="_blank" rel="noopener" style="color:inherit">SMS Backup &amp; Restore</a> works on any open Android phone and some kosher phones</p>
+  <p style="font-size:.72rem;color:var(--text-3);margin-top:12px">* <a href="https://play.google.com/store/apps/details?id=com.riteshsahu.SMSBackupRestore" target="_blank" rel="noopener" style="color:#4f46e5">SMS Backup &amp; Restore</a> works on any open Android phone and some kosher phones</p>
 </section>
 
 <section class="site-section">
@@ -344,7 +340,7 @@
 </section>
 
 <footer class="site-footer">
-  <p><span id="verSpan">v0.0.62</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener">Source code on GitHub</a></p>
+  <p><span id="verSpan">v0.0.62</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
   <p style="margin-top:6px">Free and open source · Nothing gets uploaded</p>
 </footer>
 
