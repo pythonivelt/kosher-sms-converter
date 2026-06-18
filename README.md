@@ -11,7 +11,7 @@ Switching kosher phones? This tool converts your text messages (SMS) and picture
 | SMS Backup & Restore * | ✅ SMS + MMS | ✅ SMS + MMS |
 | Fig | ✅ SMS + MMS | ✅ SMS + MMS |
 | Wonder | ✅ SMS + MMS | ❌ Not yet |
-| Pom | ⚠️ Temporarily down | ❓ Not tested |
+| Pom | ⚠️ Temporarily down | ❌ Not yet |
 
 \* SMS Backup & Restore is an app that works on any open Android phone and some kosher phones.
 
