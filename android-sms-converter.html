@@ -188,7 +188,21 @@
     <span class="hero-badge">Works with large backups</span>
     <span class="hero-badge">100% private</span>
   </div>
-  <a href="#converter" class="hero-cta">Start converting</a>
+
+</section>
+
+<section class="compat-section">
+  <h2 class="site-section-title">What's supported</h2>
+  <table class="compat-table">
+    <thead><tr><th>Phone</th><th>Convert from</th><th>Convert to</th></tr></thead>
+    <tbody>
+      <tr><td>SMS Backup &amp; Restore *</td><td class="c-yes">✅ SMS + MMS</td><td class="c-yes">✅ SMS + MMS</td></tr>
+      <tr><td>Fig</td><td class="c-yes">✅ SMS + MMS</td><td class="c-yes">✅ SMS + MMS</td></tr>
+      <tr><td>Wonder</td><td class="c-yes">✅ SMS + MMS</td><td class="c-no">❌ Not yet</td></tr>
+      <tr><td>Pom</td><td class="c-warn">⚠️ Temporarily down</td><td class="c-no">❌ Not yet</td></tr>
+    </tbody>
+  </table>
+  <p style="font-size:.72rem;color:var(--text-3);margin-top:12px">* <a href="https://play.google.com/store/apps/details?id=com.riteshsahu.SMSBackupRestore" target="_blank" rel="noopener" style="color:inherit">SMS Backup &amp; Restore</a> works on any open Android phone and some kosher phones</p>
 </section>
 
 <section class="site-section">
@@ -207,7 +221,6 @@
     <input type="file" id="fileInput" accept=".zip,.xml" />
     <div class="drop-icon">📦</div>
     <div class="drop-text">Tap to choose your backup file</div>
-    <div class="drop-hint">Supports Fig ZIP, Wonder ZIP, or SMS Backup &amp; Restore XML</div>
     <div class="file-name" id="fileName"></div>
   </div>
 
@@ -244,7 +257,7 @@
       <input type="radio" name="target" value="pom" />
       <div>
         <div class="option-label">Pom</div>
-        <div class="option-desc">Import to Pom not tested yet</div>
+        <div class="option-desc">Import to Pom not yet supported</div>
       </div>
     </label>
     <label class="option" data-value="wonder" id="optWonder">
@@ -317,20 +330,6 @@
 </div>
 </div>
 
-<section class="compat-section">
-  <h2 class="site-section-title">What's supported</h2>
-  <table class="compat-table">
-    <thead><tr><th>Phone</th><th>Convert from</th><th>Convert to</th></tr></thead>
-    <tbody>
-      <tr><td>SMS Backup &amp; Restore *</td><td class="c-yes">✅ SMS + MMS</td><td class="c-yes">✅ SMS + MMS</td></tr>
-      <tr><td>Fig</td><td class="c-yes">✅ SMS + MMS</td><td class="c-yes">✅ SMS + MMS</td></tr>
-      <tr><td>Wonder</td><td class="c-yes">✅ SMS + MMS</td><td class="c-no">❌ Not yet</td></tr>
-      <tr><td>Pom</td><td class="c-warn">⚠️ Temporarily down</td><td class="c-unk">❓ Not tested</td></tr>
-    </tbody>
-  </table>
-  <p style="font-size:.72rem;color:var(--text-3);margin-top:12px">* <a href="https://play.google.com/store/apps/details?id=com.riteshsahu.SMSBackupRestore" target="_blank" rel="noopener" style="color:inherit">SMS Backup &amp; Restore</a> works on any open Android phone and some kosher phones</p>
-</section>
-
 <section class="site-section">
   <h2 class="site-section-title">Why this tool</h2>
   <div class="features-grid">
@@ -361,7 +360,7 @@ const SUPPORT_MATRIX={
   smsbackup:{out:true, in:true},
   fig:      {out:true, in:true},
   wonder:   {out:true, in:false},
-  pom:      {out:'down', in:'untested'}
+  pom:      {out:'down', in:false}
 };
 const TEST_MODE=new URLSearchParams(location.search).has('test');
 
@@ -1597,7 +1596,7 @@ buildBtn.addEventListener('click',()=>{
     pc.scrollIntoView({behavior:'smooth',block:'center'});
     return;
   }
-  buildBtn.disabled=true;cancelled=false;cancelBtn.style.display='block';cancelBtn.innerHTML='Cancel';delete cancelBtn.dataset.confirm;errorBox.style.display='none';infoBox.style.display='none';$('downloadBtn').style.display='none';
+  buildBtn.disabled=true;buildBtn.style.display='';cancelled=false;cancelBtn.style.display='block';cancelBtn.innerHTML='Cancel';delete cancelBtn.dataset.confirm;errorBox.style.display='none';infoBox.style.display='none';$('downloadBtn').style.display='none';
   build(t.value);
 });
 
@@ -1647,7 +1646,7 @@ async function build(target){
     const dlBtn=$('downloadBtn');
     if(dlBtn._blobUrl)URL.revokeObjectURL(dlBtn._blobUrl);
     const url=URL.createObjectURL(blob);dlBtn._blobUrl=url;
-    dlBtn.href=url;dlBtn.download=filename;dlBtn.style.display='block';
+    dlBtn.href=url;dlBtn.download=filename;dlBtn.style.display='block';buildBtn.style.display='none';
   }catch(err){
     if(err&&err.cancelled){log('Build cancelled by user','warn');progressEl.style.display='none';infoBox.textContent='Cancelled.';infoBox.style.display='block';}
     else{log('Build failed: '+(err.message||err),'err');progressEl.style.display='none';errorBox.textContent=err.message||String(err);errorBox.style.display='block';}
