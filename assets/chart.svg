@@ -20,7 +20,7 @@
   <text x="450" y="63" text-anchor="middle" class="header">In (to phone)</text>
   <!-- Rows -->
   <rect x="10" y="78" width="500" height="36" rx="0" fill="#f8fafc"/>
-  <text x="110" y="101" text-anchor="middle" class="phone">SMS Backup… app</text>
+  <text x="110" y="101" text-anchor="middle" class="phone">SMS Backup &amp; Restore app</text>
   <text x="300" y="101" text-anchor="middle" class="yes">SMS + MMS</text>
   <text x="450" y="101" text-anchor="middle" class="yes">SMS + MMS</text>
 
