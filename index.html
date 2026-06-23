@@ -243,6 +243,7 @@
       <div class="stat" id="statAttachRow">🖼️ Attachments: <strong id="statAttach">0</strong></div>
       <div class="stat" id="statPdfRow" style="display:none">📄 PDFs: <strong id="statPdf">0</strong></div>
     </div>
+    <div id="pomMmsWarn" style="display:none;margin-top:10px;padding:10px 14px;border-radius:8px;background:#fef3c7;color:#92400e;font-size:.85rem;line-height:1.4">⚠️ Pom currently supports SMS only — MMS pictures and voice notes will not be included.</div>
   </div>
 
   <div class="options" id="options">
@@ -348,7 +349,7 @@
 </section>
 
 <footer class="site-footer">
-  <p><span id="verSpan">v0.0.65</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
+  <p><span id="verSpan">v0.0.66</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
   <p style="margin-top:6px">Free and open source · Nothing gets uploaded</p>
 </footer>
 
@@ -1049,6 +1050,7 @@ async function scan(){
     $('statAttach').textContent=cAttach.toLocaleString();
     $('statMmsRow').style.display=cMms>0?'':'none';
     $('statAttachRow').style.display=cAttach>0?'':'none';
+    $('pomMmsWarn').style.display=(fmt==='pom'&&cMms>0)?'block':'none';
 
     if(pdfCount>0){
       const pdfXmlSize=Math.round(pdfSize*1.37);
