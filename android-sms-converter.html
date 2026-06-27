@@ -205,7 +205,7 @@
       <tr><td>SMS Backup &amp; Restore *</td><td class="c-yes">SMS + MMS</td><td class="c-yes">SMS + MMS</td></tr>
       <tr><td>Fig</td><td class="c-yes">SMS + MMS</td><td class="c-yes">SMS + MMS</td></tr>
       <tr><td>Wonder</td><td class="c-yes">SMS + MMS</td><td class="c-no">Not yet</td></tr>
-      <tr><td>Pom</td><td class="c-yes">SMS only</td><td class="c-no">Not yet</td></tr>
+      <tr id="pomRow"><td>Pom</td><td class="c-yes" id="pomOut">SMS only</td><td class="c-no">Not yet</td></tr>
     </tbody>
   </table>
   </div>
@@ -349,7 +349,7 @@
 </section>
 
 <footer class="site-footer">
-  <p><span id="verSpan">v0.0.66</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
+  <p><span id="verSpan">v0.0.67</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
   <p style="margin-top:6px">Free and open source · Nothing gets uploaded</p>
 </footer>
 
@@ -372,6 +372,8 @@ const SUPPORT_MATRIX={
   pom:      {out:'sms', in:false}
 };
 const TEST_MODE=new URLSearchParams(location.search).has('test');
+const BETA_MODE=new URLSearchParams(location.search).has('beta');
+if(BETA_MODE){SUPPORT_MATRIX.pom={out:true,in:false};document.querySelector('.nav-logo').insertAdjacentHTML('beforeend',' <span style="background:#f59e0b;color:#fff;font-size:.6rem;padding:2px 6px;border-radius:4px;vertical-align:middle;font-weight:700;letter-spacing:.04em">BETA</span>');var pe=document.getElementById('pomOut');if(pe){pe.textContent='SMS + MMS';pe.className='c-yes'}}
 
 const $=id=>document.getElementById(id);
 const dropZone=$('dropZone'),fileInput=$('fileInput'),scanBtn=$('scanBtn'),buildBtn=$('buildBtn'),
@@ -991,6 +993,7 @@ async function scan(){
           fmt='fig';log('Detected Fig format (NDJSON)','ok');
           try{
             ({messages,attachMap,pdfCount,pdfSize}=await parseFigZip(entries));
+            if(messages.some(m=>m.creator&&m.creator.includes('.pom'))){fmt='pom';log('Detected Pom backup (creator: com.figmessenger.pom)','ok')}
           }catch(parseErr){
             log('zip.js read failed: '+parseErr.message+' — trying fallback…','warn');
             const fallback=await fallbackZipScan(selectedFile);
@@ -1050,7 +1053,7 @@ async function scan(){
     $('statAttach').textContent=cAttach.toLocaleString();
     $('statMmsRow').style.display=cMms>0?'':'none';
     $('statAttachRow').style.display=cAttach>0?'':'none';
-    $('pomMmsWarn').style.display=(fmt==='pom'&&cMms>0)?'block':'none';
+    $('pomMmsWarn').style.display=(fmt==='pom'&&cMms>0&&!BETA_MODE)?'block':'none';
 
     if(pdfCount>0){
       const pdfXmlSize=Math.round(pdfSize*1.37);
@@ -1139,7 +1142,7 @@ async function parseFigZip(entries){
       let obj;try{obj=JSON.parse(line)}catch(e){log('Skipped unparseable line: '+line.slice(0,60)+'…','warn');continue}
       const t=obj.type;
       if(t==='1'||t===1||t==='2'||t===2){
-        messages.push({type:'sms',address:(obj.address||'').replace(/\s/g,''),body:obj.body||'',date:obj.date,dateSent:obj.date_sent||'0',direction:(t==='1'||t===1)?'in':'out',read:obj.read||'0',contactName:obj.__display_name||'(Unknown)',protocol:obj.protocol,status:obj.status,locked:obj.locked,subId:obj.sub_id});
+        messages.push({type:'sms',address:(obj.address||'').replace(/\s/g,''),body:obj.body||'',date:obj.date,dateSent:obj.date_sent||'0',direction:(t==='1'||t===1)?'in':'out',read:obj.read||'0',contactName:obj.__display_name||'(Unknown)',protocol:obj.protocol,status:obj.status,locked:obj.locked,subId:obj.sub_id,creator:obj.creator});
       }else if(obj.m_type!==undefined||obj.__parts){
         const isIn=String(obj.msg_box)==='1';
         const addrs=[];
