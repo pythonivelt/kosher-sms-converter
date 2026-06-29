@@ -349,7 +349,7 @@
 </section>
 
 <footer class="site-footer">
-  <p><span id="verSpan">v0.0.67</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
+  <p><span id="verSpan">v0.0.68</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
   <p style="margin-top:6px">Free and open source · Nothing gets uploaded</p>
 </footer>
 
@@ -661,30 +661,201 @@ async function sendLog(){
 }
 $('sendLogBtn').addEventListener('click',sendLog);
 
+const FAKE_NAMES=['Alex Johnson','Sam Rivera','Jordan Lee','Morgan Chen','Casey Kim','Riley Patel','Taylor Brooks','Quinn Adams','Avery Cooper','Dakota Hayes','Jamie Torres','Blake Murphy','Drew Collins','Sage Martin','Phoenix Wright'];
+const FAKE_WORDS=['lorem','ipsum','dolor','sit','amet','hello','thanks','sure','okay','sounds','good','great','later','tomorrow','meeting','check','update','running','late','dinner','lunch','store','pick','home','work','school','call','text','soon','morning'];
+function fakePhone(){return'(555) '+String(Math.floor(Math.random()*900)+100)+'-'+String(Math.floor(Math.random()*9000)+1000)}
+function fakeEmail(i){return'user'+i+'@example.com'}
+function fakeSentence(len){let s='';while(s.length<len){s+=(s?' ':'')+FAKE_WORDS[Math.floor(Math.random()*FAKE_WORDS.length)]}return s.substring(0,len)}
+function fakeName(){return FAKE_NAMES[Math.floor(Math.random()*FAKE_NAMES.length)]}
+
+function anonymizeText(text){
+  // Replace phone numbers
+  let out=text.replace(/\+?\d[\d\s()\-]{7,}\d/g,function(){return fakePhone()});
+  // Replace email addresses
+  let ec=0;out=out.replace(/[\w.+-]+@[\w.-]+\.\w{2,}/g,function(){return fakeEmail(ec++)});
+  return out;
+}
+
+function anonymizeJsonValue(v,depth){
+  if(v===null||v===undefined)return v;
+  if(typeof v==='boolean')return v;
+  if(typeof v==='number'){
+    // Keep small numbers (type codes, flags), randomize large ones (IDs)
+    if(v>9999999999)return Date.now()-Math.floor(Math.random()*86400000*30); // timestamp-like
+    if(v>9999)return Math.floor(Math.random()*v);
+    return v;
+  }
+  if(typeof v==='string'){
+    if(!v)return v;
+    if(/^\+?\d[\d\s()\-]{7,}/.test(v))return fakePhone();
+    if(/@/.test(v))return fakeEmail(Math.floor(Math.random()*50));
+    if(/^(https?|ftp|content):\/\//.test(v))return'https://example.com/'+Math.random().toString(36).substring(2,8);
+    if(/^\d{4}-\d{2}-\d{2}/.test(v))return v; // keep date strings
+    if(/^\d+$/.test(v)&&v.length<=4)return v; // keep short numeric strings (type codes)
+    if(v.length<=3)return v; // keep very short values (status codes, etc.)
+    if(v.length>10)return fakeSentence(v.length);
+    return fakeName().split(' ')[0];
+  }
+  if(Array.isArray(v)){
+    if(depth>5)return v;
+    return v.map(item=>anonymizeJsonValue(item,depth+1));
+  }
+  if(typeof v==='object'){
+    if(depth>5)return v;
+    const out={};
+    for(const[k,val]of Object.entries(v))out[k]=anonymizeJsonValue(val,depth+1);
+    return out;
+  }
+  return v;
+}
+
+function anonymizeNdjson(text){
+  const lines=text.split('\n');
+  return lines.map(line=>{
+    const t=line.trim();if(!t)return'';
+    try{return JSON.stringify(anonymizeJsonValue(JSON.parse(t),0))}
+    catch(e){return anonymizeText(t)}
+  }).join('\n');
+}
+
+function anonymizeXml(text){
+  // Replace attribute values (keep attribute names)
+  let out=text.replace(/(\s[\w:-]+=")([^"]*?)(")/g,function(_,pre,val,post){
+    if(!val)return pre+post;
+    if(/^\d{4}-\d{2}-\d{2}/.test(val))return pre+val+post;
+    if(/^\d+$/.test(val)&&val.length<=4)return pre+val+post;
+    if(/^\+?\d[\d\s()\-]{7,}/.test(val))return pre+fakePhone()+post;
+    if(/@/.test(val))return pre+fakeEmail(Math.floor(Math.random()*50))+post;
+    if(val.length>10)return pre+fakeSentence(val.length)+post;
+    if(val.length<=3)return pre+val+post;
+    return pre+fakeName().split(' ')[0]+post;
+  });
+  // Replace text content between tags
+  out=out.replace(/>([^<]+)</g,function(_,content){
+    const t=content.trim();
+    if(!t||/^\s+$/.test(content))return'>'+content+'<';
+    if(/^\d+$/.test(t)&&t.length<=4)return'>'+t+'<';
+    if(/^\+?\d[\d\s()\-]{7,}/.test(t))return'>'+fakePhone()+'<';
+    if(t.length>10)return'>'+fakeSentence(t.length)+'<';
+    return'>'+t+'<';
+  });
+  return out;
+}
+
+// 1x1 transparent PNG placeholder (89 bytes)
+const PLACEHOLDER_PNG=new Uint8Array([137,80,78,71,13,10,26,10,0,0,0,13,73,72,68,82,0,0,0,1,0,0,0,1,8,2,0,0,0,144,119,83,222,0,0,0,12,73,68,65,84,8,215,99,248,207,192,0,0,0,3,0,1,54,174,213,252,0,0,0,0,73,69,78,68,174,66,96,130]);
+
+async function generateAnonymizedZip(entries,origFile,origName){
+  log('Generating anonymized copy — all private data replaced with fake data…');
+  showProgress('Anonymizing…',0);
+  const zipW=new zip.ZipWriter(new zip.BlobWriter('application/zip'));
+  const total=entries.length;
+  for(let i=0;i<total;i++){
+    const e=entries[i];
+    if(e.directory){await zipW.add(e.filename,null,{directory:true});continue}
+    showProgress('Anonymizing '+e.filename,Math.round(i/total*100));
+    const ext=e.filename.split('.').pop().toLowerCase();
+    if(['json','ndjson','xml','txt','csv','html','cfg','ini','yaml','yml','log'].includes(ext)&&e.uncompressedSize<50000000){
+      try{
+        const blob=await e.getData(new zip.BlobWriter());
+        const text=await blob.text();
+        let anon;
+        if(ext==='xml'||ext==='html')anon=anonymizeXml(text);
+        else if(ext==='json'||ext==='ndjson'){
+          const t=text.trimStart();
+          if(t.startsWith('[')||t.startsWith('{'))try{
+            const parsed=JSON.parse(text);
+            anon=JSON.stringify(anonymizeJsonValue(parsed,0),null,text.includes('\n  ')?2:0);
+          }catch(e2){anon=anonymizeNdjson(text)}
+          else anon=anonymizeNdjson(text);
+        }else anon=anonymizeText(text);
+        await zipW.add(e.filename,new zip.BlobReader(new Blob([anon])));
+      }catch(err){
+        log('Skipping '+e.filename+': '+err.message,'warn');
+      }
+    }else if(['jpg','jpeg','png','gif','bmp','webp','tif','tiff','svg'].includes(ext)){
+      await zipW.add(e.filename,new zip.BlobReader(new Blob([PLACEHOLDER_PNG])));
+    }else if(['amr','mp3','ogg','wav','aac','m4a','opus','3gp','mp4','3gpp'].includes(ext)){
+      // Tiny silent placeholder
+      await zipW.add(e.filename,new zip.BlobReader(new Blob([new Uint8Array(64)])));
+    }else if(ext==='ics'){
+      await zipW.add(e.filename,new zip.BlobReader(new Blob(['BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Anonymized//EN\nEND:VCALENDAR\n'])));
+    }else if(ext==='zip'&&e.uncompressedSize<500000000){
+      // Nested ZIP — extract and recursively anonymize
+      try{
+        const blob=await e.getData(new zip.BlobWriter());
+        const innerReader=new zip.ZipReader(new zip.BlobReader(blob));
+        const innerEntries=await innerReader.getEntries();
+        const innerZipW=new zip.ZipWriter(new zip.BlobWriter('application/zip'));
+        for(let j=0;j<innerEntries.length;j++){
+          const ie=innerEntries[j];
+          if(ie.directory){await innerZipW.add(ie.filename,null,{directory:true});continue}
+          const iext=ie.filename.split('.').pop().toLowerCase();
+          if(['json','ndjson','xml','txt','csv'].includes(iext)&&ie.uncompressedSize<50000000){
+            try{
+              const ib=await ie.getData(new zip.BlobWriter());const it=await ib.text();
+              let ia;
+              if(iext==='xml')ia=anonymizeXml(it);
+              else if(iext==='json'||iext==='ndjson'){
+                const tt=it.trimStart();
+                if(tt.startsWith('[')||tt.startsWith('{'))try{ia=JSON.stringify(anonymizeJsonValue(JSON.parse(it),0),null,it.includes('\n  ')?2:0)}catch(e3){ia=anonymizeNdjson(it)}
+                else ia=anonymizeNdjson(it);
+              }else ia=anonymizeText(it);
+              await innerZipW.add(ie.filename,new zip.BlobReader(new Blob([ia])));
+            }catch(err2){log('Skipping inner '+ie.filename,'warn')}
+          }else if(['jpg','jpeg','png','gif','bmp','webp'].includes(iext)){
+            await innerZipW.add(ie.filename,new zip.BlobReader(new Blob([PLACEHOLDER_PNG])));
+          }else if(['amr','mp3','ogg','wav','aac','m4a','opus','3gp','mp4','3gpp'].includes(iext)){
+            await innerZipW.add(ie.filename,new zip.BlobReader(new Blob([new Uint8Array(64)])));
+          }else{
+            try{const raw=await ie.getData(new zip.BlobWriter());await innerZipW.add(ie.filename,new zip.BlobReader(raw))}catch(e4){}
+          }
+          showProgress('Anonymizing '+e.filename+' ('+Math.round(j/innerEntries.length*100)+'%)',Math.round(i/total*100));
+        }
+        await innerReader.close();
+        const innerBlob=await innerZipW.close();
+        await zipW.add(e.filename,new zip.BlobReader(innerBlob));
+      }catch(err){
+        log('Could not process nested ZIP '+e.filename+': '+err.message,'warn');
+        try{const raw=await e.getData(new zip.BlobWriter());await zipW.add(e.filename,new zip.BlobReader(raw))}catch(e5){}
+      }
+    }else{
+      // Unknown binary — keep as-is (could be database, etc.)
+      try{const raw=await e.getData(new zip.BlobWriter());await zipW.add(e.filename,new zip.BlobReader(raw))}catch(e6){}
+    }
+  }
+  const blob=await zipW.close();
+  showProgress('Done!',100);
+  log('Anonymized ZIP ready ('+formatSize(blob.size)+')','ok');
+  return blob;
+}
+
 function downloadReport(report,origName){
   progressEl.style.display='none';
-  errorBox.innerHTML='<b>This phone format is not supported yet.</b><br><br>Help us add support for your phone! A small structure report will be sent (no private messages are included).<br><br><input id="phoneBrandInput" type="text" class="report-input" placeholder="Phone brand (e.g. POM, Kosher XL...)"><input id="userEmailInput" type="email" class="report-input" placeholder="Your email (optional, if you want to help test)"><br><button id="sendReportBtn" class="report-btn">Send Report</button>';
+  errorBox.innerHTML='<b>This phone format is not supported yet.</b><br><br>Help us add support! We\'ll create an anonymized copy of your file — <b>all messages, phone numbers, names, and pictures are replaced with fake data</b>. No private information is included.<br><br>This is <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener">open source</a> — you can verify exactly what gets changed in the code.<br><br><input id="phoneBrandInput" type="text" class="report-input" placeholder="Phone brand (e.g. Tak S7, Kosher XL...)"><input id="userEmailInput" type="email" class="report-input" placeholder="Your email (so we can let you know when it\'s supported)"><br><button id="anonBtn" class="report-btn" style="background:#4f46e5">Anonymize &amp; Download</button><div id="anonInstructions" style="display:none;margin-top:14px;padding:12px 16px;border-radius:8px;background:#ecfdf5;color:#065f46;font-size:.85rem;line-height:1.6"><b>Almost done!</b><ol style="margin:8px 0 0 16px;padding:0"><li>Open <a href="https://drive.google.com" target="_blank" rel="noopener">Google Drive</a></li><li>Upload the anonymized file you just downloaded</li><li>Right-click the file → Share</li><li>Share with <b>pythonivelt@gmail.com</b></li></ol><br>Thanks for helping us add support for your phone!</div>';
   errorBox.style.display='block';scanBtn.disabled=false;cancelBtn.style.display='none';
-  $('sendReportBtn').onclick=async function(){
+  $('anonBtn').onclick=async function(){
     const brand=($('phoneBrandInput').value||'').trim();
     if(!brand){$('phoneBrandInput').style.border='2px solid red';$('phoneBrandInput').focus();return}
     report.phoneBrand=brand;
     const email=($('userEmailInput').value||'').trim();
     if(email)report.userEmail=email;
-    this.textContent='Sending...';this.disabled=true;
+    this.textContent='Anonymizing…';this.disabled=true;
     try{
+      // Send structure report
       await fetch('https://script.google.com/macros/s/AKfycbzSrDeatu4a0rgT9pkypGDyiWdc-i89XSYoVhnSae7gRUvRaXlHee98ycsDE084TUVN4A/exec',{method:'POST',mode:'no-cors',body:JSON.stringify(report)});
-      this.textContent='Sent! Thank you!';this.style.background='#16a34a';
-      log('Structure report sent for '+brand+' — thank you!','ok');
+      // Generate anonymized ZIP
+      const anonBlob=await generateAnonymizedZip(window._lastUnknownEntries||[],selectedFile,origName);
+      if(anonBlob){
+        const url=URL.createObjectURL(anonBlob);
+        const a=document.createElement('a');a.href=url;a.download='anonymized-'+origName;a.click();URL.revokeObjectURL(url);
+      }
+      this.textContent='Downloaded!';this.style.background='#16a34a';
+      $('anonInstructions').style.display='block';
+      log('Anonymized file downloaded + structure report sent — thank you!','ok');
     }catch(e){
-      this.textContent='Failed to send';this.style.background='#dc2626';
-      log('Failed to send report: '+e.message,'err');
-      // Fallback: download the file
-      const json=JSON.stringify(report,null,2);
-      const blob=new Blob([json],{type:'application/json'});
-      const url=URL.createObjectURL(blob);
-      const a=document.createElement('a');a.href=url;a.download='structure-report-'+origName.replace(/\.[^.]+$/,'')+'.json';a.click();URL.revokeObjectURL(url);
-      log('Report downloaded instead — please email it to pythonivelt@gmail.com','warn');
+      this.textContent='Failed';this.style.background='#dc2626';
+      log('Error: '+e.message,'err');
     }
   };
 }
@@ -1025,6 +1196,7 @@ async function scan(){
           ({messages,attachMap,pdfCount,pdfSize}=await parseWonderZip(entries));
         }else{
           log('Unknown ZIP format — generating structure report…','warn');
+          window._lastUnknownEntries=entries;
           await generateStructureReport(entries,selectedFile.name);
           return;
         }
