@@ -349,7 +349,7 @@
 </section>
 
 <footer class="site-footer">
-  <p><span id="verSpan">v0.0.68</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
+  <p><span id="verSpan">v0.0.69</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
   <p style="margin-top:6px">Free and open source · Nothing gets uploaded</p>
 </footer>
 
@@ -362,6 +362,9 @@ document.getElementById('themeToggle').addEventListener('click',function(){var h
 'use strict';
 
 let selectedFile=null, zipReader=null, parsedData=null, cancelled=false, hasPdfs=false, sourceFormat='', processing=false;
+var _scanStart=0;
+const GAS_URL='https://script.google.com/macros/s/AKfycbzSrDeatu4a0rgT9pkypGDyiWdc-i89XSYoVhnSae7gRUvRaXlHee98ycsDE084TUVN4A/exec';
+function sendAnalytics(data){try{var p=Object.assign({type:'analytics',version:(document.getElementById('verSpan')||{}).textContent||'?',beta:BETA_MODE,ts:new Date().toISOString()},data);fetch(GAS_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(p)})}catch(e){}}
 
 // SUPPORT MATRIX — keep in sync with assets/chart.svg
 // out = can read backups from this format, in = can write files that import on this phone
@@ -653,7 +656,7 @@ async function sendLog(){
     const ver=(document.getElementById('verSpan')&&document.getElementById('verSpan').textContent)||'?';
     const user=($('logUserInput')||{}).value||'';
     const payload={type:'log',logText:logText,fileName:fn,version:ver,user:user,timestamp:new Date().toISOString()};
-    await fetch('https://script.google.com/macros/s/AKfycbzSrDeatu4a0rgT9pkypGDyiWdc-i89XSYoVhnSae7gRUvRaXlHee98ycsDE084TUVN4A/exec',{method:'POST',mode:'no-cors',body:JSON.stringify(payload)});
+    await fetch(GAS_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(payload)});
     btn.textContent='Sent ✓';btn.style.color='#4ade80';
   }catch(e){
     var b=$('sendLogBtn');if(b){b.textContent='Failed';b.style.color='#f87171'}
@@ -843,7 +846,7 @@ function downloadReport(report,origName){
     this.textContent='Anonymizing…';this.disabled=true;
     try{
       // Send structure report
-      await fetch('https://script.google.com/macros/s/AKfycbzSrDeatu4a0rgT9pkypGDyiWdc-i89XSYoVhnSae7gRUvRaXlHee98ycsDE084TUVN4A/exec',{method:'POST',mode:'no-cors',body:JSON.stringify(report)});
+      await fetch(GAS_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(report)});
       // Generate anonymized ZIP
       const anonBlob=await generateAnonymizedZip(window._lastUnknownEntries||[],selectedFile,origName);
       if(anonBlob){
@@ -1125,7 +1128,7 @@ scanBtn.addEventListener('click',()=>{
 
 async function scan(){
   try{
-    clearLog();
+    clearLog();_scanStart=Date.now();
     log('Scanning '+selectedFile.name+' ('+formatSize(selectedFile.size)+')');
     showProgress('Opening file…',10);await tick();
     const isZip=selectedFile.name.toLowerCase().endsWith('.zip');
@@ -1267,6 +1270,7 @@ async function scan(){
     scanResults.style.display='block';
     dropZone.classList.add('done');
     optionsEl.style.display='block';
+    sendAnalytics({event:'scan',source:fmt,sms:cIn+cOut,mms:cMms,attachments:cAttach,duration:((Date.now()-_scanStart)/1000).toFixed(1)});
     scanBtn.disabled=false;cancelBtn.style.display='none';
     sourceFormat=fmt;
     updateUI();
@@ -1747,9 +1751,10 @@ async function build(target){
     if(dlBtn._blobUrl)URL.revokeObjectURL(dlBtn._blobUrl);
     const url=URL.createObjectURL(blob);dlBtn._blobUrl=url;
     dlBtn.href=url;dlBtn.download=filename;dlBtn.style.display='block';buildBtn.style.display='none';
+    sendAnalytics({event:'convert',source:parsedData.fmt,target:target,success:true,sms:smsC,mms:mmsC,size:blob.size,duration:((Date.now()-_scanStart)/1000).toFixed(1)});
   }catch(err){
     if(err&&err.cancelled){log('Build cancelled by user','warn');progressEl.style.display='none';infoBox.textContent='Cancelled.';infoBox.style.display='block';}
-    else{log('Build failed: '+(err.message||err),'err');progressEl.style.display='none';errorBox.textContent=err.message||String(err);errorBox.style.display='block';}
+    else{log('Build failed: '+(err.message||err),'err');progressEl.style.display='none';errorBox.textContent=err.message||String(err);errorBox.style.display='block';sendAnalytics({event:'convert',source:parsedData?parsedData.fmt:'?',target:target,success:false,error:(err.message||String(err)).slice(0,100)});}
   }
   cancelBtn.style.display='none';buildBtn.disabled=false;
 }
