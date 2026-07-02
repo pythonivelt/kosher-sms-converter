@@ -93,7 +93,7 @@
   .option.selected{border-color:var(--accent-border);background:var(--accent-soft);box-shadow:0 0 0 3px var(--accent-soft)}
   .option.disabled{opacity:.4;pointer-events:none;cursor:not-allowed}
   .option.disabled .option-desc{color:var(--text-3)}
-  .option input[type="radio"]{margin-top:3px;accent-color:var(--accent);width:16px;height:16px}
+  .option input[type="radio"],.option input[type="checkbox"]{margin-top:3px;accent-color:var(--accent);width:16px;height:16px}
   .option-label{font-weight:600;font-size:.88rem;color:var(--text)}
   .option-desc{font-size:.76rem;color:var(--text-2);margin-top:2px;line-height:1.4}
   .opt-note{font-size:.7rem;color:var(--text-3);font-weight:400}
@@ -224,6 +224,8 @@
 <div class="converter-section" id="converter">
 <div class="card">
 
+  <div id="mergeBanner" style="display:none;margin-bottom:14px;padding:10px 14px;border-radius:10px;background:rgba(99,102,241,.07);border:1px solid rgba(99,102,241,.25);font-size:.78rem;line-height:1.55"><b>Fix a previous import (merge)</b><br>Step 1: upload the backup from your <b>OLD</b> phone — those messages are kept as the correct ones.<br>Step 2: upload a fresh backup from your <b>NEW</b> phone — only messages newer than the old backup are added.<br>Then delete all messages on the new phone and restore the merged file.</div>
+
   <div class="drop-zone" id="dropZone">
     <input type="file" id="fileInput" accept=".zip,.xml" />
     <div class="drop-icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><polyline points="12 12 12 21"/><polyline points="16 16 12 12 8 16"/></svg></div>
@@ -233,6 +235,7 @@
   </div>
 
   <button class="btn btn-primary" id="scanBtn" disabled>Scan backup</button>
+  <div style="text-align:center;margin-top:12px"><a href="#" id="mergeLink" style="font-size:.74rem;color:var(--accent);text-decoration:none">🔧 Already imported with an old version? Fix &amp; merge →</a></div>
 
   <div class="scan-results" id="scanResults">
     <h3>What's inside <span class="detected-badge" id="detectedBadge"></span></h3>
@@ -241,6 +244,7 @@
       <div class="stat">📤 Sent: <strong id="statOut">0</strong></div>
       <div class="stat" id="statMmsRow">📎 MMS: <strong id="statMms">0</strong></div>
       <div class="stat" id="statAttachRow">🖼️ Attachments: <strong id="statAttach">0</strong></div>
+      <div class="stat" id="statGroupRow" style="display:none">👥 Group chats: <strong id="statGroup">0</strong></div>
       <div class="stat" id="statPdfRow" style="display:none">📄 PDFs: <strong id="statPdf">0</strong></div>
     </div>
     <div id="pomMmsWarn" style="display:none;margin-top:10px;padding:10px 14px;border-radius:8px;background:#fef3c7;color:#92400e;font-size:.85rem;line-height:1.4">⚠️ Pom currently supports SMS only — MMS pictures and voice notes will not be included.</div>
@@ -300,6 +304,14 @@
       </div>
     </label>
 
+    <label class="option selected" id="optGroups" style="display:none">
+      <input type="checkbox" id="groupsChk" checked />
+      <div>
+        <div class="option-label">Include group chats</div>
+        <div class="option-desc" id="groupsDesc"></div>
+      </div>
+    </label>
+
     <div class="pdf-panel" id="pdfChoice" style="display:none">
       <div class="pdf-panel-title">Your backup contains PDF files</div>
       <div class="pdf-panel-info" id="pdfSizeInfo"></div>
@@ -349,7 +361,7 @@
 </section>
 
 <footer class="site-footer">
-  <p><span id="verSpan">v0.0.69</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
+  <p><span id="verSpan">v0.0.71</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
   <p style="margin-top:6px">Free and open source · Nothing gets uploaded</p>
 </footer>
 
@@ -1079,6 +1091,21 @@ function bindRadioGroup(selector){
 bindRadioGroup('.option[data-value="smsbackup"],.option[data-value="fig"],.option[data-value="pom"],.option[data-value="wonder"]');
 bindRadioGroup('.option[data-value="all"],.option[data-value="text"],.option[data-value="mms"]');
 bindRadioGroup('.option[data-value="pdf-include"],.option[data-value="pdf-skip"]');
+$('groupsChk').addEventListener('change',()=>{$('optGroups').classList.toggle('selected',$('groupsChk').checked)});
+
+// ===== MERGE MODE (fix a previous import) =====
+const MERGE={on:false,old:null,added:0,dropped:0};
+const DEFAULT_DROP_TEXT=document.querySelector('.drop-text').textContent;
+$('mergeLink').addEventListener('click',e=>{
+  e.preventDefault();
+  MERGE.on=!MERGE.on;MERGE.old=null;
+  $('mergeLink').innerHTML=MERGE.on?'✖ Exit merge mode — back to normal convert':'🔧 Already imported with an old version? Fix &amp; merge →';
+  $('mergeBanner').style.display=MERGE.on?'block':'none';
+  selectedFile=null;parsedData=null;fileInput.value='';fileNameEl.style.display='none';scanBtn.disabled=true;
+  scanResults.style.display='none';optionsEl.style.display='none';infoBox.style.display='none';errorBox.style.display='none';$('downloadBtn').style.display='none';dropZone.classList.remove('done');
+  document.querySelector('.drop-text').textContent=MERGE.on?'Upload the OLD phone backup (step 1)':DEFAULT_DROP_TEXT;
+  if(zipReader){try{zipReader.close()}catch{}zipReader=null}
+});
 
 function needsPdfChoice(){
   if(!hasPdfs)return false;
@@ -1210,7 +1237,20 @@ async function scan(){
       ({messages,attachMap,pdfCount,pdfSize}=await parseSmsBackupXmlStream(selectedFile));
     }
 
-    parsedData={messages,attachMap,fmt};
+    if(MERGE.on&&MERGE.old){
+      // merge: keep ALL old-backup messages; from the new backup keep only what's newer than the old backup's last message
+      const nd=d=>{const n=parseInt(d,10)||0;return n<1e12?n*1000:n};
+      let cutoff=0;for(const m of MERGE.old.messages){const d=nd(m.date);if(d>cutoff)cutoff=d}
+      const fresh=messages.filter(m=>nd(m.date)>cutoff);
+      MERGE.added=fresh.length;MERGE.dropped=messages.length-fresh.length;
+      log('Merge: old backup ends '+new Date(cutoff).toLocaleString()+' — adding '+fresh.length+' newer messages from the new backup, skipping '+MERGE.dropped+' older ones (already in the old backup)','ok');
+      messages=MERGE.old.messages.concat(fresh);
+      messages.sort((a,b)=>nd(a.date)-nd(b.date));
+      if(MERGE.old.attachMap){attachMap=attachMap||{};for(const k in MERGE.old.attachMap)if(!(k in attachMap))attachMap[k]=MERGE.old.attachMap[k]}
+      fmt='merge';
+    }
+    const grp=markGroups(messages);
+    parsedData={messages,attachMap,fmt,groupCount:grp.groupCount};
     showProgress('Done!',100);await tick();progressEl.style.display='none';
 
     // Stats
@@ -1221,13 +1261,18 @@ async function scan(){
     }
 
     log('Parsed '+messages.length+' messages ('+cIn+' in, '+cOut+' out, '+cMms+' MMS, '+cAttach+' attachments)'+(pdfCount?' + '+pdfCount+' PDFs':''),'ok');
-    $('detectedBadge').textContent=fmt==='fig'?'Fig':fmt==='pom'?'Pom':fmt==='wonder'?'Wonder':'SMS Backup & Restore';
+    $('detectedBadge').textContent=fmt==='merge'?'Merged':fmt==='fig'?'Fig':fmt==='pom'?'Pom':fmt==='wonder'?'Wonder':'SMS Backup & Restore';
     $('statIn').textContent=cIn.toLocaleString();
     $('statOut').textContent=cOut.toLocaleString();
     $('statMms').textContent=cMms.toLocaleString();
     $('statAttach').textContent=cAttach.toLocaleString();
     $('statMmsRow').style.display=cMms>0?'':'none';
     $('statAttachRow').style.display=cAttach>0?'':'none';
+    $('statGroup').textContent=grp.groupCount.toLocaleString();
+    $('statGroupRow').style.display=grp.groupCount>0?'':'none';
+    $('optGroups').style.display=grp.groupCount>0?'':'none';
+    $('groupsChk').checked=true;$('optGroups').classList.add('selected');
+    $('groupsDesc').textContent=grp.groupCount.toLocaleString()+' messages in group chats — uncheck to leave them out (group threading fixed in v0.0.71, feedback welcome)';
     $('pomMmsWarn').style.display=(fmt==='pom'&&cMms>0&&!BETA_MODE)?'block':'none';
 
     if(pdfCount>0){
@@ -1256,6 +1301,11 @@ async function scan(){
     }
     // Reset target selection
     document.querySelectorAll('input[name="target"]').forEach(r=>r.checked=false);
+    if(fmt==='merge'){
+      $('optFig').style.display='none';$('optPom').style.display='none';$('optWonder').style.display='none';
+      const si=$('optSms').querySelector('input');si.disabled=false;si.checked=true;
+      $('optSms').classList.remove('disabled');$('optSms').style.display='';$('optSms').classList.add('selected');
+    }
 
     // Hide MMS content options if no MMS
     $('optAll').style.display=cMms>0?'':'none';
@@ -1270,10 +1320,21 @@ async function scan(){
     scanResults.style.display='block';
     dropZone.classList.add('done');
     optionsEl.style.display='block';
-    sendAnalytics({event:'scan',source:fmt,sms:cIn+cOut,mms:cMms,attachments:cAttach,duration:((Date.now()-_scanStart)/1000).toFixed(1)});
+    sendAnalytics({event:'scan',source:fmt,sms:cIn+cOut,mms:cMms,attachments:cAttach,groups:grp.groupCount,duration:((Date.now()-_scanStart)/1000).toFixed(1)});
     scanBtn.disabled=false;cancelBtn.style.display='none';
     sourceFormat=fmt;
     updateUI();
+    if(MERGE.on&&!MERGE.old){
+      // merge step 1 complete — stash and ask for the new-phone backup
+      MERGE.old=parsedData;
+      scanResults.style.display='none';optionsEl.style.display='none';
+      infoBox.innerHTML='✅ Step 1 done — old backup scanned: <b>'+messages.length.toLocaleString()+'</b> messages.<br>Now upload the fresh backup from the <b>NEW</b> phone (SMS Backup &amp; Restore) and scan again.';
+      infoBox.style.display='block';
+      selectedFile=null;fileInput.value='';fileNameEl.style.display='none';scanBtn.disabled=true;
+      dropZone.classList.remove('done');
+      document.querySelector('.drop-text').textContent='Upload the NEW phone backup (step 2)';
+      zipReader=null; // keep the old file's reader open — its attachments are read during convert
+    }
   }catch(err){
     if(err&&err.cancelled){log('Scan cancelled by user','warn');progressEl.style.display='none';infoBox.textContent='Cancelled.';infoBox.style.display='block';scanBtn.disabled=false;cancelBtn.style.display='none';return}
     const msg=err.message||String(err);
@@ -1457,15 +1518,46 @@ async function parseSmsBackupXmlStream(file){
 
 // ===== WRITERS =====
 
-function filterMessages(messages,content,skipPdf){
+function normNum(a){const d=String(a||'').replace(/\D/g,'');return d.length>=10?d.slice(-10):d}
+function detectOwnNumber(messages){
+  // own number: the type-137 sender on outgoing MMS; fallback = most frequent type-151 recipient across incoming MMS
+  const out=new Map(),inc=new Map();
+  for(const m of messages){
+    if(m.type!=='mms')continue;
+    for(const a of(m.addrs||[])){
+      const n=normNum(a.address);if(!n)continue;
+      const t=parseInt(a.type,10);
+      if(m.direction==='out'&&t===137)out.set(n,(out.get(n)||0)+1);
+      else if(m.direction==='in'&&t===151)inc.set(n,(inc.get(n)||0)+1);
+    }
+  }
+  const top=map=>{let b=null,c=0;for(const[k,v]of map)if(v>c){b=k;c=v}return b};
+  return top(out)||top(inc);
+}
+function markGroups(messages){
+  const own=detectOwnNumber(messages);
+  let groupCount=0;
+  for(const m of messages){
+    if(m.type!=='mms'){m.isGroup=false;continue}
+    const others=new Set();
+    for(const a of(m.addrs||[])){const n=normNum(a.address);if(n&&n!==own)others.add(n)}
+    m.isGroup=others.size>=2;
+    if(m.isGroup)groupCount++;
+  }
+  return{own,groupCount};
+}
+function filterMessages(messages,content,skipPdf,skipGroups){
   let out=messages;
-  if(content==='text')out=messages.map(m=>{if(m.type==='mms')return{...m,parts:m.parts.filter(p=>!hasAttach(p))};return m});
-  else if(content==='mms')out=messages.filter(m=>m.type==='mms');
+  if(skipGroups)out=out.filter(m=>!m.isGroup);
+  if(content==='text')out=out.map(m=>{if(m.type==='mms')return{...m,parts:m.parts.filter(p=>!hasAttach(p))};return m});
+  else if(content==='mms')out=out.filter(m=>m.type==='mms');
   if(skipPdf)out=out.map(m=>{if(m.type==='mms')return{...m,parts:m.parts.filter(p=>p.ct!=='application/pdf')};return m});
   return out;
 }
 
+function extFromCt(ct){return({'image/jpeg':'.jpg','image/jpg':'.jpg','image/png':'.png','image/gif':'.gif','image/bmp':'.bmp','image/webp':'.webp','audio/amr':'.amr','audio/mpeg':'.mp3','audio/mp4':'.m4a','video/mp4':'.mp4','video/3gpp':'.3gp','application/pdf':'.pdf','text/x-vcard':'.vcf'})[String(ct||'').toLowerCase()]||'.bin'}
 async function writeToSmsBackup(messages){
+  const own=detectOwnNumber(messages);
   const parts=[];
   const now=new Date();
   parts.push(`<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>\n<!--File Created By Kosher Phone SMS Converter on ${now.toLocaleString()}-->\n<smses count="__COUNT__" backup_date="${Date.now()}" type="full">\n`);
@@ -1477,18 +1569,50 @@ async function writeToSmsBackup(messages){
       parts.push(`  <sms protocol="${escXml(m.protocol??0)}" address="${escXml(m.address)}" date="${escXml(m.date)}" type="${t}" subject="null" body="${escXml(m.body)}" toa="null" sc_toa="null" service_center="null" read="${escXml(m.read??0)}" status="${escXml(m.status??-1)}" locked="${escXml(m.locked??0)}" date_sent="${escXml(m.dateSent??m.date)}" sub_id="${escXml(m.subId??1)}" readable_date="${escXml(fmtDate(m.date))}" contact_name="${escXml(m.contactName)}" />\n`);
       count++;
     }else{
-      const addr=m.address||'';if(!addr)continue;
+      // SMS B&R threads MMS by the address attribute: all participants except own number, tilde-joined for groups
+      const seen=new Set(),others=[];
+      for(const a of(m.addrs||[])){const raw=(a.address||'').replace(/\s/g,'');const n=normNum(raw);if(!n||n===own||seen.has(n))continue;seen.add(n);others.push(raw)}
+      const addr=others.length?others.join('~'):(m.address||'');
+      if(!addr)continue;
       const dateMs=parseInt(m.date,10)<1e12?parseInt(m.date,10)*1000:parseInt(m.date,10);
-      let hasAtt=false;
-      const pLines=[];
+      // Two shapes, mirroring real SMS B&R exports: text-only MMS = ct_t text/plain, no SMIL;
+      // MMS with media = multipart.related + generated SMIL (Samsung Messages shows "not available" without it)
+      const items=[];let hasAtt=false,missingMedia=0;
       for(const p of m.parts){
-        if(hasAttach(p)){const d=await resolveData(p);if(d){hasAtt=true;pLines.push(`      <part seq="${p.seq||0}" ct="${escXml(p.ct)}" name="${escXml(p.cl||'attachment')}" chset="null" cd="null" fn="${escXml(p.cl||'')}" cid="" cl="${escXml(p.cl||'')}" ctt_s="null" ctt_t="null" data="${ab2b64(d)}" />`)}
-        }else pLines.push(`      <part seq="${p.seq||0}" ct="text/plain" name="body" chset="106" cd="null" fn="null" cid="null" cl="null" ctt_s="null" ctt_t="null" text="${escXml(p.text||'')}" />`);
+        if(String(p.ct||'').toLowerCase()==='application/smil')continue;
+        if(hasAttach(p)){
+          const d=await resolveData(p);
+          if(d){hasAtt=true;items.push({att:true,ct:p.ct||'application/octet-stream',cl:p.cl,seq:p.seq||0,data:d})}
+          else missingMedia++;
+        }else items.push({att:false,text:p.text||'',seq:p.seq||0});
       }
-      if(!pLines.length)pLines.push(`      <part seq="0" ct="text/plain" name="body" chset="106" cd="null" fn="null" cid="null" cl="null" ctt_s="null" ctt_t="null" text="" />`);
+      if(!items.length)items.push({att:false,text:missingMedia?'[Media missing from backup]':'',seq:0});
+      const pLines=[];
+      if(!hasAtt){
+        for(const it of items)pLines.push(`      <part seq="${it.seq}" ct="text/plain" name="body" chset="106" cd="null" fn="null" cid="null" cl="null" ctt_s="null" ctt_t="null" text="${escXml(it.text||'')}" />`);
+      }else{
+        const refs=[];let ti=0,ai=0;
+        for(const it of items){
+          if(it.att){
+            const nm=String(it.cl||('att_'+ai+extFromCt(it.ct))).replace(/[^A-Za-z0-9._-]/g,'_');
+            const tag=it.ct.indexOf('image/')===0?'img':it.ct.indexOf('audio/')===0?'audio':it.ct.indexOf('video/')===0?'video':'ref';
+            refs.push({tag:tag,src:nm});
+            pLines.push(`      <part seq="${it.seq}" ct="${escXml(it.ct)}" name="${escXml(nm)}" chset="null" cd="null" fn="${escXml(nm)}" cid="&lt;att_${ai}&gt;" cl="${escXml(nm)}" ctt_s="null" ctt_t="null" data="${ab2b64(it.data)}" />`);
+            ai++;
+          }else{
+            const nm='text_'+ti+'.txt';
+            refs.push({tag:'text',src:nm});
+            pLines.push(`      <part seq="${it.seq}" ct="text/plain" name="${nm}" chset="106" cd="null" fn="null" cid="&lt;text_${ti}&gt;" cl="${nm}" ctt_s="null" ctt_t="null" text="${escXml(it.text||'')}" />`);
+            ti++;
+          }
+        }
+        const smilBody=refs.map(r=>r.tag==='text'?'<text src="'+r.src+'" region="Text"/>':r.tag==='ref'?'<ref src="'+r.src+'"/>':'<'+r.tag+' src="'+r.src+'" region="Image"/>').join('');
+        const smil='<smil><head><layout><root-layout width="100%" height="100%"/><region id="Image" left="0" top="0" width="100%" height="80%" fit="meet"/><region id="Text" left="0" top="80%" width="100%" height="20%" fit="meet"/></layout></head><body><par dur="5000ms">'+smilBody+'</par></body></smil>';
+        pLines.unshift(`      <part seq="-1" ct="application/smil" name="smil.xml" chset="106" cd="null" fn="null" cid="&lt;smil&gt;" cl="smil.xml" ctt_s="null" ctt_t="null" text="${escXml(smil)}" />`);
+      }
       const aLines=(m.addrs||[]).map(a=>`      <addr address="${escXml((a.address||'').replace(/\s/g,''))}" type="${a.type}" charset="106" />`);
       if(!aLines.length)aLines.push(`      <addr address="${escXml(addr)}" type="${m.direction==='in'?137:151}" charset="106" />`);
-      parts.push(`  <mms date="${dateMs}" rr="null" sub="" ct_t="${escXml(m.ctT||'application/vnd.wap.multipart.related')}" read_status="null" seen="${escXml(m.seen??1)}" msg_box="${m.direction==='in'?1:2}" address="${escXml(addr)}" sub_cs="null" resp_st="null" retr_st="null" d_tm="null" text_only="${hasAtt?0:1}" exp="null" locked="${escXml(m.locked??0)}" m_id="${escXml(m.mId||'')}" st="null" retr_txt_cs="null" retr_txt="null" creator="${escXml(m.creator||'com.android.mms')}" date_sent="${escXml(m.dateSent??0)}" read="${escXml(m.read??0)}" m_size="${escXml(m.mSize??0)}" rpt_a="null" ct_cls="null" pri="null" sub_id="${escXml(m.subId??1)}" tr_id="${escXml(m.trId||'')}" resp_txt="null" ct_l="null" m_cls="${escXml(m.mCls||'personal')}" d_rpt="null" v="${escXml(m.v||18)}" service_center="null" _id="${escXml(m._id||'')}" m_type="${escXml(m.mType||128)}" readable_date="${escXml(fmtDate(m.date))}" contact_name="${escXml(m.contactName||'(Unknown)')}">
+      parts.push(`  <mms date="${dateMs}" rr="null" sub="" ct_t="${hasAtt?'application/vnd.wap.multipart.related':'text/plain'}" read_status="null" seen="${escXml(m.seen??1)}" msg_box="${m.direction==='in'?1:2}" address="${escXml(addr)}" sub_cs="null" resp_st="null" retr_st="null" d_tm="null" text_only="${hasAtt?0:1}" exp="null" locked="${escXml(m.locked??0)}" m_id="${escXml(m.mId||'')}" st="null" retr_txt_cs="null" retr_txt="null" creator="${escXml(m.creator||'com.android.mms')}" date_sent="${escXml(m.dateSent??0)}" read="${escXml(m.read??0)}" m_size="${escXml(m.mSize??0)}" rpt_a="null" ct_cls="null" pri="null" sub_id="${escXml(m.subId??1)}" tr_id="${escXml(m.trId||'')}" resp_txt="null" ct_l="null" m_cls="${escXml(m.mCls||'personal')}" d_rpt="null" v="${escXml(m.v||18)}" service_center="null" _id="${escXml(m._id||'')}" m_type="${escXml(m.mType||128)}" readable_date="${escXml(fmtDate(m.date))}" contact_name="${escXml(m.contactName||'(Unknown)')}">
     <parts>\n${pLines.join('\n')}\n    </parts>
     <addrs>\n${aLines.join('\n')}\n    </addrs>
   </mms>\n`);
@@ -1715,9 +1839,10 @@ async function build(target){
     const content=(document.querySelector('input[name="content"]:checked')||{}).value||'all';
     const pdfSel=document.querySelector('input[name="pdfmode"]:checked');
     const skipPdf=needsPdfChoice()&&(!pdfSel||pdfSel.value==='skip');
-    const msgs=filterMessages(parsedData.messages,content,skipPdf);
+    const skipGroups=parsedData.groupCount>0&&!$('groupsChk').checked;
+    const msgs=filterMessages(parsedData.messages,content,skipPdf,skipGroups);
 
-    log('Building '+target+' from '+msgs.length+' messages (content='+content+', skipPdf='+skipPdf+')');
+    log('Building '+target+' from '+msgs.length+' messages (content='+content+', skipPdf='+skipPdf+', skipGroups='+skipGroups+')');
     showProgress('Building…',20);await tick();
     let blob,filename;
     const baseName=selectedFile.name.replace(/\.(zip|xml)$/i,'');
@@ -1746,12 +1871,13 @@ async function build(target){
     const parts=[smsC?smsC.toLocaleString()+' SMS':null,mmsC?mmsC.toLocaleString()+' MMS':null].filter(Boolean).join(' + ');
     log('Export complete: '+msgs.length+' messages, '+formatSize(blob.size)+' → '+filename,'ok');
     infoBox.textContent='Converted '+(parts||msgs.length.toLocaleString()+' messages')+' ('+formatSize(blob.size)+') successfully!';
+    if(parsedData.fmt==='merge'){infoBox.innerHTML+='<br><br><b>Now on the new phone:</b><br>1. SMS Backup &amp; Restore → menu → Tools → <b>Delete Messages</b> → All messages.<br>2. Restore this merged file.<br>3. Done — old chats correctly grouped, new messages kept, no duplicates.';}
     infoBox.style.display='block';
     const dlBtn=$('downloadBtn');
     if(dlBtn._blobUrl)URL.revokeObjectURL(dlBtn._blobUrl);
     const url=URL.createObjectURL(blob);dlBtn._blobUrl=url;
     dlBtn.href=url;dlBtn.download=filename;dlBtn.style.display='block';buildBtn.style.display='none';
-    sendAnalytics({event:'convert',source:parsedData.fmt,target:target,success:true,sms:smsC,mms:mmsC,size:blob.size,duration:((Date.now()-_scanStart)/1000).toFixed(1)});
+    sendAnalytics({event:'convert',source:parsedData.fmt,target:target,success:true,sms:smsC,mms:mmsC,groups:msgs.filter(m=>m.isGroup).length,skipGroups:skipGroups,size:blob.size,duration:((Date.now()-_scanStart)/1000).toFixed(1)});
   }catch(err){
     if(err&&err.cancelled){log('Build cancelled by user','warn');progressEl.style.display='none';infoBox.textContent='Cancelled.';infoBox.style.display='block';}
     else{log('Build failed: '+(err.message||err),'err');progressEl.style.display='none';errorBox.textContent=err.message||String(err);errorBox.style.display='block';sendAnalytics({event:'convert',source:parsedData?parsedData.fmt:'?',target:target,success:false,error:(err.message||String(err)).slice(0,100)});}
