@@ -361,7 +361,7 @@
 </section>
 
 <footer class="site-footer">
-  <p><span id="verSpan">v0.0.71</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
+  <p><span id="verSpan">v0.0.72</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
   <p style="margin-top:6px">Free and open source · Nothing gets uploaded</p>
 </footer>
 
@@ -375,8 +375,13 @@ document.getElementById('themeToggle').addEventListener('click',function(){var h
 
 let selectedFile=null, zipReader=null, parsedData=null, cancelled=false, hasPdfs=false, sourceFormat='', processing=false;
 var _scanStart=0;
+// Anonymous analytics context: random per-page-load session id (never stored), coarse device class + browser family only
+let scanExtras=null;
+const SID=Math.random().toString(36).slice(2,8);
+const IS_MOBILE=(navigator.userAgentData&&typeof navigator.userAgentData.mobile==='boolean')?navigator.userAgentData.mobile:/Mobi|Android/i.test(navigator.userAgent);
+const BROWSER=(u=>u.indexOf('Edg/')>-1?'Edge':u.indexOf('OPR/')>-1?'Opera':u.indexOf('Firefox/')>-1?'Firefox':u.indexOf('Chrome/')>-1?'Chrome':u.indexOf('Safari/')>-1?'Safari':'other')(navigator.userAgent);
 const GAS_URL='https://script.google.com/macros/s/AKfycbzSrDeatu4a0rgT9pkypGDyiWdc-i89XSYoVhnSae7gRUvRaXlHee98ycsDE084TUVN4A/exec';
-function sendAnalytics(data){try{var p=Object.assign({type:'analytics',version:(document.getElementById('verSpan')||{}).textContent||'?',beta:BETA_MODE,ts:new Date().toISOString()},data);fetch(GAS_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(p)})}catch(e){}}
+function sendAnalytics(data){try{var p=Object.assign({type:'analytics',version:(document.getElementById('verSpan')||{}).textContent||'?',beta:BETA_MODE,ts:new Date().toISOString(),sid:SID,device:IS_MOBILE?'mobile':'desktop',browser:BROWSER},data);fetch(GAS_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(p)})}catch(e){}}
 
 // SUPPORT MATRIX — keep in sync with assets/chart.svg
 // out = can read backups from this format, in = can write files that import on this phone
@@ -1253,12 +1258,18 @@ async function scan(){
     parsedData={messages,attachMap,fmt,groupCount:grp.groupCount};
     showProgress('Done!',100);await tick();progressEl.style.display='none';
 
-    // Stats
+    // Stats (also feeds anonymous analytics: counts only — no numbers, names or content)
     let cIn=0,cOut=0,cMms=0,cAttach=0;
+    const _att={img:0,aud:0,vid:0,pdf:0,other:0},_thr=new Set();
+    let _dMin=Infinity,_dMax=0;
+    const _nd=d=>{const n=parseInt(d,10)||0;return n<1e12?n*1000:n};
     for(const m of messages){
+      const _d=_nd(m.date);if(_d){if(_d<_dMin)_dMin=_d;if(_d>_dMax)_dMax=_d}
+      _thr.add(m.isGroup&&m.addrs?[...new Set(m.addrs.map(a=>normNum(a.address)).filter(Boolean))].sort().join('~'):(normNum(m.address)||String(m.address||'?')));
       if(m.type==='sms'){m.direction==='in'?cIn++:cOut++}
-      else{cMms++;cAttach+=m.parts.filter(p=>hasAttach(p)).length}
+      else{cMms++;for(const p of m.parts){if(!hasAttach(p))continue;cAttach++;const c=String(p.ct||'').toLowerCase();if(c.indexOf('image/')===0)_att.img++;else if(c.indexOf('audio/')===0)_att.aud++;else if(c.indexOf('video/')===0)_att.vid++;else if(c==='application/pdf')_att.pdf++;else _att.other++}}
     }
+    scanExtras={threads:_thr.size,span:_dMax>_dMin?Math.round((_dMax-_dMin)/2629800000):0,inSize:selectedFile?selectedFile.size:0,attImg:_att.img,attAud:_att.aud,attVid:_att.vid,attPdf:_att.pdf,attOther:_att.other,ownOk:!!grp.own};
 
     log('Parsed '+messages.length+' messages ('+cIn+' in, '+cOut+' out, '+cMms+' MMS, '+cAttach+' attachments)'+(pdfCount?' + '+pdfCount+' PDFs':''),'ok');
     $('detectedBadge').textContent=fmt==='merge'?'Merged':fmt==='fig'?'Fig':fmt==='pom'?'Pom':fmt==='wonder'?'Wonder':'SMS Backup & Restore';
@@ -1320,7 +1331,7 @@ async function scan(){
     scanResults.style.display='block';
     dropZone.classList.add('done');
     optionsEl.style.display='block';
-    sendAnalytics({event:'scan',source:fmt,sms:cIn+cOut,mms:cMms,attachments:cAttach,groups:grp.groupCount,duration:((Date.now()-_scanStart)/1000).toFixed(1)});
+    sendAnalytics(Object.assign({event:'scan',source:fmt,sms:cIn+cOut,mms:cMms,attachments:cAttach,groups:grp.groupCount,merge:MERGE.on?1:0,duration:((Date.now()-_scanStart)/1000).toFixed(1)},scanExtras));
     scanBtn.disabled=false;cancelBtn.style.display='none';
     sourceFormat=fmt;
     updateUI();
@@ -1877,10 +1888,10 @@ async function build(target){
     if(dlBtn._blobUrl)URL.revokeObjectURL(dlBtn._blobUrl);
     const url=URL.createObjectURL(blob);dlBtn._blobUrl=url;
     dlBtn.href=url;dlBtn.download=filename;dlBtn.style.display='block';buildBtn.style.display='none';
-    sendAnalytics({event:'convert',source:parsedData.fmt,target:target,success:true,sms:smsC,mms:mmsC,groups:msgs.filter(m=>m.isGroup).length,skipGroups:skipGroups,size:blob.size,duration:((Date.now()-_scanStart)/1000).toFixed(1)});
+    sendAnalytics(Object.assign({event:'convert',source:parsedData.fmt,target:target,success:true,sms:smsC,mms:mmsC,groups:msgs.filter(m=>m.isGroup).length,skipGroups:skipGroups,content:content,merge:MERGE.on?1:0,mergeAdded:MERGE.added,mergeDropped:MERGE.dropped,size:blob.size,duration:((Date.now()-_scanStart)/1000).toFixed(1)},scanExtras));
   }catch(err){
     if(err&&err.cancelled){log('Build cancelled by user','warn');progressEl.style.display='none';infoBox.textContent='Cancelled.';infoBox.style.display='block';}
-    else{log('Build failed: '+(err.message||err),'err');progressEl.style.display='none';errorBox.textContent=err.message||String(err);errorBox.style.display='block';sendAnalytics({event:'convert',source:parsedData?parsedData.fmt:'?',target:target,success:false,error:(err.message||String(err)).slice(0,100)});}
+    else{log('Build failed: '+(err.message||err),'err');progressEl.style.display='none';errorBox.textContent=err.message||String(err);errorBox.style.display='block';sendAnalytics({event:'convert',source:parsedData?parsedData.fmt:'?',target:target,success:false,merge:MERGE.on?1:0,error:(err.message||String(err)).slice(0,100)});}
   }
   cancelBtn.style.display='none';buildBtn.disabled=false;
 }
