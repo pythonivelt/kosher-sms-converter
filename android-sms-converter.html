@@ -361,7 +361,7 @@
 </section>
 
 <footer class="site-footer">
-  <p><span id="verSpan">v0.0.72</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
+  <p><span id="verSpan">v0.0.73</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
   <p style="margin-top:6px">Free and open source · Nothing gets uploaded</p>
 </footer>
 
@@ -1270,6 +1270,8 @@ async function scan(){
       else{cMms++;for(const p of m.parts){if(!hasAttach(p))continue;cAttach++;const c=String(p.ct||'').toLowerCase();if(c.indexOf('image/')===0)_att.img++;else if(c.indexOf('audio/')===0)_att.aud++;else if(c.indexOf('video/')===0)_att.vid++;else if(c==='application/pdf')_att.pdf++;else _att.other++}}
     }
     scanExtras={threads:_thr.size,span:_dMax>_dMin?Math.round((_dMax-_dMin)/2629800000):0,inSize:selectedFile?selectedFile.size:0,attImg:_att.img,attAud:_att.aud,attVid:_att.vid,attPdf:_att.pdf,attOther:_att.other,ownOk:!!grp.own};
+    // backup fingerprint: one-way FNV-1a hash of counts + date range only — same backup always hashes the same, nothing recoverable
+    {const _fp=(cIn+cOut)+'|'+cMms+'|'+cAttach+'|'+(_dMin<Infinity?_dMin:0)+'|'+(_dMax||0);let _h=2166136261;for(let _i=0;_i<_fp.length;_i++){_h^=_fp.charCodeAt(_i);_h=Math.imul(_h,16777619)}scanExtras.bkp=('0000000'+(_h>>>0).toString(16)).slice(-8)}
 
     log('Parsed '+messages.length+' messages ('+cIn+' in, '+cOut+' out, '+cMms+' MMS, '+cAttach+' attachments)'+(pdfCount?' + '+pdfCount+' PDFs':''),'ok');
     $('detectedBadge').textContent=fmt==='merge'?'Merged':fmt==='fig'?'Fig':fmt==='pom'?'Pom':fmt==='wonder'?'Wonder':'SMS Backup & Restore';
