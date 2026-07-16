@@ -361,7 +361,7 @@
 </section>
 
 <footer class="site-footer">
-  <p><span id="verSpan">v0.0.74</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
+  <p><span id="verSpan">v0.0.75</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
   <p style="margin-top:6px">Free and open source · Nothing gets uploaded</p>
 </footer>
 
@@ -1106,7 +1106,7 @@ $('mergeLink').addEventListener('click',e=>{
   MERGE.on=!MERGE.on;MERGE.old=null;
   $('mergeLink').innerHTML=MERGE.on?'✖ Exit merge mode — back to normal convert':'🔧 Already imported with an old version? Fix &amp; merge →';
   $('mergeBanner').style.display=MERGE.on?'block':'none';
-  selectedFile=null;parsedData=null;fileInput.value='';fileNameEl.style.display='none';scanBtn.disabled=true;
+  selectedFile=null;parsedData=null;fileInput.value='';fileNameEl.style.display='none';scanBtn.style.display='';scanBtn.disabled=true;
   scanResults.style.display='none';optionsEl.style.display='none';infoBox.style.display='none';errorBox.style.display='none';$('downloadBtn').style.display='none';dropZone.classList.remove('done');
   document.querySelector('.drop-text').textContent=MERGE.on?'Upload the OLD phone backup (step 1)':DEFAULT_DROP_TEXT;
   if(zipReader){try{zipReader.close()}catch{}zipReader=null}
@@ -1145,7 +1145,7 @@ function pickFile(f){
   selectedFile=f;
   fileNameEl.textContent=f.name+' ('+formatSize(f.size)+')';
   fileNameEl.style.display='block';
-  scanBtn.disabled=false;cancelBtn.style.display='none';
+  scanBtn.style.display='';scanBtn.disabled=false;cancelBtn.style.display='none';
   scanResults.style.display='none';optionsEl.style.display='none';infoBox.style.display='none';errorBox.style.display='none';progressEl.style.display='none';$('downloadBtn').style.display='none';
   dropZone.classList.remove('done');parsedData=null;
   if(zipReader){try{zipReader.close()}catch{}zipReader=null}
@@ -1330,6 +1330,7 @@ async function scan(){
       $('optText').classList.add('selected');
     }
 
+    scanBtn.style.display='none';
     scanResults.style.display='block';
     dropZone.classList.add('done');
     optionsEl.style.display='block';
