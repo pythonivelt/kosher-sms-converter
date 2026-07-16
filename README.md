@@ -29,3 +29,7 @@ Switching kosher phones? This tool converts your text messages (SMS) and picture
 - **MMS support** — pictures, voice notes, and other attachments all transfer
 - **Privacy** — your messages never leave your device, everything runs locally in the browser
 - **Filtering** — convert just SMS, just MMS, or everything; option to skip PDFs
+
+## Contact
+
+Questions, problems, or a phone format we don't support yet? Reach out: **pythonivelt@gmail.com** — email or Google Chat, both work.
