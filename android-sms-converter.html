@@ -144,6 +144,11 @@
   .nav-logo-icon{width:32px;height:32px;border-radius:9px;background:var(--accent-grad);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px -2px rgba(99,102,241,.4);flex-shrink:0}
   .nav-logo-icon svg{width:18px;height:18px;display:block}
   .nav-right{display:flex;align-items:center;gap:12px}
+  .contact-cta{max-width:900px;margin:0 auto;padding:22px 20px 4px;text-align:center}
+  .contact-cta-title{font-size:1.02rem;margin-bottom:4px}
+  .contact-cta-sub{font-size:.78rem;color:var(--text-2,#6b7280);line-height:1.55;max-width:420px;margin:0 auto 12px}
+  .contact-cta-btn{border:none;cursor:pointer;background:#4f46e5;color:#fff;font-weight:600;font-size:.86rem;padding:10px 24px;border-radius:99px;font-family:inherit;transition:filter .2s,transform .15s;box-shadow:0 6px 16px -6px rgba(79,70,229,.35)}
+  .contact-cta-btn:hover{filter:brightness(1.1);transform:translateY(-1px)}
   .hero{position:relative;z-index:1;text-align:center;padding:48px 24px 36px;max-width:680px;margin:0 auto}
   .hero h1{font-size:2.1rem;font-weight:800;background:linear-gradient(135deg,var(--text),var(--accent));-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:14px;line-height:1.25;letter-spacing:-.04em}
   .hero-sub{font-size:1rem;color:var(--text-2);line-height:1.65;margin-bottom:24px}
@@ -174,7 +179,9 @@
   .features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;max-width:680px;margin:0 auto}
   .feature-card{padding:20px;background:var(--card);border:1px solid var(--card-border);border-radius:16px;transition:transform .2s,box-shadow .2s}
   .feature-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.06)}
-  .feature-icon{font-size:1.4rem;margin-bottom:8px}
+  .feature-icon{width:34px;height:34px;border-radius:9px;background:rgba(79,70,229,.1);color:#4f46e5;display:flex;align-items:center;justify-content:center;margin-bottom:10px}
+  .feature-icon svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  [data-theme="dark"] .feature-icon{background:rgba(129,140,248,.15);color:#a5b4fc}
   .feature-title{font-weight:600;font-size:.86rem;color:var(--text);margin-bottom:5px}
   .feature-desc{font-size:.76rem;color:var(--text-2);line-height:1.5}
   .site-footer{position:relative;z-index:1;max-width:900px;margin:0 auto;padding:32px 24px;text-align:center;font-size:.74rem;color:var(--text-3);border-top:1px solid var(--surface-border)}
@@ -368,14 +375,20 @@
 <section class="site-section">
   <h2 class="site-section-title">Why this tool</h2>
   <div class="features-grid">
-    <div class="feature-card"><div class="feature-icon">🔒</div><div class="feature-title">Completely private</div><div class="feature-desc">Everything runs in your browser. Your messages never leave your device.</div></div>
-    <div class="feature-card"><div class="feature-icon">📎</div><div class="feature-title">Full MMS support</div><div class="feature-desc">Pictures, voice notes, and attachments all transfer — not just texts.</div></div>
-    <div class="feature-card"><div class="feature-icon">📱</div><div class="feature-title">Works on any device</div><div class="feature-desc">No downloads, no installs — runs entirely in your browser on any device.</div></div>
+    <div class="feature-card"><div class="feature-icon"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div><div class="feature-title">Completely private</div><div class="feature-desc">Everything runs in your browser. Your messages never leave your device.</div></div>
+    <div class="feature-card"><div class="feature-icon"><svg viewBox="0 0 24 24"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg></div><div class="feature-title">Full MMS support</div><div class="feature-desc">Pictures, voice notes, and attachments all transfer — not just texts.</div></div>
+    <div class="feature-card"><div class="feature-icon"><svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></div><div class="feature-title">Works on any device</div><div class="feature-desc">No downloads, no installs — runs entirely in your browser on any device.</div></div>
   </div>
 </section>
 
+<section class="contact-cta">
+  <h2 class="contact-cta-title">Need help or have a question?</h2>
+  <p class="contact-cta-sub">Feedback, a problem with a conversion, or a phone we don't support yet — we'd love to hear from you, and we'll get back to you as soon as possible.</p>
+  <button class="contact-cta-btn" id="contactCta" type="button">Contact Us</button>
+</section>
+
 <footer class="site-footer">
-  <p><span id="verSpan">v0.0.77</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a> · <a href="#" id="contactLink" title="pythonivelt@gmail.com — email or Google Chat" style="color:#4f46e5">Contact</a></p>
+  <p><span id="verSpan">v0.0.78</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
   <p style="margin-top:6px">Free and open source · Nothing gets uploaded</p>
 </footer>
 
@@ -1921,8 +1934,8 @@ async function build(target){
   <div class="modal">
     <button class="modal-close" id="contactClose" aria-label="Close" type="button">×</button>
     <div id="contactFormWrap">
-      <h3 id="contactTitle">Contact</h3>
-      <p class="modal-sub">Question, problem, or a phone we don't support yet? Send a message and I'll get back to you.</p>
+      <h3 id="contactTitle">Contact Us</h3>
+      <p class="modal-sub">Question, problem, or a phone we don't support yet? Send a message and we'll get back to you as soon as possible.</p>
       <label for="ctName">Name</label>
       <input id="ctName" type="text" maxlength="80" autocomplete="name">
       <label for="ctEmail">Your email *</label>
@@ -1943,7 +1956,7 @@ async function build(target){
     <div class="modal-ok" id="contactOk">
       <div style="font-size:2rem;margin-bottom:8px">✅</div>
       <b>Message sent!</b>
-      <p style="font-size:.85rem;color:var(--text-2,#6b7280);margin-top:6px">I'll get back to you at the email you gave.</p>
+      <p style="font-size:.85rem;color:var(--text-2,#6b7280);margin-top:6px">We'll get back to you at the email you gave.</p>
     </div>
   </div>
 </div>
@@ -1953,7 +1966,8 @@ var g=function(i){return document.getElementById(i)};
 var cm=g('contactModal');
 function openM(e){if(e)e.preventDefault();g('contactFormWrap').style.display='';g('contactOk').style.display='none';cm.classList.add('open');g('ctMsg').value.trim()||g('ctEmail').focus()}
 function closeM(){cm.classList.remove('open')}
-g('contactLink').addEventListener('click',openM);
+var cl=g('contactLink');if(cl)cl.addEventListener('click',openM);
+var cta=g('contactCta');if(cta)cta.addEventListener('click',openM);
 g('contactClose').addEventListener('click',closeM);
 cm.addEventListener('click',function(e){if(e.target===cm)closeM()});
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&cm.classList.contains('open'))closeM()});
