@@ -361,7 +361,7 @@
 </section>
 
 <footer class="site-footer">
-  <p><span id="verSpan">v0.0.73</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
+  <p><span id="verSpan">v0.0.74</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
   <p style="margin-top:6px">Free and open source · Nothing gets uploaded</p>
 </footer>
 
@@ -374,7 +374,7 @@ document.getElementById('themeToggle').addEventListener('click',function(){var h
 'use strict';
 
 let selectedFile=null, zipReader=null, parsedData=null, cancelled=false, hasPdfs=false, sourceFormat='', processing=false;
-var _scanStart=0;
+var _scanStart=0,_buildStart=0;
 // Anonymous analytics context: random per-page-load session id (never stored), coarse device class + browser family only
 let scanExtras=null;
 const SID=Math.random().toString(36).slice(2,8);
@@ -1848,6 +1848,7 @@ cancelBtn.addEventListener('click',()=>{
 });
 
 async function build(target){
+  _buildStart=Date.now();
   try{
     const content=(document.querySelector('input[name="content"]:checked')||{}).value||'all';
     const pdfSel=document.querySelector('input[name="pdfmode"]:checked');
@@ -1890,7 +1891,7 @@ async function build(target){
     if(dlBtn._blobUrl)URL.revokeObjectURL(dlBtn._blobUrl);
     const url=URL.createObjectURL(blob);dlBtn._blobUrl=url;
     dlBtn.href=url;dlBtn.download=filename;dlBtn.style.display='block';buildBtn.style.display='none';
-    sendAnalytics(Object.assign({event:'convert',source:parsedData.fmt,target:target,success:true,sms:smsC,mms:mmsC,groups:msgs.filter(m=>m.isGroup).length,skipGroups:skipGroups,content:content,merge:MERGE.on?1:0,mergeAdded:MERGE.added,mergeDropped:MERGE.dropped,size:blob.size,duration:((Date.now()-_scanStart)/1000).toFixed(1)},scanExtras));
+    sendAnalytics(Object.assign({event:'convert',source:parsedData.fmt,target:target,success:true,sms:smsC,mms:mmsC,groups:msgs.filter(m=>m.isGroup).length,skipGroups:skipGroups,content:content,merge:MERGE.on?1:0,mergeAdded:MERGE.added,mergeDropped:MERGE.dropped,size:blob.size,duration:((Date.now()-_buildStart)/1000).toFixed(1)},scanExtras));
   }catch(err){
     if(err&&err.cancelled){log('Build cancelled by user','warn');progressEl.style.display='none';infoBox.textContent='Cancelled.';infoBox.style.display='block';}
     else{log('Build failed: '+(err.message||err),'err');progressEl.style.display='none';errorBox.textContent=err.message||String(err);errorBox.style.display='block';sendAnalytics({event:'convert',source:parsedData?parsedData.fmt:'?',target:target,success:false,merge:MERGE.on?1:0,error:(err.message||String(err)).slice(0,100)});}
