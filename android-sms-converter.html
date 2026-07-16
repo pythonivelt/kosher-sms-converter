@@ -112,6 +112,20 @@
   .gh-link{display:inline-flex;align-items:center;gap:5px;color:var(--text-3);text-decoration:none;transition:color .2s}
   .gh-link:hover{color:var(--accent)}
   .gh-link svg{width:13px;height:13px;display:block}
+  .modal-overlay{position:fixed;inset:0;background:rgba(15,15,25,.55);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
+  .modal-overlay.open{display:flex}
+  .modal{background:var(--card,#fff);color:inherit;border-radius:16px;max-width:440px;width:100%;padding:26px 24px;position:relative;max-height:92vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+  .modal h3{font-size:1.15rem;margin-bottom:4px}
+  .modal-sub{font-size:.82rem;color:var(--text-2,#6b7280);line-height:1.5;margin-bottom:14px}
+  .modal-close{position:absolute;top:8px;right:12px;border:none;background:none;font-size:1.5rem;line-height:1;cursor:pointer;color:var(--text-3,#9ca3af);padding:4px}
+  .modal label{display:block;font-size:.76rem;font-weight:600;margin:10px 0 4px}
+  .modal input,.modal select,.modal textarea{width:100%;padding:10px 12px;border:1px solid var(--field-border,#d1d5db);border-radius:8px;font-size:.9rem;font-family:inherit;background:var(--field,#fff);color:inherit;box-sizing:border-box}
+  .modal textarea{min-height:110px;resize:vertical}
+  .modal .send-btn{margin-top:14px;width:100%;padding:12px;border:none;border-radius:10px;background:#4f46e5;color:#fff;font-weight:600;font-size:.92rem;cursor:pointer}
+  .modal .send-btn:hover{filter:brightness(1.08)}
+  .modal .send-btn:disabled{opacity:.6;cursor:default}
+  .modal-alt{margin-top:14px;font-size:.76rem;color:var(--text-3,#6b7280);text-align:center;line-height:1.5}
+  .modal-ok{display:none;text-align:center;padding:26px 8px}
   .log-panel{margin-top:14px}
   .log-panel summary{font-size:.7rem;color:var(--text-3);cursor:pointer;user-select:none;text-align:center;list-style:none}
   .log-panel summary::-webkit-details-marker{display:none}
@@ -361,7 +375,7 @@
 </section>
 
 <footer class="site-footer">
-  <p><span id="verSpan">v0.0.76</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a> · <a href="mailto:pythonivelt@gmail.com?subject=SMS%20Converter" title="pythonivelt@gmail.com — email or Google Chat" style="color:#4f46e5">Contact</a></p>
+  <p><span id="verSpan">v0.0.77</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a> · <a href="#" id="contactLink" title="pythonivelt@gmail.com — email or Google Chat" style="color:#4f46e5">Contact</a></p>
   <p style="margin-top:6px">Free and open source · Nothing gets uploaded</p>
 </footer>
 
@@ -1900,6 +1914,65 @@ async function build(target){
   cancelBtn.style.display='none';buildBtn.disabled=false;
 }
 
+})();
+</script>
+
+<div class="modal-overlay" id="contactModal" role="dialog" aria-modal="true" aria-labelledby="contactTitle">
+  <div class="modal">
+    <button class="modal-close" id="contactClose" aria-label="Close" type="button">×</button>
+    <div id="contactFormWrap">
+      <h3 id="contactTitle">Contact</h3>
+      <p class="modal-sub">Question, problem, or a phone we don't support yet? Send a message and I'll get back to you.</p>
+      <label for="ctName">Name</label>
+      <input id="ctName" type="text" maxlength="80" autocomplete="name">
+      <label for="ctEmail">Your email *</label>
+      <input id="ctEmail" type="email" maxlength="120" placeholder="so I can reply" autocomplete="email">
+      <label for="ctSubject">Subject</label>
+      <select id="ctSubject">
+        <option>Question</option>
+        <option>Problem with a conversion</option>
+        <option>My phone isn't supported</option>
+        <option>Feedback</option>
+        <option>Other</option>
+      </select>
+      <label for="ctMsg">Message *</label>
+      <textarea id="ctMsg" maxlength="4000"></textarea>
+      <button class="send-btn" id="ctSend" type="button">Send message</button>
+      <p class="modal-alt">Or reach me directly: <a href="mailto:pythonivelt@gmail.com?subject=SMS%20Converter" style="color:#4f46e5">pythonivelt@gmail.com</a> — email or Google Chat</p>
+    </div>
+    <div class="modal-ok" id="contactOk">
+      <div style="font-size:2rem;margin-bottom:8px">✅</div>
+      <b>Message sent!</b>
+      <p style="font-size:.85rem;color:var(--text-2,#6b7280);margin-top:6px">I'll get back to you at the email you gave.</p>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+var g=function(i){return document.getElementById(i)};
+var cm=g('contactModal');
+function openM(e){if(e)e.preventDefault();g('contactFormWrap').style.display='';g('contactOk').style.display='none';cm.classList.add('open');g('ctMsg').value.trim()||g('ctEmail').focus()}
+function closeM(){cm.classList.remove('open')}
+g('contactLink').addEventListener('click',openM);
+g('contactClose').addEventListener('click',closeM);
+cm.addEventListener('click',function(e){if(e.target===cm)closeM()});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&cm.classList.contains('open'))closeM()});
+g('ctSend').addEventListener('click',function(){
+  var em=g('ctEmail').value.trim(),msg=g('ctMsg').value.trim(),btn=g('ctSend');
+  if(!msg){g('ctMsg').style.borderColor='#dc2626';g('ctMsg').focus();return}
+  g('ctMsg').style.borderColor='';
+  if(!em||em.indexOf('@')<1){g('ctEmail').style.borderColor='#dc2626';g('ctEmail').focus();return}
+  g('ctEmail').style.borderColor='';
+  btn.disabled=true;btn.textContent='Sending…';
+  var p={type:'contact',name:g('ctName').value.trim().slice(0,80),email:em.slice(0,120),subject:g('ctSubject').value,message:msg.slice(0,4000),version:(document.getElementById('verSpan')||{}).textContent||'?',ts:new Date().toISOString()};
+  fetch(GAS_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(p)}).then(function(){
+    g('contactFormWrap').style.display='none';g('contactOk').style.display='block';
+    g('ctMsg').value='';btn.disabled=false;btn.textContent='Send message';
+  }).catch(function(){
+    btn.disabled=false;btn.textContent='Send message';
+    window.location.href='mailto:pythonivelt@gmail.com?subject='+encodeURIComponent('SMS Converter: '+p.subject)+'&body='+encodeURIComponent(msg);
+  });
+});
 })();
 </script>
 </body>
