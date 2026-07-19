@@ -191,6 +191,31 @@
   @keyframes shake{0%,100%{transform:translateX(0)}15%{transform:translateX(-6px)}30%{transform:translateX(5px)}45%{transform:translateX(-4px)}60%{transform:translateX(3px)}75%{transform:translateX(-2px)}}
   .shake{animation:shake .5s ease-in-out}
   @media (max-width:480px){.card{padding:26px 18px;border-radius:20px}.stats-grid{grid-template-columns:1fr}}
+  @media (min-width:768px){
+    .hero h1{font-size:2.3rem}
+    .hero-sub{font-size:1.02rem;max-width:580px;margin-left:auto;margin-right:auto}
+    .converter-section{max-width:600px}
+    .card{max-width:none}
+    .steps-grid{gap:18px}
+    .step{padding:26px 20px}
+    .site-section{max-width:860px}
+    .features-grid{max-width:860px;gap:18px}
+    .feature-card{padding:24px}
+    .compat-section{max-width:680px}
+  }
+  @media (min-width:1080px){
+    .site-nav{max-width:1100px;padding:18px 32px}
+    .hero h1{font-size:2.65rem}
+    .hero{padding:64px 24px 40px;max-width:760px}
+    .hero-sub{font-size:1.06rem;max-width:640px}
+    .converter-section{max-width:640px;padding:0 24px 48px}
+    .site-section{max-width:1000px}
+    .features-grid{max-width:1000px;gap:20px}
+    .compat-section{max-width:740px}
+    .site-section-title{font-size:1.35rem}
+    .contact-cta-title{font-size:1.12rem}
+    .contact-cta-sub{font-size:.82rem;max-width:480px}
+  }
   @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
@@ -206,7 +231,7 @@
 </nav>
 
 <section class="hero">
-  <h1>Keep your messages when you switch phones</h1>
+  <h1>Transfer your messages to your new phone</h1>
   <p class="hero-sub">Transfer all your texts and pictures between kosher phones. Works with Fig, Wonder, Pom, and SMS Backup &amp; Restore. Runs in your browser — nothing gets uploaded.</p>
   <div class="hero-badges">
     <span class="hero-badge">SMS &amp; MMS</span>
@@ -372,6 +397,7 @@
 </div>
 </div>
 
+
 <section class="site-section">
   <h2 class="site-section-title">Why this tool</h2>
   <div class="features-grid">
@@ -407,7 +433,7 @@ let scanExtras=null;
 const SID=Math.random().toString(36).slice(2,8);
 const IS_MOBILE=(navigator.userAgentData&&typeof navigator.userAgentData.mobile==='boolean')?navigator.userAgentData.mobile:/Mobi|Android/i.test(navigator.userAgent);
 const BROWSER=(u=>u.indexOf('Edg/')>-1?'Edge':u.indexOf('OPR/')>-1?'Opera':u.indexOf('Firefox/')>-1?'Firefox':u.indexOf('Chrome/')>-1?'Chrome':u.indexOf('Safari/')>-1?'Safari':'other')(navigator.userAgent);
-const GAS_URL='https://script.google.com/macros/s/AKfycbzSrDeatu4a0rgT9pkypGDyiWdc-i89XSYoVhnSae7gRUvRaXlHee98ycsDE084TUVN4A/exec';
+const GAS_URL=window.GAS_URL='https://script.google.com/macros/s/AKfycbzSrDeatu4a0rgT9pkypGDyiWdc-i89XSYoVhnSae7gRUvRaXlHee98ycsDE084TUVN4A/exec';
 function sendAnalytics(data){try{var p=Object.assign({type:'analytics',version:(document.getElementById('verSpan')||{}).textContent||'?',beta:BETA_MODE,ts:new Date().toISOString(),sid:SID,device:IS_MOBILE?'mobile':'desktop',browser:BROWSER},data);fetch(GAS_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(p)})}catch(e){}}
 
 // SUPPORT MATRIX — keep in sync with assets/chart.svg
@@ -1979,13 +2005,19 @@ g('ctSend').addEventListener('click',function(){
   g('ctEmail').style.borderColor='';
   btn.disabled=true;btn.textContent='Sending…';
   var p={type:'contact',name:g('ctName').value.trim().slice(0,80),email:em.slice(0,120),subject:g('ctSubject').value,message:msg.slice(0,4000),version:(document.getElementById('verSpan')||{}).textContent||'?',ts:new Date().toISOString()};
-  fetch(GAS_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(p)}).then(function(){
-    g('contactFormWrap').style.display='none';g('contactOk').style.display='block';
-    g('ctMsg').value='';btn.disabled=false;btn.textContent='Send message';
-  }).catch(function(){
+  // if anything goes wrong (network, script error, hang) fall back to a prefilled email — never leave the button stuck
+  var fallback=function(){
     btn.disabled=false;btn.textContent='Send message';
     window.location.href='mailto:pythonivelt@gmail.com?subject='+encodeURIComponent('SMS Converter: '+p.subject)+'&body='+encodeURIComponent(msg);
-  });
+  };
+  var guard=setTimeout(fallback,15000);
+  try{
+    fetch(window.GAS_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(p)}).then(function(){
+      clearTimeout(guard);
+      g('contactFormWrap').style.display='none';g('contactOk').style.display='block';
+      g('ctMsg').value='';btn.disabled=false;btn.textContent='Send message';
+    }).catch(function(){clearTimeout(guard);fallback()});
+  }catch(e){clearTimeout(guard);fallback()}
 });
 })();
 </script>
