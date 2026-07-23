@@ -1005,19 +1005,21 @@ async function fallbackZipScan(file){
       const compData=file.slice(dataStart,dataStart+compSize);
       let ndjsonText;
       if(method===8){
-        // DEFLATE — use DecompressionStream
+        // DEFLATE — use DecompressionStream (tolerates truncated streams)
         try{
           const ds=new DecompressionStream('deflate-raw');
           const reader=ds.readable.getReader();
           const writer=ds.writable.getWriter();
-          const chunks=[];
-          const readAll=(async()=>{while(true){const{done,value}=await reader.read();if(done)break;chunks.push(value)}})();
-          // Feed compressed data in chunks to avoid memory issues
+          const chunks=[];let partial=false;
+          const readAll=(async()=>{try{while(true){const{done,value}=await reader.read();if(done)break;chunks.push(value)}}catch(e){}})();
           const compReader=compData.stream().getReader();
           while(true){const{done,value}=await compReader.read();if(done)break;await writer.write(value)}
-          await writer.close();await readAll;
+          try{await writer.close()}catch(e){partial=true;try{await reader.cancel()}catch(e2){}}
+          await readAll;
+          if(chunks.length===0){log('Backup file appears damaged — no data could be recovered. Try transferring the backup from your phone again.','err');return null}
           const dec=new TextDecoder();
           ndjsonText=chunks.map(c=>dec.decode(c,{stream:true})).join('');
+          if(partial)log('Backup may be incomplete — recovered '+formatSize(ndjsonText.length)+' of data','warn');
         }catch(e){log('Decompression failed: '+e.message,'err');return null}
       }else if(method===0){
         // STORE — read raw
