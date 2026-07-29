@@ -414,7 +414,7 @@
 </section>
 
 <footer class="site-footer">
-  <p><span id="verSpan">v0.0.84</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
+  <p><span id="verSpan">v0.0.85</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
   <p style="margin-top:6px">Free and open source · Nothing gets uploaded</p>
 </footer>
 
@@ -1728,18 +1728,13 @@ async function buildFigZip(messages){
       const obj={_id:id,thread_id:tid,date:mmsDate,date_sent:'0',msg_box:mb,read:m.read||'0',m_id:m.mId||'',ct_t:m.ctT||'application/vnd.wap.multipart.related',m_cls:m.mCls||'personal',m_type:m.mType||(mb==='1'?'132':'128'),v:m.v||'18',pri:'129',rr:'129',tr_id:m.trId||'',d_rpt:'129',locked:m.locked||'0',sub_id:m.subId||'1',seen:m.seen||'1',creator:'com.figmessenger',text_only:m.parts.some(p=>hasAttach(p))?'0':'1'};
       const sAddr=m.addrs?m.addrs.find(a=>a.type===137||a.type==='137'):null;
       const rAddrs=m.addrs?m.addrs.filter(a=>a.type===151||a.type==='151'):[];
-      const is1on1=sAddr&&rAddrs.length===1;
-      if(is1on1){
-        // 1-on-1: only include the other person's address, not both
+      if(!m.isGroup&&sAddr&&rAddrs.length===1){
         if(mb==='1'){
-          // Incoming: sender is the other person
           const aid=String(addrId++);obj.__sender_address={_id:aid,msg_id:id,address:sAddr.address,type:'137',charset:'106',__display_name:m.contactName||'(Unknown)'};
         }else{
-          // Outgoing: recipient is the other person
           const aid=String(addrId++);obj.__recipient_addresses=[{_id:aid,msg_id:id,address:rAddrs[0].address,type:'151',charset:'106',__display_name:m.contactName||'(Unknown)'}];
         }
       }else{
-        // Group or single addr: pass through as-is
         if(sAddr){const aid=String(addrId++);obj.__sender_address={_id:aid,msg_id:id,address:sAddr.address,type:'137',charset:'106',__display_name:m.contactName||'(Unknown)'}}
         if(rAddrs.length)obj.__recipient_addresses=rAddrs.map(a=>{const aid=String(addrId++);return{_id:aid,msg_id:id,address:a.address,type:String(a.type),charset:'106',__display_name:'(Unknown)'}});
       }
