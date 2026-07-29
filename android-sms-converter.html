@@ -414,7 +414,7 @@
 </section>
 
 <footer class="site-footer">
-  <p><span id="verSpan">v0.0.81</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
+  <p><span id="verSpan">v0.0.83</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
   <p style="margin-top:6px">Free and open source · Nothing gets uploaded</p>
 </footer>
 
@@ -1700,18 +1700,24 @@ async function buildFigZip(messages){
   let msgId=1,addrId=100001,partObjId=200001;
   const attachFiles=[];
 
-  // Build thread_id map: group by address
+  // Build thread_id map: group by participant set (not just one address)
   const threadMap={};let nextThread=1;
   for(const m of messages){
-    const addr=(m.address||'').replace(/[^\d+]/g,'');
-    if(addr&&!threadMap[addr])threadMap[addr]=String(nextThread++);
+    let tk;
+    if(m.isGroup&&m.addrs&&m.addrs.length>1){
+      tk=[...new Set(m.addrs.map(a=>(a.address||'').replace(/[^\d+]/g,'')).filter(Boolean))].sort().join('~');
+    }else{
+      tk=(m.address||'').replace(/[^\d+]/g,'');
+    }
+    m._threadKey=tk;
+    if(tk&&!threadMap[tk])threadMap[tk]=String(nextThread++);
   }
 
   for(let mi=0;mi<messages.length;mi++){
     const m=messages[mi];
     const id=String(msgId++);
     const addr=(m.address||'').replace(/[^\d+]/g,'');
-    const tid=threadMap[addr]||'1';
+    const tid=threadMap[m._threadKey||addr]||'1';
     if(mi%50===0){if(cancelled)throw{cancelled:true};const pct=Math.round(mi/messages.length*50);showProgress('Building messages… '+mi+'/'+messages.length,50+pct);await tick()}
 
     if(m.type==='sms'){
