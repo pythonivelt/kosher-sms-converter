@@ -182,6 +182,8 @@
   .feature-icon{width:34px;height:34px;border-radius:9px;background:rgba(79,70,229,.1);color:#4f46e5;display:flex;align-items:center;justify-content:center;margin-bottom:10px}
   .feature-icon svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
   [data-theme="dark"] .feature-icon{background:rgba(129,140,248,.15);color:#a5b4fc}
+  [data-theme="dark"] #convertNotice{background:#450a0a;border-color:#991b1b;color:#fca5a5}
+  [data-theme="dark"] #convertNotice a{color:#f87171}
   .feature-title{font-weight:600;font-size:.86rem;color:var(--text);margin-bottom:5px}
   .feature-desc{font-size:.76rem;color:var(--text-2);line-height:1.5}
   .site-footer{position:relative;z-index:1;max-width:900px;margin:0 auto;padding:32px 24px;text-align:center;font-size:.74rem;color:var(--text-3);border-top:1px solid var(--surface-border)}
@@ -280,7 +282,7 @@
     <div class="file-name" id="fileName"></div>
   </div>
 
-  <button class="btn btn-primary" id="scanBtn" disabled>Scan backup</button>
+  <button class="btn btn-primary" id="scanBtn" style="display:none">Scan backup</button>
   <div style="text-align:center;margin-top:12px"><a href="#" id="mergeLink" style="font-size:.74rem;color:var(--accent);text-decoration:none">🔧 Already imported with an old version? Fix &amp; merge →</a></div>
 
   <div class="scan-results" id="scanResults">
@@ -372,6 +374,7 @@
       </label>
     </div>
 
+    <div id="convertNotice" style="display:none;margin-bottom:12px;padding:10px 14px;border-radius:8px;background:#fef2f2;border:1px solid #fca5a5;color:#991b1b;font-size:.78rem;line-height:1.45"><strong>⚠ Please note:</strong> This tool is tested but some messages may end up in a different chat — for example, group messages might land in a private chat. This can't be undone by re-converting. If you run into any issues, <a href="#" onclick="document.getElementById('contactModal').style.display='flex';return false" style="color:#dc2626;text-decoration:underline">let us know</a> and we'll work on a fix.</div>
     <button class="btn btn-success" id="buildBtn" disabled>Convert</button>
   </div>
 
@@ -389,8 +392,9 @@
     <summary>Show log</summary>
     <div class="log-box" id="logBox"></div>
     <div class="log-row">
-      <input id="logUserInput" type="text" class="log-input" placeholder="Your email or iVelt username (optional)">
-      <button id="sendLogBtn" class="log-btn">Send log to developer</button>
+      <input id="logPhoneInput" type="text" class="log-input" placeholder="Phone model (e.g. Fig S7, Wonder XL)">
+      <input id="logUserInput" type="text" class="log-input" placeholder="Your email (optional, for follow-up)">
+      <button id="sendLogBtn" class="log-btn">Send log</button>
     </div>
   </details>
 
@@ -401,9 +405,9 @@
 <section class="site-section">
   <h2 class="site-section-title">Why this tool</h2>
   <div class="features-grid">
-    <div class="feature-card"><div class="feature-icon"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div><div class="feature-title">Completely private</div><div class="feature-desc">Everything runs in your browser. Your messages never leave your device.</div></div>
-    <div class="feature-card"><div class="feature-icon"><svg viewBox="0 0 24 24"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg></div><div class="feature-title">Full MMS support</div><div class="feature-desc">Pictures, voice notes, and attachments all transfer — not just texts.</div></div>
+    <div class="feature-card"><div class="feature-icon"><svg viewBox="0 0 24 24"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg></div><div class="feature-title">Full MMS support</div><div class="feature-desc">Pictures, voice notes, group chats, and attachments all transfer — not just texts.</div></div>
     <div class="feature-card"><div class="feature-icon"><svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></div><div class="feature-title">Works on any device</div><div class="feature-desc">No downloads, no installs — runs entirely in your browser on any device.</div></div>
+    <div class="feature-card"><div class="feature-icon"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div><div class="feature-title">Completely offline &amp; secure</div><div class="feature-desc">Everything runs in your browser — nothing gets uploaded. Your messages never leave your device.</div></div>
   </div>
 </section>
 
@@ -414,7 +418,7 @@
 </section>
 
 <footer class="site-footer">
-  <p><span id="verSpan">v0.0.85</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
+  <p><span id="verSpan">v0.0.86</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
   <p style="margin-top:6px">Free and open source · Nothing gets uploaded</p>
 </footer>
 
@@ -725,7 +729,10 @@ async function sendLog(){
     const fn=(fileNameEl?fileNameEl.textContent:'')||'unknown';
     const ver=(document.getElementById('verSpan')&&document.getElementById('verSpan').textContent)||'?';
     const user=($('logUserInput')||{}).value||'';
-    const payload={type:'log',logText:logText,fileName:fn,version:ver,user:user,timestamp:new Date().toISOString()};
+    const phone=($('logPhoneInput')||{}).value||'';
+    const src=parsedData?parsedData.fmt:'?';
+    const tgt=(document.querySelector('input[name="target"]:checked')||{}).value||'?';
+    const payload={type:'log',logText:logText,fileName:fn,version:ver,user:user,phone:phone,source:src,target:tgt,timestamp:new Date().toISOString()};
     await fetch(GAS_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(payload)});
     btn.textContent='Sent ✓';btn.style.color='#4ade80';
   }catch(e){
@@ -906,7 +913,7 @@ async function generateAnonymizedZip(entries,origFile,origName){
 function downloadReport(report,origName){
   progressEl.style.display='none';
   errorBox.innerHTML='<b>This phone format is not supported yet.</b><br><br>Help us add support! We\'ll create an anonymized copy of your file — <b>all messages, phone numbers, names, and pictures are replaced with fake data</b>. No private information is included.<br><br>This is <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener">open source</a> — you can verify exactly what gets changed in the code.<br><br><input id="phoneBrandInput" type="text" class="report-input" placeholder="Phone brand (e.g. Tak S7, Kosher XL...)"><input id="userEmailInput" type="email" class="report-input" placeholder="Your email (so we can let you know when it\'s supported)"><br><button id="anonBtn" class="report-btn" style="background:#4f46e5">Anonymize &amp; Download</button><div id="anonInstructions" style="display:none;margin-top:14px;padding:12px 16px;border-radius:8px;background:#ecfdf5;color:#065f46;font-size:.85rem;line-height:1.6"><b>Almost done!</b><ol style="margin:8px 0 0 16px;padding:0"><li>Open <a href="https://drive.google.com" target="_blank" rel="noopener">Google Drive</a></li><li>Upload the anonymized file you just downloaded</li><li>Right-click the file → Share</li><li>Share with <b>pythonivelt@gmail.com</b></li></ol><br>Thanks for helping us add support for your phone!</div>';
-  errorBox.style.display='block';scanBtn.disabled=false;cancelBtn.style.display='none';
+  errorBox.style.display='block';scanBtn.style.display='';scanBtn.disabled=false;cancelBtn.style.display='none';
   $('anonBtn').onclick=async function(){
     const brand=($('phoneBrandInput').value||'').trim();
     if(!brand){$('phoneBrandInput').style.border='2px solid red';$('phoneBrandInput').focus();return}
@@ -1162,8 +1169,8 @@ $('mergeLink').addEventListener('click',e=>{
   MERGE.on=!MERGE.on;MERGE.old=null;
   $('mergeLink').innerHTML=MERGE.on?'✖ Exit merge mode — back to normal convert':'🔧 Already imported with an old version? Fix &amp; merge →';
   $('mergeBanner').style.display=MERGE.on?'block':'none';
-  selectedFile=null;parsedData=null;fileInput.value='';fileNameEl.style.display='none';scanBtn.style.display='';scanBtn.disabled=true;
-  scanResults.style.display='none';optionsEl.style.display='none';infoBox.style.display='none';errorBox.style.display='none';$('downloadBtn').style.display='none';dropZone.classList.remove('done');
+  selectedFile=null;parsedData=null;fileInput.value='';fileNameEl.style.display='none';scanBtn.style.display='none';
+  scanResults.style.display='none';optionsEl.style.display='none';infoBox.style.display='none';errorBox.style.display='none';$('downloadBtn').style.display='none';$('convertNotice').style.display='none';buildBtn.disabled=true;dropZone.classList.remove('done');
   document.querySelector('.drop-text').textContent=MERGE.on?'Upload the OLD phone backup (step 1)':DEFAULT_DROP_TEXT;
   if(zipReader){try{zipReader.close()}catch{}zipReader=null}
 });
@@ -1390,6 +1397,7 @@ async function scan(){
     scanResults.style.display='block';
     dropZone.classList.add('done');
     optionsEl.style.display='block';
+    $('convertNotice').style.display='block';
     sendAnalytics(Object.assign({event:'scan',source:fmt,sms:cIn+cOut,mms:cMms,attachments:cAttach,groups:grp.groupCount,merge:MERGE.on?1:0,duration:((Date.now()-_scanStart)/1000).toFixed(1)},scanExtras));
     scanBtn.disabled=false;cancelBtn.style.display='none';
     sourceFormat=fmt;
@@ -1400,13 +1408,13 @@ async function scan(){
       scanResults.style.display='none';optionsEl.style.display='none';
       infoBox.innerHTML='✅ Step 1 done — old backup scanned: <b>'+messages.length.toLocaleString()+'</b> messages.<br>Now upload the fresh backup from the <b>NEW</b> phone (SMS Backup &amp; Restore) and scan again.';
       infoBox.style.display='block';
-      selectedFile=null;fileInput.value='';fileNameEl.style.display='none';scanBtn.disabled=true;
+      selectedFile=null;fileInput.value='';fileNameEl.style.display='none';scanBtn.style.display='none';
       dropZone.classList.remove('done');
       document.querySelector('.drop-text').textContent='Upload the NEW phone backup (step 2)';
       zipReader=null; // keep the old file's reader open — its attachments are read during convert
     }
   }catch(err){
-    if(err&&err.cancelled){log('Scan cancelled by user','warn');progressEl.style.display='none';infoBox.textContent='Cancelled.';infoBox.style.display='block';scanBtn.disabled=false;cancelBtn.style.display='none';return}
+    if(err&&err.cancelled){log('Scan cancelled by user','warn');progressEl.style.display='none';infoBox.textContent='Cancelled.';infoBox.style.display='block';scanBtn.style.display='';scanBtn.disabled=false;cancelBtn.style.display='none';return}
     const msg=err.message||String(err);
     log('Scan failed: '+msg,'err');
     progressEl.style.display='none';
@@ -1417,7 +1425,7 @@ async function scan(){
       return;
     }
     errorBox.textContent=msg;
-    errorBox.style.display='block';scanBtn.disabled=false;cancelBtn.style.display='none';
+    errorBox.style.display='block';scanBtn.style.display='';scanBtn.disabled=false;cancelBtn.style.display='none';
   }
 }
 
@@ -1954,7 +1962,7 @@ async function build(target){
     if(err&&err.cancelled){log('Build cancelled by user','warn');progressEl.style.display='none';infoBox.textContent='Cancelled.';infoBox.style.display='block';}
     else{log('Build failed: '+(err.message||err),'err');progressEl.style.display='none';errorBox.textContent=err.message||String(err);errorBox.style.display='block';sendAnalytics({event:'convert',source:parsedData?parsedData.fmt:'?',target:target,success:false,merge:MERGE.on?1:0,error:(err.message||String(err)).slice(0,100)});}
   }
-  cancelBtn.style.display='none';buildBtn.disabled=false;
+  cancelBtn.style.display='none';buildBtn.disabled=false;buildBtn.style.display='';
 }
 
 })();
@@ -1969,7 +1977,7 @@ async function build(target){
       <label for="ctName">Name</label>
       <input id="ctName" type="text" maxlength="80" autocomplete="name">
       <label for="ctEmail">Your email *</label>
-      <input id="ctEmail" type="email" maxlength="120" placeholder="so I can reply" autocomplete="email">
+      <input id="ctEmail" type="email" maxlength="120" placeholder="your@email.com" autocomplete="email">
       <label for="ctSubject">Subject</label>
       <select id="ctSubject">
         <option>Question</option>
