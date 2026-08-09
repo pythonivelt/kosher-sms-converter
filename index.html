@@ -2005,7 +2005,7 @@ async function build(target){
 (function(){
 var g=function(i){return document.getElementById(i)};
 var cm=g('contactModal');
-function openM(e){if(e)e.preventDefault();g('contactFormWrap').style.display='';g('contactOk').style.display='none';cm.classList.add('open');g('ctMsg').value.trim()||g('ctEmail').focus()}
+function openM(e){if(e)e.preventDefault();g('contactFormWrap').style.display='';g('contactOk').style.display='none';cm.classList.add('open')}
 function closeM(){cm.classList.remove('open')}
 var cl=g('contactLink');if(cl)cl.addEventListener('click',openM);
 var cta=g('contactCta');if(cta)cta.addEventListener('click',openM);
