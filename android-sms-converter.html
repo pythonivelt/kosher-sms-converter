@@ -1963,7 +1963,7 @@ async function build(target){
     if(err&&err.cancelled){log('Build cancelled by user','warn');progressEl.style.display='none';infoBox.textContent='Cancelled.';infoBox.style.display='block';}
     else{log('Build failed: '+(err.message||err),'err');progressEl.style.display='none';errorBox.textContent=err.message||String(err);errorBox.style.display='block';sendAnalytics({event:'convert',source:parsedData?parsedData.fmt:'?',target:target,success:false,merge:MERGE.on?1:0,error:(err.message||String(err)).slice(0,100)});}
   }
-  cancelBtn.style.display='none';buildBtn.disabled=false;buildBtn.style.display='';
+  cancelBtn.style.display='none';if($('downloadBtn').style.display==='none'){buildBtn.disabled=false;buildBtn.style.display='';}
 }
 
 })();
