@@ -114,10 +114,11 @@
   .gh-link svg{width:13px;height:13px;display:block}
   .modal-overlay{position:fixed;inset:0;background:rgba(15,15,25,.55);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
   .modal-overlay.open{display:flex}
-  .modal{background:var(--card,#fff);color:inherit;border-radius:16px;max-width:440px;width:100%;padding:26px 24px;position:relative;max-height:92vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+  .modal-wrap{position:relative;max-width:440px;width:100%}
+  .modal{background:var(--card,#fff);color:inherit;border-radius:16px;width:100%;padding:26px 24px;max-height:92vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.35)}
   .modal h3{font-size:1.15rem;margin-bottom:4px}
   .modal-sub{font-size:.82rem;color:var(--text-2,#6b7280);line-height:1.5;margin-bottom:14px}
-  .modal-close{position:absolute;top:8px;right:12px;border:none;background:none;font-size:1.5rem;line-height:1;cursor:pointer;color:var(--text-3,#9ca3af);padding:4px}
+  .modal-close{position:absolute;top:4px;right:4px;border:none;background:none;font-size:1.5rem;line-height:1;cursor:pointer;color:var(--text-3,#9ca3af);padding:12px;min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center;z-index:1;touch-action:manipulation}
   .modal label{display:block;font-size:.76rem;font-weight:600;margin:10px 0 4px}
   .modal input,.modal select,.modal textarea{width:100%;padding:10px 12px;border:1px solid var(--field-border,#d1d5db);border-radius:8px;font-size:.9rem;font-family:inherit;background:var(--field,#fff);color:inherit;box-sizing:border-box}
   .modal textarea{min-height:110px;resize:vertical}
@@ -1969,8 +1970,9 @@ async function build(target){
 </script>
 
 <div class="modal-overlay" id="contactModal" role="dialog" aria-modal="true" aria-labelledby="contactTitle">
-  <div class="modal">
+  <div class="modal-wrap">
     <button class="modal-close" id="contactClose" aria-label="Close" type="button">×</button>
+  <div class="modal">
     <div id="contactFormWrap">
       <h3 id="contactTitle">Contact Us</h3>
       <p class="modal-sub">Question, problem, or a phone we don't support yet? Send a message and we'll get back to you as soon as possible.</p>
@@ -1997,6 +1999,7 @@ async function build(target){
       <p style="font-size:.85rem;color:var(--text-2,#6b7280);margin-top:6px">We'll get back to you at the email you gave.</p>
     </div>
   </div>
+  </div>
 </div>
 <script>
 (function(){
@@ -2006,8 +2009,8 @@ function openM(e){if(e)e.preventDefault();g('contactFormWrap').style.display='';
 function closeM(){cm.classList.remove('open')}
 var cl=g('contactLink');if(cl)cl.addEventListener('click',openM);
 var cta=g('contactCta');if(cta)cta.addEventListener('click',openM);
-g('contactClose').addEventListener('click',closeM);
-cm.addEventListener('click',function(e){if(e.target===cm)closeM()});
+var ccb=g('contactClose');ccb.addEventListener('click',closeM);ccb.addEventListener('touchend',function(e){e.preventDefault();closeM()});
+cm.addEventListener('click',function(e){if(e.target===cm)closeM()});cm.addEventListener('touchend',function(e){if(e.target===cm){e.preventDefault();closeM()}});
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&cm.classList.contains('open'))closeM()});
 g('ctSend').addEventListener('click',function(){
   var em=g('ctEmail').value.trim(),msg=g('ctMsg').value.trim(),btn=g('ctSend');
