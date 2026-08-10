@@ -183,6 +183,8 @@
   .feature-icon{width:34px;height:34px;border-radius:9px;background:rgba(79,70,229,.1);color:#4f46e5;display:flex;align-items:center;justify-content:center;margin-bottom:10px}
   .feature-icon svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
   [data-theme="dark"] .feature-icon{background:rgba(129,140,248,.15);color:#a5b4fc}
+  #convertNotice{margin-bottom:12px;padding:10px 14px;border-radius:8px;background:#fef2f2;border:1px solid #fca5a5;color:#991b1b;font-size:.78rem;line-height:1.45}
+  #convertNotice a{color:#dc2626;text-decoration:underline}
   [data-theme="dark"] #convertNotice{background:#450a0a;border-color:#991b1b;color:#fca5a5}
   [data-theme="dark"] #convertNotice a{color:#f87171}
   .feature-title{font-weight:600;font-size:.86rem;color:var(--text);margin-bottom:5px}
@@ -375,7 +377,7 @@
       </label>
     </div>
 
-    <div id="convertNotice" style="display:none;margin-bottom:12px;padding:10px 14px;border-radius:8px;background:#fef2f2;border:1px solid #fca5a5;color:#991b1b;font-size:.78rem;line-height:1.45"><strong>⚠ Please note:</strong> This tool is tested but some messages may end up in a different chat — for example, group messages might land in a private chat. This can't be undone by re-converting. If you run into any issues, <a href="#" onclick="document.getElementById('contactModal').style.display='flex';return false" style="color:#dc2626;text-decoration:underline">let us know</a> and we'll work on a fix.</div>
+    <div id="convertNotice" style="display:none"><strong>⚠ Please note:</strong> This tool is tested but some messages may end up in a different chat — for example, group messages might land in a private chat. This can't be undone by re-converting. If you run into any issues, <a href="#" onclick="document.getElementById('contactModal').style.display='flex';return false">let us know</a> and we'll work on a fix.</div>
     <button class="btn btn-success" id="buildBtn" disabled>Convert</button>
   </div>
 
