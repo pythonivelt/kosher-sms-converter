@@ -253,12 +253,12 @@
     <tbody>
       <tr><td>SMS Backup &amp; Restore *</td><td class="c-yes">SMS + MMS</td><td class="c-yes">SMS + MMS</td></tr>
       <tr><td>Fig</td><td class="c-yes">SMS + MMS</td><td class="c-yes">SMS + MMS</td></tr>
-      <tr><td>Wonder</td><td class="c-yes">SMS + MMS</td><td class="c-no">Not yet</td></tr>
+      <tr><td>Wonder</td><td class="c-yes">SMS + MMS</td><td class="c-yes">SMS + MMS **</td></tr>
       <tr id="pomRow"><td>Pom</td><td class="c-yes" id="pomOut">SMS only</td><td class="c-no">Not yet</td></tr>
     </tbody>
   </table>
   </div>
-  <p style="font-size:.72rem;color:var(--text-3);margin-top:14px;text-align:center">* <a href="https://play.google.com/store/apps/details?id=com.riteshsahu.SMSBackupRestore" target="_blank" rel="noopener" style="color:var(--accent)">SMS Backup &amp; Restore</a> works on any open Android phone and some kosher phones</p>
+  <p style="font-size:.72rem;color:var(--text-3);margin-top:14px;text-align:center">* <a href="https://play.google.com/store/apps/details?id=com.riteshsahu.SMSBackupRestore" target="_blank" rel="noopener" style="color:var(--accent)">SMS Backup &amp; Restore</a> works on any open Android phone and some kosher phones<br>** Wonder imports Fig backups — we convert to Fig format which Wonder can restore</p>
 </section>
 
 <section class="site-section">
@@ -326,7 +326,7 @@
       <input type="radio" name="target" value="wonder" />
       <div>
         <div class="option-label">Wonder</div>
-        <div class="option-desc">Import to Wonder not yet supported</div>
+        <div class="option-desc">Fig ZIP — Wonder imports Fig backups</div>
       </div>
     </label>
 
@@ -446,7 +446,7 @@ function sendAnalytics(data){try{var p=Object.assign({type:'analytics',version:(
 const SUPPORT_MATRIX={
   smsbackup:{out:true, in:true},
   fig:      {out:true, in:true},
-  wonder:   {out:true, in:false},
+  wonder:   {out:true, in:true},
   pom:      {out:'sms', in:false}
 };
 const TEST_MODE=new URLSearchParams(location.search).has('test');
@@ -1186,16 +1186,6 @@ function updateUI(){
   pc.style.display=needsPdfChoice()?'block':'none';
   const t=document.querySelector('input[name="target"]:checked');
   buildBtn.disabled=!t;
-  // Wonder: force SMS only, disable MMS options
-  const isWonder=t&&t.value==='wonder';
-  if(isWonder){
-    document.querySelectorAll('.option[data-value="all"],.option[data-value="mms"]').forEach(o=>{o.style.opacity='.4';o.style.pointerEvents='none'});
-    $('optAll').querySelector('input').checked=false;$('optAll').classList.remove('selected');
-    $('optMmsOnly').querySelector('input').checked=false;$('optMmsOnly').classList.remove('selected');
-    $('optText').querySelector('input').checked=true;$('optText').classList.add('selected');
-  }else{
-    document.querySelectorAll('.option[data-value="all"],.option[data-value="mms"]').forEach(o=>{o.style.opacity='';o.style.pointerEvents=''});
-  }
 }
 
 // ===== FILE PICKING =====
@@ -1940,10 +1930,9 @@ async function build(target){
         filename='last_'+p(n.getHours())+p(n.getMinutes())+p(n.getSeconds())+'.zip';
       }else filename='fig-'+baseName+'.zip';
     }else if(target==='wonder'){
-      showProgress('Building Wonder ZIP (SMS only)…',40);await tick();
-      blob=await buildWonderZip(msgs);
-      const d=new Date(),p=x=>String(x).padStart(2,'0');
-      filename='Messages_Backup_'+d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+'.zip';
+      showProgress('Building Fig ZIP for Wonder…',40);await tick();
+      blob=await buildFigZip(msgs);
+      filename='fig-'+baseName+'.zip';
     }
 
     cancelBtn.style.display='none';
