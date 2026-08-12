@@ -299,6 +299,7 @@
       <div class="stat" id="statPdfRow" style="display:none">📄 PDFs: <strong id="statPdf">0</strong></div>
     </div>
     <div id="pomMmsWarn" style="display:none;margin-top:10px;padding:10px 14px;border-radius:8px;background:#fef3c7;color:#92400e;font-size:.85rem;line-height:1.4">⚠️ Pom currently supports SMS only — MMS pictures and voice notes will not be included.</div>
+    <div id="wonderWarn" style="display:none;margin-top:10px;padding:10px 14px;border-radius:8px;background:#fef3c7;color:#92400e;font-size:.85rem;line-height:1.5">⚠️ <strong>Wonder display bug:</strong> After importing, Wonder only shows the last ~10 messages per conversation. All your messages are actually there — for example, if you tap a picture you can scroll back to much older ones. This is a bug on Wonder's side. Once they fix it, just convert and import again and everything will show up normally.</div>
   </div>
 
   <div class="options" id="options">
@@ -328,7 +329,7 @@
       <input type="radio" name="target" value="wonder" />
       <div>
         <div class="option-label">Wonder</div>
-        <div class="option-desc">For Wonder phones — a little buggy: only the last ~10 messages show per conversation, but all messages are actually there (e.g. tap a picture and you can scroll back to older ones). Once Wonder fixes this, you'll need to convert and import again for everything to show.</div>
+        <div class="option-desc">ZIP file — for Wonder phones</div>
       </div>
     </label>
 
@@ -1188,6 +1189,7 @@ function updateUI(){
   pc.style.display=needsPdfChoice()?'block':'none';
   const t=document.querySelector('input[name="target"]:checked');
   buildBtn.disabled=!t;
+  $('wonderWarn').style.display=(t&&t.value==='wonder')?'block':'none';
 }
 
 // ===== FILE PICKING =====
