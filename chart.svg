@@ -31,7 +31,7 @@
   <rect x="10" y="148" width="500" height="32" rx="4" fill="#fff" stroke="#e2e8f0" stroke-width="0.5"/>
   <text x="120" y="169" text-anchor="middle" class="row">Wonder</text>
   <text x="310" y="169" text-anchor="middle" class="yes">✅ SMS + MMS</text>
-  <text x="460" y="169" text-anchor="middle" class="yes">✅ SMS + MMS</text>
+  <text x="460" y="169" text-anchor="middle" class="no">❌ Not yet</text>
   <!-- Row 4: Pom -->
   <rect x="10" y="182" width="500" height="32" rx="4" fill="#f1f5f9" stroke="#e2e8f0" stroke-width="0.5"/>
   <text x="120" y="203" text-anchor="middle" class="row">Pom</text>
