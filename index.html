@@ -255,7 +255,7 @@
     <tbody>
       <tr><td>SMS Backup &amp; Restore *</td><td class="c-yes">SMS + MMS</td><td class="c-yes">SMS + MMS</td></tr>
       <tr><td>Fig</td><td class="c-yes">SMS + MMS</td><td class="c-yes">SMS + MMS</td></tr>
-      <tr><td>Wonder</td><td class="c-yes">SMS + MMS</td><td class="c-yes">SMS + MMS</td></tr>
+      <tr><td>Wonder</td><td class="c-yes">SMS + MMS</td><td class="c-no">Not yet</td></tr>
       <tr id="pomRow"><td>Pom</td><td class="c-yes" id="pomOut">SMS only</td><td class="c-no">Not yet</td></tr>
     </tbody>
   </table>
@@ -328,7 +328,7 @@
       <input type="radio" name="target" value="wonder" />
       <div>
         <div class="option-label">Wonder</div>
-        <div class="option-desc">ZIP file — for Wonder phones</div>
+        <div class="option-desc">Import to Wonder not yet supported</div>
       </div>
     </label>
 
@@ -448,7 +448,7 @@ function sendAnalytics(data){try{var p=Object.assign({type:'analytics',version:(
 const SUPPORT_MATRIX={
   smsbackup:{out:true, in:true},
   fig:      {out:true, in:true},
-  wonder:   {out:true, in:true},
+  wonder:   {out:true, in:false},
   pom:      {out:'sms', in:false}
 };
 const TEST_MODE=new URLSearchParams(location.search).has('test');
