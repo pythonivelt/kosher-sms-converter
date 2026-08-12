@@ -464,7 +464,7 @@ const logPanel=$('logPanel'),logBox=$('logBox');
 function log(msg,type){logPanel.style.display='block';const s=document.createElement('span');if(type)s.className='log-'+type;s.textContent=(new Date().toLocaleTimeString('en-US',{hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'}))+' '+msg+'\n';logBox.appendChild(s);logBox.scrollTop=logBox.scrollHeight}
 function clearLog(){logBox.innerHTML='';logPanel.style.display='none';logPanel.removeAttribute('open')}
 
-function hasAttach(p){return!!(p.data||p._entry||p._fallbackAttach)}
+function hasAttach(p){return!!(p.data||p._hasData||p._entry||p._fallbackAttach)}
 // Shared index: built once during export, caches all entry positions
 let _entryIndex=null;let _indexBuilding=false;
 async function _buildEntryIndex(file,needed){
@@ -1573,7 +1573,7 @@ async function parseSmsBackupXmlStream(file){
         while((pm=pr.exec(block))!==null){
           const pp=pa(pm[0]);const ct=pp.ct||'';
           if(ct==='application/smil')continue;
-          if(pp.data){const data=b642ab(pp.data);if(ct==='application/pdf'){pdfCount++;pdfSize+=data.byteLength}parts.push({ct,cl:pp.cl||'',data,seq:parseInt(pp.seq)||0})}
+          if(pp.data){const approx=Math.round(pp.data.length*0.75);if(ct==='application/pdf'){pdfCount++;pdfSize+=approx}parts.push({ct,cl:pp.cl||'',_hasData:true,_b64Len:pp.data.length,seq:parseInt(pp.seq)||0})}
           else parts.push({ct:'text/plain',text:ux(pp.text)||'',seq:parseInt(pp.seq)||0});
         }
         messages.push({type:'mms',date:ma.date||'',dateSent:ma.date_sent||'0',direction:mb==='1'?'in':'out',read:ma.read||'0',address:ma.address||'',contactName:ux(ma.contact_name)||'(Unknown)',addrs,parts,msgBox:mb,ctT:ma.ct_t,mType:ma.m_type,mSize:ma.m_size,mId:ma.m_id,mCls:ma.m_cls,trId:ma.tr_id,v:ma.v,locked:ma.locked,subId:ma.sub_id,seen:ma.seen,creator:ma.creator,_id:ma._id});
@@ -1585,6 +1585,47 @@ async function parseSmsBackupXmlStream(file){
   }
   log('Streamed '+formatSize(tot)+' → '+messages.length+' messages','ok');
   return{messages,attachMap:{},pdfCount,pdfSize};
+}
+
+async function rehydrateSmsBackupStream(file,messages){
+  const needsData=messages.some(m=>m.type==='mms'&&m.parts&&m.parts.some(p=>p._hasData));
+  if(!needsData)return;
+  log('Re-reading attachments from file…');
+  const reader=file.stream().getReader();
+  const dec=new TextDecoder();
+  let buf='',mmsIdx=0,bytesRead=0;const tot=file.size;
+  const mmsMessages=messages.filter(m=>m.type==='mms');
+  function fc(from,pat){let q=0;for(let i=from;i<=buf.length-pat.length;i++){const c=buf[i];if(q){if(c===(q===1?'"':"'"))q=0}else if(c==='"')q=1;else if(c==="'")q=2;else if(buf.startsWith(pat,i))return i+pat.length}return -1}
+  function pa(s){const a={},r=/(\w[\w_-]*)=(?:"([^"]*)"|'([^']*)')/g;let m;while((m=r.exec(s))!==null)a[m[1]]=m[2]!=null?m[2]:m[3];return a}
+  while(true){
+    const{done,value}=await reader.read();
+    if(value){bytesRead+=value.length;buf+=dec.decode(value,{stream:!done})}
+    let moved=true;
+    while(moved){
+      moved=false;
+      const mi=buf.indexOf('<mms ');
+      if(mi===-1){const lt=buf.lastIndexOf('>');if(lt>0)buf=buf.substring(lt+1);break}
+      const end=buf.indexOf('</mms>',mi);
+      if(end===-1)break;
+      const block=buf.substring(mi,end+6);buf=buf.substring(end+6);moved=true;
+      if(mmsIdx>=mmsMessages.length)continue;
+      const msg=mmsMessages[mmsIdx++];
+      let pi=0;
+      const pr=/<part\s[^>]*\/>/g;let pm;
+      while((pm=pr.exec(block))!==null){
+        const pp=pa(pm[0]);const ct=pp.ct||'';
+        if(ct==='application/smil')continue;
+        if(pp.data&&pi<msg.parts.length&&msg.parts[pi]._hasData){
+          msg.parts[pi].data=b642ab(pp.data);
+          delete msg.parts[pi]._hasData;delete msg.parts[pi]._b64Len;
+        }
+        pi++;
+      }
+    }
+    if(done)break;
+    if(bytesRead%10000000<100000){const p=Math.round(bytesRead/tot*30)+10;showProgress('Loading attachments… '+formatSize(bytesRead)+' / '+formatSize(tot),p);await tick()}
+  }
+  log('Attachments loaded for '+mmsIdx+' MMS messages','ok');
 }
 
 // ===== WRITERS =====
@@ -1916,6 +1957,7 @@ async function build(target){
     const msgs=filterMessages(parsedData.messages,content,skipPdf,skipGroups);
 
     log('Building '+target+' from '+msgs.length+' messages (content='+content+', skipPdf='+skipPdf+', skipGroups='+skipGroups+')');
+    if(parsedData.fmt==='smsbackup'&&content!=='text')await rehydrateSmsBackupStream(selectedFile,msgs);
     showProgress('Building…',20);await tick();
     let blob,filename;
     const baseName=selectedFile.name.replace(/\.(zip|xml)$/i,'');
