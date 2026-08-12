@@ -80,12 +80,15 @@
   .progress-bar-wrap{background:var(--surface-2);border-radius:99px;height:7px;overflow:hidden;margin-top:8px}
   .progress-bar{height:100%;background:var(--accent-grad);width:0;transition:width .15s;border-radius:99px}
   .progress-label{font-size:.78rem;color:var(--text-2)}
-  .scan-results{margin-top:20px;padding:18px;background:var(--surface);border:1px solid var(--surface-border);border-radius:16px;font-size:.84rem;color:var(--text-2);display:none}
-  .scan-results h3{font-size:.92rem;color:var(--text);margin-bottom:12px;font-weight:600}
+  .scan-results{margin-top:20px;padding:20px;background:var(--surface);border:1px solid var(--surface-border);border-radius:16px;font-size:.84rem;color:var(--text-2);display:none}
+  .scan-results h3{font-size:.92rem;color:var(--text);margin-bottom:14px;font-weight:600;display:flex;align-items:center;gap:8px}
   .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
   .scan-results div.stat{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--surface-border);border-radius:10px;padding:9px 12px;margin:0}
   .scan-results strong{color:var(--text)}
-  .detected-badge{display:inline-block;padding:3px 10px;border-radius:7px;font-size:.75rem;font-weight:600;background:var(--accent-soft);color:var(--accent);border:1px solid var(--accent-border);margin-left:6px}
+  .detected-badge{display:inline-block;padding:3px 10px;border-radius:7px;font-size:.75rem;font-weight:600;background:var(--accent-soft);color:var(--accent);border:1px solid var(--accent-border)}
+  .option-note{display:none;margin-top:6px;padding:8px 10px;border-radius:8px;background:var(--warn-soft,#fef3c7);border:1px solid var(--warn-border,#fde68a);color:var(--warn-text,#92400e);font-size:.72rem;line-height:1.45}
+  .option.selected .option-note{display:block}
+  [data-theme="dark"] .option-note{background:rgba(251,191,36,.1);border-color:rgba(251,191,36,.25);color:#fbbf24}
   .section-label{font-size:.76rem;font-weight:600;color:var(--text-2);margin:18px 0 8px;text-transform:uppercase;letter-spacing:.07em}
   .options{margin-top:14px;display:none}
   .option{display:flex;align-items:flex-start;gap:12px;padding:14px 15px;border:1px solid var(--surface-border);border-radius:14px;margin-bottom:9px;cursor:pointer;transition:border-color .18s,background .18s,box-shadow .18s;background:var(--card)}
@@ -298,8 +301,6 @@
       <div class="stat" id="statGroupRow" style="display:none">👥 Group chats: <strong id="statGroup">0</strong></div>
       <div class="stat" id="statPdfRow" style="display:none">📄 PDFs: <strong id="statPdf">0</strong></div>
     </div>
-    <div id="pomMmsWarn" style="display:none;margin-top:10px;padding:10px 14px;border-radius:8px;background:#fef3c7;color:#92400e;font-size:.85rem;line-height:1.4">⚠️ Pom currently supports SMS only — MMS pictures and voice notes will not be included.</div>
-    <div id="wonderWarn" style="display:none;margin-top:10px;padding:10px 14px;border-radius:8px;background:#fef3c7;color:#92400e;font-size:.85rem;line-height:1.5">⚠️ <strong>Note:</strong> Wonder may only show the last few messages per conversation after the first import. If that happens, just import the same file again — the second import fixes it. Messages, pictures, and voice notes all come through.</div>
   </div>
 
   <div class="options" id="options">
@@ -330,6 +331,7 @@
       <div>
         <div class="option-label">Wonder</div>
         <div class="option-desc">ZIP file — for Wonder phones</div>
+        <div class="option-note" id="wonderNote">Wonder may only show the last few messages per conversation after the first import. If that happens, just import the same file again and everything will come through — messages, pictures, and voice notes.</div>
       </div>
     </label>
 
@@ -1189,7 +1191,6 @@ function updateUI(){
   pc.style.display=needsPdfChoice()?'block':'none';
   const t=document.querySelector('input[name="target"]:checked');
   buildBtn.disabled=!t;
-  $('wonderWarn').style.display=(t&&t.value==='wonder')?'block':'none';
 }
 
 // ===== FILE PICKING =====
