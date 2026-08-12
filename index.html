@@ -380,7 +380,7 @@
       </label>
     </div>
 
-    <div id="convertNotice" style="display:none"><strong>⚠ Please note:</strong> This tool is tested but some messages may end up in a different chat — for example, group messages might land in a private chat. This can't be undone by re-converting. If you run into any issues, <a href="#" onclick="document.getElementById('contactModal').style.display='flex';return false">let us know</a> and we'll work on a fix.</div>
+    <div id="convertNotice" style="display:none"><strong>⚠ Please note:</strong> This tool is tested but some messages may end up in a different chat — for example, group messages might land in a private chat. This can't be undone by re-converting. If you run into any issues, <a href="#" onclick="document.getElementById('contactModal').classList.add('open');return false">let us know</a> and we'll work on a fix.</div>
     <button class="btn btn-success" id="buildBtn" disabled>Convert</button>
   </div>
 
@@ -1345,7 +1345,7 @@ async function scan(){
     $('optGroups').style.display=grp.groupCount>0?'':'none';
     $('groupsChk').checked=true;$('optGroups').classList.add('selected');
     $('groupsDesc').textContent=grp.groupCount.toLocaleString()+' messages in group chats — uncheck to leave them out (group threading fixed in v0.0.71, feedback welcome)';
-    $('pomMmsWarn').style.display=(fmt==='pom'&&cMms>0&&!BETA_MODE)?'block':'none';
+    const pmw=$('pomMmsWarn');if(pmw)pmw.style.display=(fmt==='pom'&&cMms>0&&!BETA_MODE)?'block':'none';
 
     if(pdfCount>0){
       const pdfXmlSize=Math.round(pdfSize*1.37);
