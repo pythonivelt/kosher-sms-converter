@@ -424,7 +424,7 @@
 </section>
 
 <footer class="site-footer">
-  <p><span id="verSpan">v0.0.87</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
+  <p><span id="verSpan">v0.0.88</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
   <p style="margin-top:6px">Free and open source · Nothing gets uploaded</p>
 </footer>
 
@@ -1539,6 +1539,7 @@ async function parseSmsBackupXmlStream(file){
   const reader=file.stream().getReader();
   const dec=new TextDecoder();
   let buf='',bytesRead=0;const tot=file.size;let lastPct=0;
+  let _skipData=false,_skipLen=0;
 
   function pa(s){const a={},r=/(\w[\w_-]*)=(?:"([^"]*)"|'([^']*)')/g;let m;while((m=r.exec(s))!==null)a[m[1]]=m[2]!=null?m[2]:m[3];return a}
   function ux(s){return s?s.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&apos;/g,"'").replace(/&#13;/g,'\r').replace(/&#10;/g,'\n').replace(/&#x([0-9a-fA-F]+);/g,(_,h)=>String.fromCodePoint(parseInt(h,16))).replace(/&#(\d+);/g,(_,d)=>String.fromCodePoint(parseInt(d))):''}
@@ -1548,7 +1549,7 @@ async function parseSmsBackupXmlStream(file){
 
   while(true){
     const{done,value}=await reader.read();
-    if(value){bytesRead+=value.length;buf+=dec.decode(value,{stream:!done})}
+    if(value){bytesRead+=value.length;const _c=dec.decode(value,{stream:!done});if(_skipData){const qi=_c.indexOf('"');if(qi===-1){_skipLen+=_c.length}else{_skipData=false;buf+=' data-slen="'+(_skipLen+qi)+'"'+_c.substring(qi+1);_skipLen=0}}else{buf+=_c}if(!_skipData){let _di;while((_di=buf.indexOf(' data="'))!==-1){const _ds=_di+7,_de=buf.indexOf('"',_ds);if(_de===-1){_skipData=true;_skipLen=buf.length-_ds;buf=buf.substring(0,_di);break}buf=buf.substring(0,_di)+' data-slen="'+(_de-_ds)+'"'+buf.substring(_de+1)}}}
     let moved=true;
     while(moved){
       moved=false;
@@ -1576,7 +1577,7 @@ async function parseSmsBackupXmlStream(file){
         while((pm=pr.exec(block))!==null){
           const pp=pa(pm[0]);const ct=pp.ct||'';
           if(ct==='application/smil')continue;
-          if(pp.data){const approx=Math.round(pp.data.length*0.75);if(ct==='application/pdf'){pdfCount++;pdfSize+=approx}parts.push({ct,cl:pp.cl||'',_hasData:true,_b64Len:pp.data.length,seq:parseInt(pp.seq)||0})}
+          const _dl=pp['data-slen']?parseInt(pp['data-slen']):pp.data?pp.data.length:0;if(_dl>0){const approx=Math.round(_dl*0.75);if(ct==='application/pdf'){pdfCount++;pdfSize+=approx}parts.push({ct,cl:pp.cl||'',_hasData:true,_b64Len:_dl,seq:parseInt(pp.seq)||0})}
           else parts.push({ct:'text/plain',text:ux(pp.text)||'',seq:parseInt(pp.seq)||0});
         }
         messages.push({type:'mms',date:ma.date||'',dateSent:ma.date_sent||'0',direction:mb==='1'?'in':'out',read:ma.read||'0',address:ma.address||'',contactName:ux(ma.contact_name)||'(Unknown)',addrs,parts,msgBox:mb,ctT:ma.ct_t,mType:ma.m_type,mSize:ma.m_size,mId:ma.m_id,mCls:ma.m_cls,trId:ma.tr_id,v:ma.v,locked:ma.locked,subId:ma.sub_id,seen:ma.seen,creator:ma.creator,_id:ma._id});
