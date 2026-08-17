@@ -195,7 +195,7 @@
   .site-footer{position:relative;z-index:1;max-width:900px;margin:0 auto;padding:32px 24px;text-align:center;font-size:.74rem;color:var(--text-3);border-top:1px solid var(--surface-border)}
   .site-footer a{color:var(--accent);text-decoration:none;transition:color .2s}
   .site-footer a:hover{color:var(--accent)}
-  @media(max-width:600px){.hero h1{font-size:1.5rem}.steps-grid{grid-template-columns:1fr}.hero{padding:32px 20px 24px}.site-nav{padding:12px 16px}}
+  @media(max-width:600px){.hero h1{font-size:1.5rem}.steps-grid{grid-template-columns:1fr}.hero{padding:32px 20px 24px}.site-nav{padding:12px 16px}.log-row{flex-direction:column}.log-row .log-btn{align-self:flex-end}}
   @keyframes shake{0%,100%{transform:translateX(0)}15%{transform:translateX(-6px)}30%{transform:translateX(5px)}45%{transform:translateX(-4px)}60%{transform:translateX(3px)}75%{transform:translateX(-2px)}}
   .shake{animation:shake .5s ease-in-out}
   @media (max-width:480px){.card{padding:26px 18px;border-radius:20px}.stats-grid{grid-template-columns:1fr}}
@@ -467,7 +467,7 @@ const logPanel=$('logPanel'),logBox=$('logBox');
 function log(msg,type){logPanel.style.display='block';const s=document.createElement('span');if(type)s.className='log-'+type;s.textContent=(new Date().toLocaleTimeString('en-US',{hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'}))+' '+msg+'\n';logBox.appendChild(s);logBox.scrollTop=logBox.scrollHeight}
 function clearLog(){logBox.innerHTML='';logPanel.style.display='none';logPanel.removeAttribute('open')}
 
-function hasAttach(p){return!!(p.data||p._hasData||p._entry||p._fallbackAttach)}
+function hasAttach(p){return!!(p.data||p._dataBlob||p._hasData||p._entry||p._fallbackAttach)}
 // Shared index: built once during export, caches all entry positions
 let _entryIndex=null;let _indexBuilding=false;
 async function _buildEntryIndex(file,needed){
@@ -509,7 +509,7 @@ async function _buildEntryIndex(file,needed){
   _indexBuilding=false;
   return _entryIndex;
 }
-async function resolveData(p){if(p.data)return p.data;if(p._entry){try{const b=await p._entry.getData(new zip.BlobWriter());p.data=await b.arrayBuffer();delete p._entry;return p.data}catch(e){log('Failed to read attachment: '+e.message,'warn');return null}}if(p._fallbackAttach){try{const ai=p._fallbackAttach;
+async function resolveData(p){if(p.data)return p.data;if(p._dataBlob){return await p._dataBlob.arrayBuffer()}if(p._entry){try{const b=await p._entry.getData(new zip.BlobWriter());p.data=await b.arrayBuffer();delete p._entry;return p.data}catch(e){log('Failed to read attachment: '+e.message,'warn');return null}}if(p._fallbackAttach){try{const ai=p._fallbackAttach;
 // If needs full scan, look up from the shared entry index
 if(ai._needsFullScan){
   const needed=new Set();for(const k in attachMap)if(attachMap[k]._needsFullScan)needed.add(k);
@@ -1620,7 +1620,8 @@ async function rehydrateSmsBackupStream(file,messages){
         const pp=pa(pm[0]);const ct=pp.ct||'';
         if(ct==='application/smil')continue;
         if(pp.data&&pi<msg.parts.length&&msg.parts[pi]._hasData){
-          msg.parts[pi].data=b642ab(pp.data);
+          const _ab=b642ab(pp.data);
+          msg.parts[pi]._dataBlob=new Blob([new Uint8Array(_ab)]);
           delete msg.parts[pi]._hasData;delete msg.parts[pi]._b64Len;
         }
         pi++;
@@ -1674,25 +1675,25 @@ function filterMessages(messages,content,skipPdf,skipGroups){
 function extFromCt(ct){return({'image/jpeg':'.jpg','image/jpg':'.jpg','image/png':'.png','image/gif':'.gif','image/bmp':'.bmp','image/webp':'.webp','audio/amr':'.amr','audio/mpeg':'.mp3','audio/mp4':'.m4a','video/mp4':'.mp4','video/3gpp':'.3gp','application/pdf':'.pdf','text/x-vcard':'.vcf'})[String(ct||'').toLowerCase()]||'.bin'}
 async function writeToSmsBackup(messages){
   const own=detectOwnNumber(messages);
-  const parts=[];
+  const blobs=[];let parts=[];let partsSz=0;
+  const FLUSH=50*1024*1024;
+  function flush(){if(parts.length){blobs.push(new Blob(parts));parts=[];partsSz=0}}
   const now=new Date();
-  parts.push(`<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>\n<!--File Created By Kosher Phone SMS Converter on ${now.toLocaleString()}-->\n<smses count="__COUNT__" backup_date="${Date.now()}" type="full">\n`);
+  const hdr=`<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>\n<!--File Created By Kosher Phone SMS Converter on ${now.toLocaleString()}-->\n<smses count="__COUNT__" backup_date="${Date.now()}" type="full">\n`;
+  parts.push(hdr);partsSz+=hdr.length;
   let count=0,i=0;
 
   for(const m of messages){
     if(m.type==='sms'){
       const t=m.direction==='in'?'1':'2';
-      parts.push(`  <sms protocol="${escXml(m.protocol??0)}" address="${escXml(m.address)}" date="${escXml(m.date)}" type="${t}" subject="null" body="${escXml(m.body)}" toa="null" sc_toa="null" service_center="null" read="${escXml(m.read??0)}" status="${escXml(m.status??-1)}" locked="${escXml(m.locked??0)}" date_sent="${escXml(m.dateSent??m.date)}" sub_id="${escXml(m.subId??1)}" readable_date="${escXml(fmtDate(m.date))}" contact_name="${escXml(m.contactName)}" />\n`);
-      count++;
+      const s=`  <sms protocol="${escXml(m.protocol??0)}" address="${escXml(m.address)}" date="${escXml(m.date)}" type="${t}" subject="null" body="${escXml(m.body)}" toa="null" sc_toa="null" service_center="null" read="${escXml(m.read??0)}" status="${escXml(m.status??-1)}" locked="${escXml(m.locked??0)}" date_sent="${escXml(m.dateSent??m.date)}" sub_id="${escXml(m.subId??1)}" readable_date="${escXml(fmtDate(m.date))}" contact_name="${escXml(m.contactName)}" />\n`;
+      parts.push(s);partsSz+=s.length;count++;
     }else{
-      // SMS B&R threads MMS by the address attribute: all participants except own number, tilde-joined for groups
       const seen=new Set(),others=[];
       for(const a of(m.addrs||[])){const raw=(a.address||'').replace(/\s/g,'');const n=normNum(raw);if(!n||n===own||seen.has(n))continue;seen.add(n);others.push(raw)}
       const addr=others.length?others.join('~'):(m.address||'');
       if(!addr)continue;
       const dateMs=parseInt(m.date,10)<1e12?parseInt(m.date,10)*1000:parseInt(m.date,10);
-      // Two shapes, mirroring real SMS B&R exports: text-only MMS = ct_t text/plain, no SMIL;
-      // MMS with media = multipart.related + generated SMIL (Samsung Messages shows "not available" without it)
       const items=[];let hasAtt=false,missingMedia=0;
       for(const p of m.parts){
         if(String(p.ct||'').toLowerCase()==='application/smil')continue;
@@ -1728,17 +1729,20 @@ async function writeToSmsBackup(messages){
       }
       const aLines=(m.addrs||[]).map(a=>`      <addr address="${escXml((a.address||'').replace(/\s/g,''))}" type="${a.type}" charset="106" />`);
       if(!aLines.length)aLines.push(`      <addr address="${escXml(addr)}" type="${m.direction==='in'?137:151}" charset="106" />`);
-      parts.push(`  <mms date="${dateMs}" rr="null" sub="" ct_t="${hasAtt?'application/vnd.wap.multipart.related':'text/plain'}" read_status="null" seen="${escXml(m.seen??1)}" msg_box="${m.direction==='in'?1:2}" address="${escXml(addr)}" sub_cs="null" resp_st="null" retr_st="null" d_tm="null" text_only="${hasAtt?0:1}" exp="null" locked="${escXml(m.locked??0)}" m_id="${escXml(m.mId||'')}" st="null" retr_txt_cs="null" retr_txt="null" creator="${escXml(m.creator||'com.android.mms')}" date_sent="${escXml(m.dateSent??0)}" read="${escXml(m.read??0)}" m_size="${escXml(m.mSize??0)}" rpt_a="null" ct_cls="null" pri="null" sub_id="${escXml(m.subId??1)}" tr_id="${escXml(m.trId||'')}" resp_txt="null" ct_l="null" m_cls="${escXml(m.mCls||'personal')}" d_rpt="null" v="${escXml(m.v||18)}" service_center="null" _id="${escXml(m._id||'')}" m_type="${escXml(m.mType||128)}" readable_date="${escXml(fmtDate(m.date))}" contact_name="${escXml(m.contactName||'(Unknown)')}">
+      const s=`  <mms date="${dateMs}" rr="null" sub="" ct_t="${hasAtt?'application/vnd.wap.multipart.related':'text/plain'}" read_status="null" seen="${escXml(m.seen??1)}" msg_box="${m.direction==='in'?1:2}" address="${escXml(addr)}" sub_cs="null" resp_st="null" retr_st="null" d_tm="null" text_only="${hasAtt?0:1}" exp="null" locked="${escXml(m.locked??0)}" m_id="${escXml(m.mId||'')}" st="null" retr_txt_cs="null" retr_txt="null" creator="${escXml(m.creator||'com.android.mms')}" date_sent="${escXml(m.dateSent??0)}" read="${escXml(m.read??0)}" m_size="${escXml(m.mSize??0)}" rpt_a="null" ct_cls="null" pri="null" sub_id="${escXml(m.subId??1)}" tr_id="${escXml(m.trId||'')}" resp_txt="null" ct_l="null" m_cls="${escXml(m.mCls||'personal')}" d_rpt="null" v="${escXml(m.v||18)}" service_center="null" _id="${escXml(m._id||'')}" m_type="${escXml(m.mType||128)}" readable_date="${escXml(fmtDate(m.date))}" contact_name="${escXml(m.contactName||'(Unknown)')}">
     <parts>\n${pLines.join('\n')}\n    </parts>
     <addrs>\n${aLines.join('\n')}\n    </addrs>
-  </mms>\n`);
-      count++;
+  </mms>\n`;
+      parts.push(s);partsSz+=s.length;count++;
     }
+    if(partsSz>FLUSH)flush();
     if(++i%200===0){if(cancelled)throw{cancelled:true};showProgress('Building… '+i.toLocaleString()+' / '+messages.length.toLocaleString(),Math.round(i/messages.length*80)+10);await tick()}
   }
   parts.push('</smses>\n');
-  parts[0]=parts[0].replace('__COUNT__',String(count));
-  return new Blob(parts,{type:'text/xml;charset=utf-8'});
+  flush();
+  const hdrBlob=blobs[0];const hdrBuf=await hdrBlob.text();
+  blobs[0]=new Blob([hdrBuf.replace('__COUNT__',String(count))]);
+  return new Blob(blobs,{type:'text/xml;charset=utf-8'});
 }
 
 async function buildFigZip(messages){
@@ -1801,7 +1805,7 @@ async function buildFigZip(messages){
           const pn='PART_'+(partId++);
           const pid=String(partObjId++);
           const cl=p.cl||'image000000.jpg';
-          attachFiles.push({fn:'data/'+pn,data:d});
+          attachFiles.push({fn:'data/'+pn,data:new Blob([new Uint8Array(d)])});
           obj.__parts.push({_id:pid,mid:id,seq:String(seq++),ct:p.ct,name:cl,cid:'<'+cl.replace(/\.[^.]+$/,'')+'>',cl:cl,_data:'/data/user_de/0/com.android.providers.telephony/app_parts/'+pn});
         }}else{
           const pid=String(partObjId++);
@@ -1817,7 +1821,7 @@ async function buildFigZip(messages){
   log('Building Fig ZIP: '+smsCt+' SMS, '+mmsCt+' MMS, '+attachFiles.length+' attachments','ok');
   const ndjsonData=new TextEncoder().encode(lines.join('\n')+'\n');
   const zipFiles=[{name:'messages.ndjson',data:ndjsonData}];
-  for(const af of attachFiles)zipFiles.push({name:af.fn,data:new Uint8Array(af.data)});
+  for(const af of attachFiles)zipFiles.push({name:af.fn,data:af.data});
   return await buildRawZip(zipFiles);
 }
 
@@ -1847,28 +1851,33 @@ async function buildRawZip(files){
   function u16(v){return[v&0xFF,(v>>8)&0xFF]}
   function u32(v){return[v&0xFF,(v>>8)&0xFF,(v>>16)&0xFF,(v>>24)&0xFF]}
   const enc=new TextEncoder();
-  const parts=[];const cdirs=[];let offset=0;
+  const blobs=[];let parts=[];let partsSz=0;const FLUSH=50*1024*1024;
+  function flush(){if(parts.length){blobs.push(new Blob(parts));parts=[];partsSz=0}}
+  const cdirs=[];let offset=0;
   for(let fi=0;fi<files.length;fi++){
     const f=files[fi];
     const nameBytes=enc.encode(f.name);
-    const crc=crc32(f.data);const sz=f.data.length;
-    // Try DEFLATE, fall back to STORE
-    const compressed=await deflate(f.data);
+    const raw=f.data instanceof Blob?new Uint8Array(await f.data.arrayBuffer()):f.data instanceof Uint8Array?f.data:new Uint8Array(f.data);
+    const crc=crc32(raw);const sz=raw.length;
+    const compressed=await deflate(raw);
     const useDeflate=compressed&&compressed.length<sz;
     const method=useDeflate?8:0;
-    const cData=useDeflate?compressed:f.data;
+    const cData=useDeflate?compressed:raw;
     const csz=cData.length;
     const lh=new Uint8Array([0x50,0x4B,0x03,0x04,...u16(20),...u16(0),...u16(method),...u16(0),...u16(0),...u32(crc),...u32(csz),...u32(sz),...u16(nameBytes.length),...u16(0)]);
-    parts.push(lh,nameBytes,cData);
+    parts.push(lh,nameBytes,cData);partsSz+=lh.length+nameBytes.length+csz;
     const cd=new Uint8Array([0x50,0x4B,0x01,0x02,...u16(20),...u16(20),...u16(0),...u16(method),...u16(0),...u16(0),...u32(crc),...u32(csz),...u32(sz),...u16(nameBytes.length),...u16(0),...u16(0),...u16(0),...u16(0),...u32(0),...u32(offset)]);
     cdirs.push(cd,nameBytes);
-    offset+=lh.length+nameBytes.length+cData.length;
+    offset+=lh.length+nameBytes.length+csz;
+    f.data=null;
+    if(partsSz>FLUSH)flush();
     if(cancelled)throw{cancelled:true};if(fi%2===0){const pct=Math.round(fi/files.length*100);showProgress('Building ZIP… '+pct+'%',90+Math.round(pct/10));await tick()}
   }
+  flush();
   const cdirOffset=offset;let cdirSize=0;
   for(const c of cdirs)cdirSize+=c.length;
   const eocd=new Uint8Array([0x50,0x4B,0x05,0x06,...u16(0),...u16(0),...u16(files.length),...u16(files.length),...u32(cdirSize),...u32(cdirOffset),...u16(0)]);
-  return new Blob([...parts,...cdirs,eocd],{type:'application/zip'});
+  return new Blob([...blobs,...cdirs,eocd],{type:'application/zip'});
 }
 
 async function buildWonderZip(messages){
@@ -1894,7 +1903,7 @@ async function buildWonderZip(messages){
           const ext=(p.ct||'').split('/').pop().replace('jpeg','jpg')||'bin';
           const imgName=(p.cl||'image'+String(attachId).padStart(6,'0')+'.'+ext);
           const fn='mms_'+(mmsCount+1)+'_'+attachId+'.'+ext;attachId++;
-          attachFiles.push({fn,data:d});
+          attachFiles.push({fn,data:new Blob([new Uint8Array(d)])});
           xml+=`    <part ct="${escXml(p.ct)}" name="${escXml(imgName)}" cl="${escXml(imgName)}" file="${escXml(fn)}" />\n`;
           smilParts.push({src:imgName,ct:p.ct});
         }}else{
@@ -1924,7 +1933,7 @@ async function buildWonderZip(messages){
   const dateStr=new Date().toISOString().slice(0,10);
   const xmlData=new TextEncoder().encode(xmlParts.join(''));
   const zipFiles=[{name:'Messages_Backup_'+dateStr+'.xml',data:xmlData}];
-  for(const af of attachFiles)zipFiles.push({name:'mms_attachments/'+af.fn,data:new Uint8Array(af.data)});
+  for(const af of attachFiles)zipFiles.push({name:'mms_attachments/'+af.fn,data:af.data});
   return await buildRawZip(zipFiles);
 }
 
