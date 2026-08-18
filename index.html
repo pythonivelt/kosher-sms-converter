@@ -256,10 +256,11 @@
   <table class="compat-table">
     <thead><tr><th>Phone</th><th>Convert from</th><th>Convert to</th></tr></thead>
     <tbody>
-      <tr><td>SMS Backup &amp; Restore *</td><td class="c-yes">SMS + MMS</td><td class="c-yes">SMS + MMS</td></tr>
+      <tr><td>SMS Backup &amp; Restore App *</td><td class="c-yes">SMS + MMS</td><td class="c-yes">SMS + MMS</td></tr>
       <tr><td>Fig</td><td class="c-yes">SMS + MMS</td><td class="c-yes">SMS + MMS</td></tr>
       <tr><td>Wonder</td><td class="c-yes">SMS + MMS</td><td class="c-yes">SMS + MMS</td></tr>
       <tr id="pomRow"><td>Pom</td><td class="c-yes" id="pomOut">SMS only</td><td class="c-no">Not yet</td></tr>
+      <tr><td>Buggy Backup App</td><td class="c-yes">SMS only</td><td class="c-no">Not in plan as of now</td></tr>
     </tbody>
   </table>
   </div>
@@ -424,7 +425,7 @@
 </section>
 
 <footer class="site-footer">
-  <p><span id="verSpan">v0.0.88</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
+  <p><span id="verSpan">v0.0.89</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
   <p style="margin-top:6px">Free and open source · Nothing gets uploaded</p>
 </footer>
 
@@ -452,7 +453,8 @@ const SUPPORT_MATRIX={
   smsbackup:{out:true, in:true},
   fig:      {out:true, in:true},
   wonder:   {out:true, in:true},
-  pom:      {out:'sms', in:false}
+  pom:      {out:'sms', in:false},
+  buggy:    {out:'sms', in:false}
 };
 const TEST_MODE=new URLSearchParams(location.search).has('test');
 const BETA_MODE=new URLSearchParams(location.search).has('beta');
@@ -1252,6 +1254,7 @@ async function scan(){
         const hasNdjson=entries.some(e=>e.filename.endsWith('.ndjson'));
         const hasWonderXml=entries.some(e=>e.filename.endsWith('.xml')&&!e.filename.includes('/'));
         const hasMmsAttach=entries.some(e=>e.filename.startsWith('mms_attachments/'));
+        const hasBuggyConv=entries.some(e=>/^conversations\/conv_\d+$/.test(e.filename));
 
         log('ZIP contains '+entries.length+' entries');
         if(hasNdjson){
@@ -1288,6 +1291,9 @@ async function scan(){
           const mmsDir=entries.filter(e=>e.filename.startsWith('mms_attachments/'));
           if(mmsDir.length)log('MMS attachment entries: '+mmsDir.length+' (e.g. '+mmsDir.slice(0,3).map(e=>e.filename).join(', ')+')');
           ({messages,attachMap,pdfCount,pdfSize}=await parseWonderZip(entries));
+        }else if(hasBuggyConv){
+          fmt='buggy';log('Detected Buggy Backup format','ok');
+          ({messages,attachMap,pdfCount,pdfSize}=await parseBuggyBackupZip(entries));
         }else{
           log('Unknown ZIP format — generating structure report…','warn');
           window._lastUnknownEntries=entries;
@@ -1333,7 +1339,7 @@ async function scan(){
     {const _fp=(cIn+cOut)+'|'+cMms+'|'+cAttach+'|'+(_dMin<Infinity?_dMin:0)+'|'+(_dMax||0);let _h=2166136261;for(let _i=0;_i<_fp.length;_i++){_h^=_fp.charCodeAt(_i);_h=Math.imul(_h,16777619)}scanExtras.bkp=('0000000'+(_h>>>0).toString(16)).slice(-8)}
 
     log('Parsed '+messages.length+' messages ('+cIn+' in, '+cOut+' out, '+cMms+' MMS, '+cAttach+' attachments)'+(pdfCount?' + '+pdfCount+' PDFs':''),'ok');
-    $('detectedBadge').textContent=fmt==='merge'?'Merged':fmt==='fig'?'Fig':fmt==='pom'?'Pom':fmt==='wonder'?'Wonder':'SMS Backup & Restore';
+    $('detectedBadge').textContent=fmt==='merge'?'Merged':fmt==='fig'?'Fig':fmt==='pom'?'Pom':fmt==='wonder'?'Wonder':fmt==='buggy'?'Buggy Backup App':'SMS Backup & Restore';
     $('statIn').textContent=cIn.toLocaleString();
     $('statOut').textContent=cOut.toLocaleString();
     $('statMms').textContent=cMms.toLocaleString();
@@ -1532,6 +1538,24 @@ async function parseWonderZip(entries){
     messages.push({type:'mms',date:el.getAttribute('date')||'',dateSent:'0',direction:mb==='1'?'in':'out',read:el.getAttribute('read')||'0',address:addr,contactName:'(Unknown)',addrs,parts,msgBox:mb,ctT:el.getAttribute('ct_t')||'application/vnd.wap.multipart.related',mType:el.getAttribute('m_type')||'132',seen:el.getAttribute('seen')||'1'});
   }
   return{messages,attachMap:{},pdfCount,pdfSize};
+}
+
+async function parseBuggyBackupZip(entries){
+  showProgress('Reading Buggy Backup…',15);await tick();
+  const convEntries=entries.filter(e=>/^conversations\/conv_\d+$/.test(e.filename));
+  log('Buggy Backup: '+convEntries.length+' conversation entries');
+  const messages=[];let lastPct=0;
+  for(let i=0;i<convEntries.length;i++){
+    if(cancelled)throw{cancelled:true};
+    const pct=Math.min(90,Math.round(i/convEntries.length*75)+15);
+    if(pct>lastPct+2){lastPct=pct;showProgress('Parsing… '+messages.length.toLocaleString()+' messages',pct);await tick()}
+    const text=await convEntries[i].getData(new zip.TextWriter());
+    let obj;try{obj=JSON.parse(text)}catch{continue}
+    const h=obj.h,isIn=h===1;
+    messages.push({type:'sms',address:(obj.q||'').replace(/\s/g,''),body:obj.r||'',date:String(obj.m||''),dateSent:String(obj.n||'0'),direction:isIn?'in':'out',read:obj.b?'1':'0',contactName:'(Unknown)',protocol:obj.k,status:obj.g,locked:obj.d?'1':'0',subId:obj.l,creator:obj.o,seen:obj.e?'1':'0'});
+  }
+  log('Parsed '+messages.length+' messages from Buggy Backup','ok');
+  return{messages,attachMap:{},pdfCount:0,pdfSize:0};
 }
 
 async function parseSmsBackupXmlStream(file){
