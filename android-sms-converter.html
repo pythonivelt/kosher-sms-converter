@@ -124,6 +124,8 @@
   .modal-close{position:absolute;top:4px;right:4px;border:none;background:none;font-size:1.5rem;line-height:1;cursor:pointer;color:var(--text-3,#9ca3af);padding:12px;min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center;z-index:1;touch-action:manipulation}
   .modal label{display:block;font-size:.76rem;font-weight:600;margin:10px 0 4px}
   .modal input,.modal select,.modal textarea{width:100%;padding:10px 12px;border:1px solid var(--field-border,#d1d5db);border-radius:8px;font-size:.9rem;font-family:inherit;background:var(--field,#fff);color:inherit;box-sizing:border-box}
+  [data-theme="dark"] .modal select{color-scheme:dark}
+  [data-theme="dark"] .modal select option{background:#1e293b;color:#e2e8f0}
   .modal textarea{min-height:110px;resize:vertical}
   .modal .send-btn{margin-top:14px;width:100%;padding:12px;border:none;border-radius:10px;background:#4f46e5;color:#fff;font-weight:600;font-size:.92rem;cursor:pointer}
   .modal .send-btn:hover{filter:brightness(1.08)}
@@ -254,13 +256,14 @@
   <h2 class="site-section-title">What's supported</h2>
   <div class="compat-card">
   <table class="compat-table">
-    <thead><tr><th>Phone</th><th>Convert from</th><th>Convert to</th></tr></thead>
+    <thead><tr><th>Phone / App</th><th>Convert from</th><th>Convert to</th></tr></thead>
     <tbody>
       <tr><td>SMS Backup &amp; Restore App *</td><td class="c-yes">SMS + MMS</td><td class="c-yes">SMS + MMS</td></tr>
+      <tr><td>Buggy Backup App</td><td class="c-yes">SMS only</td><td class="c-no">Not in plan as of now</td></tr>
       <tr><td>Fig</td><td class="c-yes">SMS + MMS</td><td class="c-yes">SMS + MMS</td></tr>
       <tr><td>Wonder</td><td class="c-yes">SMS + MMS</td><td class="c-yes">SMS + MMS</td></tr>
       <tr id="pomRow"><td>Pom</td><td class="c-yes" id="pomOut">SMS only</td><td class="c-no">Not yet</td></tr>
-      <tr><td>Buggy Backup App</td><td class="c-yes">SMS only</td><td class="c-no">Not in plan as of now</td></tr>
+      <tr><td>TAK</td><td class="c-yes">SMS + MMS</td><td class="c-yes">SMS + MMS</td></tr>
     </tbody>
   </table>
   </div>
@@ -316,8 +319,8 @@
     <label class="option" data-value="fig" id="optFig">
       <input type="radio" name="target" value="fig" />
       <div>
-        <div class="option-label">Fig</div>
-        <div class="option-desc">NDJSON ZIP — for Fig phones</div>
+        <div class="option-label">Fig / TAK</div>
+        <div class="option-desc">NDJSON ZIP — for Fig &amp; TAK phones</div>
       </div>
     </label>
     <label class="option" data-value="pom" id="optPom">
@@ -425,7 +428,7 @@
 </section>
 
 <footer class="site-footer">
-  <p><span id="verSpan">v0.0.89</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
+  <p><span id="verSpan">v0.0.90</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
   <p style="margin-top:6px">Free and open source · Nothing gets uploaded</p>
 </footer>
 
@@ -1339,7 +1342,7 @@ async function scan(){
     {const _fp=(cIn+cOut)+'|'+cMms+'|'+cAttach+'|'+(_dMin<Infinity?_dMin:0)+'|'+(_dMax||0);let _h=2166136261;for(let _i=0;_i<_fp.length;_i++){_h^=_fp.charCodeAt(_i);_h=Math.imul(_h,16777619)}scanExtras.bkp=('0000000'+(_h>>>0).toString(16)).slice(-8)}
 
     log('Parsed '+messages.length+' messages ('+cIn+' in, '+cOut+' out, '+cMms+' MMS, '+cAttach+' attachments)'+(pdfCount?' + '+pdfCount+' PDFs':''),'ok');
-    $('detectedBadge').textContent=fmt==='merge'?'Merged':fmt==='fig'?'Fig':fmt==='pom'?'Pom':fmt==='wonder'?'Wonder':fmt==='buggy'?'Buggy Backup App':'SMS Backup & Restore';
+    $('detectedBadge').textContent=fmt==='merge'?'Merged':fmt==='fig'?'Fig / TAK':fmt==='pom'?'Pom':fmt==='wonder'?'Wonder':fmt==='buggy'?'Buggy Backup App':'SMS Backup & Restore';
     $('statIn').textContent=cIn.toLocaleString();
     $('statOut').textContent=cOut.toLocaleString();
     $('statMms').textContent=cMms.toLocaleString();
@@ -1403,6 +1406,7 @@ async function scan(){
     sendAnalytics(Object.assign({event:'scan',source:fmt,sms:cIn+cOut,mms:cMms,attachments:cAttach,groups:grp.groupCount,merge:MERGE.on?1:0,duration:((Date.now()-_scanStart)/1000).toFixed(1)},scanExtras));
     scanBtn.disabled=false;cancelBtn.style.display='none';
     sourceFormat=fmt;
+    if(fmt==='fig'){infoBox.innerHTML='<b>Switching to another Fig or TAK phone?</b> Fig and TAK use the exact same backup format — no conversion needed. Just take your backup file and import it directly on the new phone.';infoBox.style.display='block';}
     updateUI();
     if(MERGE.on&&!MERGE.old){
       // merge step 1 complete — stash and ask for the new-phone backup
@@ -1966,6 +1970,10 @@ buildBtn.addEventListener('click',()=>{
   if(!parsedData)return;
   const t=document.querySelector('input[name="target"]:checked');
   if(!t)return;
+  if(parsedData.fmt==='fig'&&t.value==='wonder'){
+    infoBox.innerHTML='<b>No conversion needed!</b><br>Wonder accepts Fig backups directly. Just take your Fig backup file and import it into Wonder — no conversion required.';
+    infoBox.style.display='block';infoBox.scrollIntoView({behavior:'smooth',block:'center'});return;
+  }
   if(needsPdfChoice()&&!document.querySelector('input[name="pdfmode"]:checked')){
     const pc=$('pdfChoice');
     pc.classList.remove('shake');void pc.offsetWidth;pc.classList.add('shake');
