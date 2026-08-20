@@ -1,5 +1,5 @@
 <!-- SUPPORT MATRIX — keep in sync with android-sms-converter.html SUPPORT_MATRIX -->
-<svg xmlns="http://www.w3.org/2000/svg" width="520" height="332" viewBox="0 0 520 332">
+<svg xmlns="http://www.w3.org/2000/svg" width="560" height="332" viewBox="0 0 560 332">
   <style>
     text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; fill: #1e293b; }
     .header { font-weight: 700; font-size: 15px; fill: #fff; }
@@ -12,42 +12,42 @@
     .footnote { font-size: 11px; fill: #64748b; }
   </style>
   <!-- Title -->
-  <text x="260" y="28" text-anchor="middle" class="title">Kosher Phone SMS Converter</text>
+  <text x="280" y="28" text-anchor="middle" class="title">Kosher Phone SMS Converter</text>
   <!-- Header row -->
-  <rect x="10" y="42" width="500" height="32" rx="6" fill="#4f46e5"/>
+  <rect x="10" y="42" width="540" height="32" rx="6" fill="#4f46e5"/>
   <text x="110" y="63" text-anchor="middle" class="header">Phone / App</text>
-  <text x="300" y="63" text-anchor="middle" class="header">Out (from phone)</text>
-  <text x="450" y="63" text-anchor="middle" class="header">In (to phone)</text>
+  <text x="300" y="63" text-anchor="middle" class="header">Convert from</text>
+  <text x="470" y="63" text-anchor="middle" class="header">Convert to</text>
   <!-- Rows -->
-  <rect x="10" y="78" width="500" height="36" rx="0" fill="#f8fafc"/>
+  <rect x="10" y="78" width="540" height="36" rx="0" fill="#f8fafc"/>
   <text x="110" y="101" text-anchor="middle" class="phone">SMS Backup &amp; Restore App</text>
   <text x="300" y="101" text-anchor="middle" class="yes">SMS + MMS</text>
-  <text x="450" y="101" text-anchor="middle" class="yes">SMS + MMS</text>
+  <text x="470" y="101" text-anchor="middle" class="yes">SMS + MMS</text>
 
-  <rect x="10" y="114" width="500" height="36" rx="0" fill="#f1f5f9"/>
+  <rect x="10" y="114" width="540" height="36" rx="0" fill="#f1f5f9"/>
   <text x="110" y="137" text-anchor="middle" class="phone">Buggy Backup App</text>
   <text x="300" y="137" text-anchor="middle" class="yes">SMS only</text>
-  <text x="450" y="137" text-anchor="middle" class="no">Not in plan as of now</text>
+  <text x="470" y="137" text-anchor="middle" class="no">Not in plan as of now</text>
 
-  <rect x="10" y="150" width="500" height="36" rx="0" fill="#f8fafc"/>
+  <rect x="10" y="150" width="540" height="36" rx="0" fill="#f8fafc"/>
   <text x="110" y="173" text-anchor="middle" class="phone">Fig</text>
   <text x="300" y="173" text-anchor="middle" class="yes">SMS + MMS</text>
-  <text x="450" y="173" text-anchor="middle" class="yes">SMS + MMS</text>
+  <text x="470" y="173" text-anchor="middle" class="yes">SMS + MMS</text>
 
-  <rect x="10" y="186" width="500" height="36" rx="0" fill="#f1f5f9"/>
+  <rect x="10" y="186" width="540" height="36" rx="0" fill="#f1f5f9"/>
   <text x="110" y="209" text-anchor="middle" class="phone">Wonder</text>
   <text x="300" y="209" text-anchor="middle" class="yes">SMS + MMS</text>
-  <text x="450" y="209" text-anchor="middle" class="yes">SMS + MMS</text>
+  <text x="470" y="209" text-anchor="middle" class="yes">SMS + MMS</text>
 
-  <rect x="10" y="222" width="500" height="36" rx="0" fill="#f8fafc"/>
+  <rect x="10" y="222" width="540" height="36" rx="0" fill="#f8fafc"/>
   <text x="110" y="245" text-anchor="middle" class="phone">Pom</text>
   <text x="300" y="245" text-anchor="middle" class="yes">SMS only</text>
-  <text x="450" y="245" text-anchor="middle" class="no">Not yet</text>
+  <text x="470" y="245" text-anchor="middle" class="no">Not yet</text>
 
-  <rect x="10" y="258" width="500" height="36" rx="0" fill="#f1f5f9"/>
+  <rect x="10" y="258" width="540" height="36" rx="0" fill="#f1f5f9"/>
   <text x="110" y="281" text-anchor="middle" class="phone">TAK</text>
   <text x="300" y="281" text-anchor="middle" class="yes">SMS + MMS</text>
-  <text x="450" y="281" text-anchor="middle" class="yes">SMS + MMS</text>
+  <text x="470" y="281" text-anchor="middle" class="yes">SMS + MMS</text>
 
-  <text x="260" y="317" text-anchor="middle" class="footnote">This chart stays up to date as new phones are added</text>
+  <text x="280" y="317" text-anchor="middle" class="footnote">This chart stays up to date as new phones are added</text>
 </svg>
