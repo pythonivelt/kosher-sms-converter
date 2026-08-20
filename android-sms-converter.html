@@ -200,7 +200,7 @@
   @media(max-width:600px){.hero h1{font-size:1.5rem}.steps-grid{grid-template-columns:1fr}.hero{padding:32px 20px 24px}.site-nav{padding:12px 16px}.log-row{flex-direction:column}.log-row .log-btn{align-self:flex-end}}
   @keyframes shake{0%,100%{transform:translateX(0)}15%{transform:translateX(-6px)}30%{transform:translateX(5px)}45%{transform:translateX(-4px)}60%{transform:translateX(3px)}75%{transform:translateX(-2px)}}
   .shake{animation:shake .5s ease-in-out}
-  @media (max-width:480px){.card{padding:26px 18px;border-radius:20px}.stats-grid{grid-template-columns:1fr}}
+  @media (max-width:480px){.card{padding:26px 18px;border-radius:20px}.stats-grid{grid-template-columns:1fr}.compat-table{font-size:.72rem}.compat-table th,.compat-table td{padding:8px 6px}.compat-table th,.compat-table .c-yes,.compat-table .c-no{white-space:nowrap}.compat-card{padding:16px 12px}}
   @media (min-width:768px){
     .hero h1{font-size:2.3rem}
     .hero-sub{font-size:1.02rem;max-width:580px;margin-left:auto;margin-right:auto}
@@ -307,6 +307,8 @@
     </div>
   </div>
 
+  <div class="info" id="figTakNotice" style="display:none"></div>
+
   <div class="options" id="options">
     <div class="section-label">Convert to</div>
     <label class="option" data-value="smsbackup" id="optSms">
@@ -323,19 +325,19 @@
         <div class="option-desc">NDJSON ZIP — for Fig &amp; TAK phones</div>
       </div>
     </label>
-    <label class="option" data-value="pom" id="optPom">
-      <input type="radio" name="target" value="pom" />
-      <div>
-        <div class="option-label">Pom</div>
-        <div class="option-desc">Import to Pom not yet supported</div>
-      </div>
-    </label>
     <label class="option" data-value="wonder" id="optWonder">
       <input type="radio" name="target" value="wonder" />
       <div>
         <div class="option-label">Wonder</div>
         <div class="option-desc">ZIP file — for Wonder phones</div>
         <div class="option-note" id="wonderNote">Wonder may only show the last few messages per conversation after the first import. If that happens, just import the same file again and everything will come through — messages, pictures, and voice notes.</div>
+      </div>
+    </label>
+    <label class="option" data-value="pom" id="optPom">
+      <input type="radio" name="target" value="pom" />
+      <div>
+        <div class="option-label">Pom</div>
+        <div class="option-desc">Import to Pom not yet supported</div>
       </div>
     </label>
 
@@ -1181,7 +1183,7 @@ $('mergeLink').addEventListener('click',e=>{
   $('mergeLink').innerHTML=MERGE.on?'✖ Exit merge mode — back to normal convert':'🔧 Already imported with an old version? Fix &amp; merge →';
   $('mergeBanner').style.display=MERGE.on?'block':'none';
   selectedFile=null;parsedData=null;fileInput.value='';fileNameEl.style.display='none';scanBtn.style.display='none';
-  scanResults.style.display='none';optionsEl.style.display='none';infoBox.style.display='none';errorBox.style.display='none';$('downloadBtn').style.display='none';$('convertNotice').style.display='none';buildBtn.disabled=true;dropZone.classList.remove('done');
+  scanResults.style.display='none';optionsEl.style.display='none';infoBox.style.display='none';errorBox.style.display='none';$('downloadBtn').style.display='none';$('convertNotice').style.display='none';$('figTakNotice').style.display='none';buildBtn.disabled=true;dropZone.classList.remove('done');dropZone.style.display='';$('mergeLink').parentElement.style.display='';
   document.querySelector('.drop-text').textContent=MERGE.on?'Upload the OLD phone backup (step 1)':DEFAULT_DROP_TEXT;
   if(zipReader){try{zipReader.close()}catch{}zipReader=null}
 });
@@ -1211,7 +1213,7 @@ function pickFile(f){
   fileNameEl.style.display='block';
   scanBtn.style.display='';scanBtn.disabled=false;cancelBtn.style.display='none';
   scanResults.style.display='none';optionsEl.style.display='none';infoBox.style.display='none';errorBox.style.display='none';progressEl.style.display='none';$('downloadBtn').style.display='none';
-  dropZone.classList.remove('done');parsedData=null;
+  dropZone.classList.remove('done');dropZone.style.display='';parsedData=null;
   if(zipReader){try{zipReader.close()}catch{}zipReader=null}
 }
 
@@ -1391,22 +1393,22 @@ async function scan(){
     // Hide MMS content options if no MMS
     $('optAll').style.display=cMms>0?'':'none';
     $('optMmsOnly').style.display=cMms>0?'':'none';
+    $('optText').style.display=cMms>0?'':'none';
     $('contentLabel').style.display=cMms>0?'':'none';
     if(cMms===0){
       document.querySelector('input[name="content"][value="text"]').checked=true;
       document.querySelectorAll('.option[data-value="all"],.option[data-value="text"],.option[data-value="mms"]').forEach(o=>o.classList.remove('selected'));
-      $('optText').classList.add('selected');
     }
 
     scanBtn.style.display='none';
     scanResults.style.display='block';
-    dropZone.classList.add('done');
+    dropZone.classList.add('done');dropZone.style.display='none';$('mergeLink').parentElement.style.display='none';
     optionsEl.style.display='block';
     $('convertNotice').style.display='block';
     sendAnalytics(Object.assign({event:'scan',source:fmt,sms:cIn+cOut,mms:cMms,attachments:cAttach,groups:grp.groupCount,merge:MERGE.on?1:0,duration:((Date.now()-_scanStart)/1000).toFixed(1)},scanExtras));
     scanBtn.disabled=false;cancelBtn.style.display='none';
     sourceFormat=fmt;
-    if(fmt==='fig'){infoBox.innerHTML='<b>Switching to another Fig or TAK phone?</b> Fig and TAK use the exact same backup format — no conversion needed. Just take your backup file and import it directly on the new phone.';infoBox.style.display='block';}
+    if(fmt==='fig'){$('figTakNotice').innerHTML='<b>Switching to another Fig or TAK phone?</b> Fig and TAK use the exact same backup format — no conversion needed. Just take your backup file and import it directly on the new phone.';$('figTakNotice').style.display='block';}else{$('figTakNotice').style.display='none';}
     updateUI();
     if(MERGE.on&&!MERGE.old){
       // merge step 1 complete — stash and ask for the new-phone backup
@@ -1415,7 +1417,7 @@ async function scan(){
       infoBox.innerHTML='✅ Step 1 done — old backup scanned: <b>'+messages.length.toLocaleString()+'</b> messages.<br>Now upload the fresh backup from the <b>NEW</b> phone (SMS Backup &amp; Restore) and scan again.';
       infoBox.style.display='block';
       selectedFile=null;fileInput.value='';fileNameEl.style.display='none';scanBtn.style.display='none';
-      dropZone.classList.remove('done');
+      dropZone.classList.remove('done');dropZone.style.display='';
       document.querySelector('.drop-text').textContent='Upload the NEW phone backup (step 2)';
       zipReader=null; // keep the old file's reader open — its attachments are read during convert
     }
