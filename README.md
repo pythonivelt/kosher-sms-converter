@@ -6,12 +6,14 @@ Switching kosher phones? This tool converts your text messages (SMS) and picture
 
 ## What works
 
-| Phone | Read backup (out) | Import (in) |
+| Phone / App | Read backup (out) | Import (in) |
 |-------|:---:|:---:|
-| SMS Backup & Restore * | ✅ SMS + MMS | ✅ SMS + MMS |
+| SMS Backup & Restore App * | ✅ SMS + MMS | ✅ SMS + MMS |
+| Buggy Backup App | ✅ SMS only | ❌ Not in plan as of now |
 | Fig | ✅ SMS + MMS | ✅ SMS + MMS |
 | Wonder | ✅ SMS + MMS | ✅ SMS + MMS |
 | Pom | ✅ SMS only | ❌ Not yet |
+| TAK | ✅ SMS + MMS | ✅ SMS + MMS |
 
 \* SMS Backup & Restore is an app that works on any open Android phone and some kosher phones.
 
