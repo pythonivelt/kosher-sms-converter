@@ -1,0 +1,1765 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Kosher Phone SMS Converter</title>
+<meta name="description" content="Convert SMS/MMS backups between Fig, Wonder, Pom and SMS Backup &amp; Restore — 100% in your browser, nothing uploaded." />
+<meta name="color-scheme" content="light dark" />
+<meta name="theme-color" content="#f3f4fb" media="(prefers-color-scheme: light)" />
+<meta name="theme-color" content="#0a0d18" media="(prefers-color-scheme: dark)" />
+<script>(function(){var t='light';try{t=localStorage.getItem('theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light')}catch(e){}document.documentElement.setAttribute('data-theme',t)})();</script>
+<script src="https://cdn.jsdelivr.net/npm/@zip.js/zip.js@2.7.52/dist/zip.min.js"></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{--accent:#6366f1;--accent-2:#8b5cf6;--accent-grad:linear-gradient(135deg,#6366f1,#8b5cf6);--ok:#10b981;--ok-2:#059669;--danger:#ef4444;--danger-2:#dc2626}
+  [data-theme="light"]{
+    --bg:#f3f4fb;--glow-1:rgba(99,102,241,.14);--glow-2:rgba(16,185,129,.10);
+    --card:#ffffff;--card-border:rgba(15,23,42,.08);
+    --surface:#f8fafc;--surface-2:#eef1f6;--surface-border:rgba(15,23,42,.08);
+    --text:#0f172a;--text-2:#475569;--text-3:#94a3b8;
+    --accent-soft:rgba(99,102,241,.08);--accent-border:rgba(99,102,241,.45);
+    --shadow:0 1px 2px rgba(15,23,42,.04),0 12px 40px -8px rgba(15,23,42,.12);
+    --btn-glow:0 8px 24px -6px rgba(99,102,241,.5);
+    --ok-soft:#ecfdf5;--ok-border:#a7f3d0;--ok-text:#065f46;
+    --warn-soft:#fffbeb;--warn-border:#fde68a;--warn-text:#92400e;--warn-text-2:#b45309;
+    --err-soft:#fef2f2;--err-border:#fecaca;--err-text:#991b1b;
+    --field:#ffffff;--field-border:rgba(15,23,42,.16)
+  }
+  [data-theme="dark"]{
+    --bg:#0a0d18;--glow-1:rgba(99,102,241,.17);--glow-2:rgba(16,185,129,.09);
+    --card:#10152a;--card-border:rgba(148,163,184,.13);
+    --surface:rgba(148,163,184,.06);--surface-2:rgba(148,163,184,.12);--surface-border:rgba(148,163,184,.14);
+    --text:#e8ecf8;--text-2:#9aa6c0;--text-3:#5e6b8c;
+    --accent-soft:rgba(99,102,241,.15);--accent-border:rgba(129,140,248,.55);
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 16px 48px -8px rgba(0,0,0,.55);
+    --btn-glow:0 8px 24px -6px rgba(99,102,241,.35);
+    --ok-soft:rgba(16,185,129,.1);--ok-border:rgba(16,185,129,.3);--ok-text:#6ee7b7;
+    --warn-soft:rgba(245,158,11,.09);--warn-border:rgba(245,158,11,.3);--warn-text:#fcd34d;--warn-text-2:#fbbf24;
+    --err-soft:rgba(239,68,68,.1);--err-border:rgba(239,68,68,.32);--err-text:#fca5a5;
+    --field:rgba(148,163,184,.07);--field-border:rgba(148,163,184,.22)
+  }
+  html{color-scheme:light}
+  [data-theme="dark"]{color-scheme:dark}
+  body{font-family:'Segoe UI',system-ui,-apple-system,'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;min-height:100dvh;padding:0;margin:0;transition:background .3s}
+  body::before{content:'';position:fixed;inset:0;background:radial-gradient(800px 500px at 15% -10%,var(--glow-1),transparent 55%),radial-gradient(600px 400px at 85% 20%,rgba(139,92,246,.08),transparent 55%),radial-gradient(700px 500px at 90% 110%,var(--glow-2),transparent 55%),radial-gradient(400px 400px at 50% 50%,rgba(99,102,241,.03),transparent 60%);pointer-events:none;z-index:0}
+  .card{position:relative;z-index:1;background:var(--card);border:1px solid var(--card-border);border-radius:24px;padding:34px 32px;max-width:540px;width:100%;box-shadow:var(--shadow);transition:background .3s,border-color .3s;margin:0 auto}
+  .top-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:8px}
+  .logo{display:flex;align-items:center;gap:13px;min-width:0}
+  .logo-icon{width:46px;height:46px;flex:0 0 46px;background:var(--accent-grad);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.45rem;box-shadow:0 6px 18px -4px rgba(99,102,241,.5)}
+  h1{font-size:1.22rem;color:var(--text);font-weight:700;letter-spacing:-.02em;line-height:1.25}
+  .theme-toggle{flex:0 0 auto;width:38px;height:38px;border-radius:12px;border:1px solid var(--surface-border);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-2);transition:border-color .2s,color .2s,transform .15s;padding:0}
+  .theme-toggle:hover{border-color:var(--accent-border);color:var(--accent)}
+  .theme-toggle:active{transform:scale(.92)}
+  .theme-toggle svg{width:18px;height:18px;display:block}
+  [data-theme="light"] .icon-sun{display:none}
+  [data-theme="dark"] .icon-moon{display:none}
+  .subtitle{font-size:.84rem;color:var(--text-2);margin-bottom:24px;line-height:1.55}
+  .drop-zone{border:1px solid rgba(99,102,241,.15);border-radius:20px;padding:48px 24px;text-align:center;cursor:pointer;transition:all .35s cubic-bezier(.4,0,.2,1);background:linear-gradient(145deg,rgba(99,102,241,.04),rgba(99,102,241,.08));box-shadow:0 2px 8px rgba(99,102,241,.06);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);position:relative;overflow:hidden}
+  .drop-zone::before{content:'';position:absolute;inset:0;border-radius:20px;background:linear-gradient(135deg,rgba(255,255,255,.12),transparent);pointer-events:none}
+  .drop-zone:hover{border-color:rgba(99,102,241,.3);box-shadow:0 8px 32px rgba(99,102,241,.12);transform:translateY(-2px)}
+  .drop-zone.active{border-color:var(--accent);box-shadow:0 8px 32px rgba(99,102,241,.2);transform:scale(1.01)}
+  .drop-zone.done{border-color:rgba(22,163,74,.25);background:linear-gradient(145deg,rgba(22,163,74,.04),rgba(22,163,74,.08));box-shadow:0 2px 12px rgba(22,163,74,.08)}
+  .drop-zone input{display:none}
+  .drop-icon{margin-bottom:12px;opacity:.7;transition:opacity .3s}
+  .drop-zone:hover .drop-icon{opacity:1}
+  .drop-text{color:var(--text);font-size:.95rem;font-weight:600;letter-spacing:-.02em}
+  .drop-sub{color:var(--text-3);font-size:.78rem;margin-top:6px;font-weight:400}
+  .drop-hint{font-size:.75rem;color:var(--text-3);margin-top:6px}
+  .btn{display:block;width:100%;padding:14px;border:none;border-radius:14px;font-size:.95rem;font-weight:600;cursor:pointer;margin-top:16px;transition:filter .2s,transform .15s,box-shadow .2s;letter-spacing:.01em}
+  .btn:active{transform:scale(.985)}
+  .btn-primary{background:var(--accent-grad);color:#fff;box-shadow:var(--btn-glow)}
+  .btn-primary:hover{filter:brightness(1.07)}
+  .btn-primary:disabled{background:var(--surface-2);color:var(--text-3);box-shadow:none;cursor:not-allowed;filter:none;transform:none}
+  .btn-success{background:linear-gradient(135deg,var(--ok),var(--ok-2));color:#fff;box-shadow:0 8px 24px -6px rgba(16,185,129,.45)}
+  .btn-success:hover{filter:brightness(1.07)}
+  .btn-success:disabled{background:var(--surface-2);color:var(--text-3);box-shadow:none;cursor:not-allowed;filter:none;transform:none}
+  .btn-cancel{background:linear-gradient(135deg,var(--danger),var(--danger-2));color:#fff;box-shadow:0 8px 24px -6px rgba(239,68,68,.4)}
+  .btn-cancel:hover{filter:brightness(1.07)}
+  .progress{margin-top:16px;display:none}
+  .progress-bar-wrap{background:var(--surface-2);border-radius:99px;height:7px;overflow:hidden;margin-top:8px}
+  .progress-bar{height:100%;background:var(--accent-grad);width:0;transition:width .15s;border-radius:99px}
+  .progress-label{font-size:.78rem;color:var(--text-2)}
+  .scan-results{margin-top:20px;padding:18px;background:var(--surface);border:1px solid var(--surface-border);border-radius:16px;font-size:.84rem;color:var(--text-2);display:none}
+  .scan-results h3{font-size:.92rem;color:var(--text);margin-bottom:12px;font-weight:600}
+  .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .scan-results div.stat{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--surface-border);border-radius:10px;padding:9px 12px;margin:0}
+  .scan-results strong{color:var(--text)}
+  .detected-badge{display:inline-block;padding:3px 10px;border-radius:7px;font-size:.75rem;font-weight:600;background:var(--accent-soft);color:var(--accent);border:1px solid var(--accent-border);margin-left:6px}
+  .section-label{font-size:.76rem;font-weight:600;color:var(--text-2);margin:18px 0 8px;text-transform:uppercase;letter-spacing:.07em}
+  .options{margin-top:14px;display:none}
+  .option{display:flex;align-items:flex-start;gap:12px;padding:14px 15px;border:1px solid var(--surface-border);border-radius:14px;margin-bottom:9px;cursor:pointer;transition:border-color .18s,background .18s,box-shadow .18s;background:var(--card)}
+  .option:hover{border-color:var(--accent-border)}
+  .option.selected{border-color:var(--accent-border);background:var(--accent-soft);box-shadow:0 0 0 3px var(--accent-soft)}
+  .option.disabled{opacity:.4;pointer-events:none;cursor:not-allowed}
+  .option.disabled .option-desc{color:var(--text-3)}
+  .option input[type="radio"]{margin-top:3px;accent-color:var(--accent);width:16px;height:16px}
+  .option-label{font-weight:600;font-size:.88rem;color:var(--text)}
+  .option-desc{font-size:.76rem;color:var(--text-2);margin-top:2px;line-height:1.4}
+  .opt-note{font-size:.7rem;color:var(--text-3);font-weight:400}
+  .pdf-panel{margin-top:14px;padding:16px;background:var(--warn-soft);border:1px solid var(--warn-border);border-radius:14px;transition:all .3s}
+  .pdf-panel-title{font-weight:600;font-size:.88rem;color:var(--warn-text);margin-bottom:4px}
+  .pdf-panel-info{font-size:.78rem;color:var(--warn-text-2);margin-bottom:10px;line-height:1.5}
+  .pdf-panel-desc{font-size:.78rem;color:var(--warn-text);margin-bottom:12px;line-height:1.5}
+  .info{background:var(--ok-soft);border:1px solid var(--ok-border);border-radius:12px;padding:12px 14px;font-size:.82rem;color:var(--ok-text);margin-top:14px;display:none;line-height:1.5}
+  .error{background:var(--err-soft);border:1px solid var(--err-border);border-radius:12px;padding:12px 14px;font-size:.82rem;color:var(--err-text);margin-top:14px;display:none;line-height:1.5}
+  .report-input{width:100%;padding:9px 12px;border-radius:10px;border:1px solid var(--field-border);background:var(--field);color:var(--text);margin-bottom:8px;font-size:1rem}
+  .report-btn{padding:9px 22px;border-radius:10px;border:none;background:var(--accent-grad);color:#fff;font-weight:600;cursor:pointer}
+  .file-name{font-size:.78rem;color:var(--accent);margin-top:10px;word-break:break-all;display:none;font-weight:500}
+  .footer{margin-top:26px;font-size:.72rem;color:var(--text-3);text-align:center;display:flex;flex-direction:column;gap:8px;align-items:center}
+  .footer-line{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap}
+  .footer-dot{width:3px;height:3px;border-radius:50%;background:var(--text-3);opacity:.7}
+  .gh-link{display:inline-flex;align-items:center;gap:5px;color:var(--text-3);text-decoration:none;transition:color .2s}
+  .gh-link:hover{color:var(--accent)}
+  .gh-link svg{width:13px;height:13px;display:block}
+  .log-panel{margin-top:14px}
+  .log-panel summary{font-size:.7rem;color:var(--text-3);cursor:pointer;user-select:none;text-align:center;list-style:none}
+  .log-panel summary::-webkit-details-marker{display:none}
+  .log-panel summary::before{content:'▸ ';font-size:.65rem}
+  .log-panel[open] summary::before{content:'▾ '}
+  .log-panel .log-box{max-height:120px;overflow-y:auto;background:#0d1322;color:#8b97b5;border:1px solid rgba(148,163,184,.15);font-family:'Cascadia Code',Consolas,monospace;font-size:.65rem;line-height:1.5;padding:8px 10px;border-radius:10px;margin-top:6px;white-space:pre-wrap;word-break:break-all}
+  .log-panel .log-box .log-warn{color:#facc15}
+  .log-panel .log-box .log-err{color:#f87171}
+  .log-panel .log-box .log-ok{color:#4ade80}
+  .log-row{margin-top:6px;display:flex;gap:6px;align-items:center;justify-content:flex-end}
+  .log-input{flex:1;padding:6px 10px;border-radius:8px;border:1px solid var(--field-border);background:var(--field);color:var(--text);font-size:.68rem}
+  .log-btn{padding:6px 12px;border-radius:8px;border:1px solid var(--field-border);background:var(--surface);color:var(--text-2);font-size:.68rem;cursor:pointer;white-space:nowrap;transition:border-color .2s,color .2s}
+  .log-btn:hover{border-color:var(--accent-border);color:var(--accent)}
+  .site-nav{position:relative;z-index:2;max-width:900px;margin:0 auto;padding:16px 24px;display:flex;align-items:center;justify-content:space-between}
+  .nav-logo{font-size:1.05rem;font-weight:700;color:transparent;background:var(--accent-grad);-webkit-background-clip:text;background-clip:text;text-decoration:none;display:flex;align-items:center;gap:10px;letter-spacing:-.03em}
+  .nav-logo-icon{width:32px;height:32px;border-radius:9px;background:var(--accent-grad);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px -2px rgba(99,102,241,.4);flex-shrink:0}
+  .nav-logo-icon svg{width:18px;height:18px;display:block}
+  .nav-right{display:flex;align-items:center;gap:12px}
+  .hero{position:relative;z-index:1;text-align:center;padding:48px 24px 36px;max-width:680px;margin:0 auto}
+  .hero h1{font-size:2.1rem;font-weight:800;background:linear-gradient(135deg,var(--text),var(--accent));-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:14px;line-height:1.25;letter-spacing:-.04em}
+  .hero-sub{font-size:1rem;color:var(--text-2);line-height:1.65;margin-bottom:24px}
+  .hero-badges{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:28px}
+  .hero-badge{padding:6px 14px;border-radius:99px;font-size:.76rem;font-weight:500;background:linear-gradient(135deg,var(--accent-soft),rgba(139,92,246,.06));border:1px solid rgba(99,102,241,.15);color:var(--text-2);backdrop-filter:blur(4px)}
+  .hero-cta{display:inline-block;padding:13px 30px;border-radius:14px;background:var(--accent-grad);color:#fff;font-weight:600;font-size:.92rem;text-decoration:none;box-shadow:var(--btn-glow);transition:filter .2s,transform .15s}
+  .hero-cta:hover{filter:brightness(1.07);transform:translateY(-1px)}
+  .converter-section{position:relative;z-index:1;max-width:540px;margin:0 auto;padding:0 20px 40px}
+  .site-section{position:relative;z-index:1;max-width:900px;margin:0 auto;padding:40px 24px}
+  .site-section-title{font-size:1.25rem;font-weight:700;color:var(--text);text-align:center;margin-bottom:24px}
+  .steps-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .step{text-align:center;padding:22px 14px;background:var(--card);border:1px solid var(--card-border);border-radius:18px;transition:transform .2s,box-shadow .2s}
+  .step:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.06)}
+  .step-num{font-size:1.2rem;font-weight:800;background:var(--accent-grad);-webkit-background-clip:text;background-clip:text;color:transparent;opacity:.35;margin-bottom:4px;letter-spacing:-.04em}
+  .step-title{font-weight:600;font-size:.88rem;color:var(--text);margin-bottom:5px}
+  .step-desc{font-size:.76rem;color:var(--text-2);line-height:1.5}
+  .compat-section{position:relative;z-index:1;max-width:600px;margin:0 auto;padding:40px 24px}
+  .compat-card{background:var(--card);border:1px solid var(--card-border);border-radius:20px;padding:24px;box-shadow:0 2px 12px rgba(0,0,0,.04)}
+  .compat-table{width:100%;border-collapse:collapse;font-size:.84rem}
+  .compat-table th{text-align:left;font-weight:600;color:var(--text);padding:10px 12px;border-bottom:2px solid var(--surface-border)}
+  .compat-table td{padding:12px;border-bottom:1px solid var(--surface-border);color:var(--text-2)}
+  .compat-table tr:last-child td{border-bottom:none}
+  .compat-table tr:hover td{background:var(--accent-soft);transition:background .2s}
+  td.c-yes{color:var(--ok);font-weight:600}
+  td.c-no{color:var(--danger);font-weight:500}
+  td.c-warn{color:#d97706;font-weight:500}
+  td.c-unk{color:var(--text-3);font-weight:500}
+  .features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;max-width:680px;margin:0 auto}
+  .feature-card{padding:20px;background:var(--card);border:1px solid var(--card-border);border-radius:16px;transition:transform .2s,box-shadow .2s}
+  .feature-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.06)}
+  .feature-icon{font-size:1.4rem;margin-bottom:8px}
+  .feature-title{font-weight:600;font-size:.86rem;color:var(--text);margin-bottom:5px}
+  .feature-desc{font-size:.76rem;color:var(--text-2);line-height:1.5}
+  .site-footer{position:relative;z-index:1;max-width:900px;margin:0 auto;padding:32px 24px;text-align:center;font-size:.74rem;color:var(--text-3);border-top:1px solid var(--surface-border)}
+  .site-footer a{color:var(--accent);text-decoration:none;transition:color .2s}
+  .site-footer a:hover{color:var(--accent)}
+  @media(max-width:600px){.hero h1{font-size:1.5rem}.steps-grid{grid-template-columns:1fr}.hero{padding:32px 20px 24px}.site-nav{padding:12px 16px}}
+  @keyframes shake{0%,100%{transform:translateX(0)}15%{transform:translateX(-6px)}30%{transform:translateX(5px)}45%{transform:translateX(-4px)}60%{transform:translateX(3px)}75%{transform:translateX(-2px)}}
+  .shake{animation:shake .5s ease-in-out}
+  @media (max-width:480px){.card{padding:26px 18px;border-radius:20px}.stats-grid{grid-template-columns:1fr}}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<nav class="site-nav">
+  <a href="#" class="nav-logo"><span class="nav-logo-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>Kosher Phone SMS Converter</a>
+  <div class="nav-right">
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch between dark and light mode">
+      <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+    </button>
+  </div>
+</nav>
+
+<section class="hero">
+  <h1>Keep your messages when you switch phones</h1>
+  <p class="hero-sub">Transfer all your texts and pictures between kosher phones. Works with Fig, Wonder, Pom, and SMS Backup &amp; Restore. Runs in your browser — nothing gets uploaded.</p>
+  <div class="hero-badges">
+    <span class="hero-badge">SMS &amp; MMS</span>
+    <span class="hero-badge">Pictures &amp; voice notes</span>
+    <span class="hero-badge">Works with large backups</span>
+    <span class="hero-badge">100% private</span>
+  </div>
+
+</section>
+
+<section class="compat-section">
+  <h2 class="site-section-title">What's supported</h2>
+  <div class="compat-card">
+  <table class="compat-table">
+    <thead><tr><th>Phone</th><th>Convert from</th><th>Convert to</th></tr></thead>
+    <tbody>
+      <tr><td>SMS Backup &amp; Restore *</td><td class="c-yes">SMS + MMS</td><td class="c-yes">SMS + MMS</td></tr>
+      <tr><td>Fig</td><td class="c-yes">SMS + MMS</td><td class="c-yes">SMS + MMS</td></tr>
+      <tr><td>Wonder</td><td class="c-yes">SMS + MMS</td><td class="c-no">Not yet</td></tr>
+      <tr id="pomRow"><td>Pom</td><td class="c-yes" id="pomOut">SMS only</td><td class="c-no">Not yet</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p style="font-size:.72rem;color:var(--text-3);margin-top:14px;text-align:center">* <a href="https://play.google.com/store/apps/details?id=com.riteshsahu.SMSBackupRestore" target="_blank" rel="noopener" style="color:var(--accent)">SMS Backup &amp; Restore</a> works on any open Android phone and some kosher phones</p>
+</section>
+
+<section class="site-section">
+  <h2 class="site-section-title">How it works</h2>
+  <div class="steps-grid">
+    <div class="step"><div class="step-num">1</div><div class="step-title">Pick your backup</div><div class="step-desc">Choose the ZIP or XML file from your old phone</div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-title">Choose your phone</div><div class="step-desc">Select which phone you're moving to</div></div>
+    <div class="step"><div class="step-num">3</div><div class="step-title">Download &amp; import</div><div class="step-desc">Get the converted file and import on your new phone</div></div>
+  </div>
+</section>
+
+<div class="converter-section" id="converter">
+<div class="card">
+
+  <div class="drop-zone" id="dropZone">
+    <input type="file" id="fileInput" accept=".zip,.xml" />
+    <div class="drop-icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><polyline points="12 12 12 21"/><polyline points="16 16 12 12 8 16"/></svg></div>
+    <div class="drop-text">Upload your backup</div>
+    <div class="drop-sub">ZIP or XML · drag & drop or tap to browse</div>
+    <div class="file-name" id="fileName"></div>
+  </div>
+
+  <button class="btn btn-primary" id="scanBtn" disabled>Scan backup</button>
+
+  <div class="scan-results" id="scanResults">
+    <h3>What's inside <span class="detected-badge" id="detectedBadge"></span></h3>
+    <div class="stats-grid">
+      <div class="stat">📩 Received: <strong id="statIn">0</strong></div>
+      <div class="stat">📤 Sent: <strong id="statOut">0</strong></div>
+      <div class="stat" id="statMmsRow">📎 MMS: <strong id="statMms">0</strong></div>
+      <div class="stat" id="statAttachRow">🖼️ Attachments: <strong id="statAttach">0</strong></div>
+      <div class="stat" id="statPdfRow" style="display:none">📄 PDFs: <strong id="statPdf">0</strong></div>
+    </div>
+    <div id="pomMmsWarn" style="display:none;margin-top:10px;padding:10px 14px;border-radius:8px;background:#fef3c7;color:#92400e;font-size:.85rem;line-height:1.4">⚠️ Pom currently supports SMS only — MMS pictures and voice notes will not be included.</div>
+  </div>
+
+  <div class="options" id="options">
+    <div class="section-label">Convert to</div>
+    <label class="option" data-value="smsbackup" id="optSms">
+      <input type="radio" name="target" value="smsbackup" />
+      <div>
+        <div class="option-label">SMS Backup &amp; Restore</div>
+        <div class="option-desc">XML file — import on any Android phone</div>
+      </div>
+    </label>
+    <label class="option" data-value="fig" id="optFig">
+      <input type="radio" name="target" value="fig" />
+      <div>
+        <div class="option-label">Fig</div>
+        <div class="option-desc">NDJSON ZIP — for Fig phones</div>
+      </div>
+    </label>
+    <label class="option" data-value="pom" id="optPom">
+      <input type="radio" name="target" value="pom" />
+      <div>
+        <div class="option-label">Pom</div>
+        <div class="option-desc">Import to Pom not yet supported</div>
+      </div>
+    </label>
+    <label class="option" data-value="wonder" id="optWonder">
+      <input type="radio" name="target" value="wonder" />
+      <div>
+        <div class="option-label">Wonder</div>
+        <div class="option-desc">Import to Wonder not yet supported</div>
+      </div>
+    </label>
+
+    <div class="section-label" id="contentLabel">Content</div>
+    <label class="option selected" data-value="all" id="optAll">
+      <input type="radio" name="content" value="all" checked />
+      <div>
+        <div class="option-label">Everything</div>
+        <div class="option-desc">All messages with attachments</div>
+      </div>
+    </label>
+    <label class="option" data-value="text" id="optText">
+      <input type="radio" name="content" value="text" />
+      <div>
+        <div class="option-label">Messages only</div>
+        <div class="option-desc">Text only — no images/audio (smaller file)</div>
+      </div>
+    </label>
+    <label class="option" data-value="mms" id="optMmsOnly">
+      <input type="radio" name="content" value="mms" />
+      <div>
+        <div class="option-label">MMS only</div>
+        <div class="option-desc">Only MMS with attachments</div>
+      </div>
+    </label>
+
+    <div class="pdf-panel" id="pdfChoice" style="display:none">
+      <div class="pdf-panel-title">Your backup contains PDF files</div>
+      <div class="pdf-panel-info" id="pdfSizeInfo"></div>
+      <div class="pdf-panel-desc">PDFs make the output much larger and most SMS apps can't display them. What do you want to do?</div>
+      <label class="option" data-value="pdf-include" style="margin-bottom:6px">
+        <input type="radio" name="pdfmode" value="include" />
+        <div><div class="option-label">Include PDFs</div><div class="option-desc">Larger file</div></div>
+      </label>
+      <label class="option" data-value="pdf-skip">
+        <input type="radio" name="pdfmode" value="skip" />
+        <div><div class="option-label">Skip PDFs</div><div class="option-desc">Saves space</div></div>
+      </label>
+    </div>
+
+    <button class="btn btn-success" id="buildBtn" disabled>Convert</button>
+  </div>
+
+  <div class="progress" id="progress">
+    <div class="progress-label" id="progressLabel">Reading…</div>
+    <div class="progress-bar-wrap"><div class="progress-bar" id="progressBar"></div></div>
+  </div>
+  <button class="btn btn-cancel" id="cancelBtn" style="display:none">Cancel</button>
+
+  <div class="info" id="infoBox"></div>
+  <a class="btn btn-success" id="downloadBtn" style="display:none;text-decoration:none;text-align:center;margin-top:8px" download="">Download</a>
+  <div class="error" id="errorBox"></div>
+
+  <details class="log-panel" id="logPanel" style="display:none">
+    <summary>Show log</summary>
+    <div class="log-box" id="logBox"></div>
+    <div class="log-row">
+      <input id="logUserInput" type="text" class="log-input" placeholder="Your email or iVelt username (optional)">
+      <button id="sendLogBtn" class="log-btn">Send log to developer</button>
+    </div>
+  </details>
+
+</div>
+</div>
+
+<section class="site-section">
+  <h2 class="site-section-title">Why this tool</h2>
+  <div class="features-grid">
+    <div class="feature-card"><div class="feature-icon">🔒</div><div class="feature-title">Completely private</div><div class="feature-desc">Everything runs in your browser. Your messages never leave your device.</div></div>
+    <div class="feature-card"><div class="feature-icon">📎</div><div class="feature-title">Full MMS support</div><div class="feature-desc">Pictures, voice notes, and attachments all transfer — not just texts.</div></div>
+    <div class="feature-card"><div class="feature-icon">📱</div><div class="feature-title">Works on any device</div><div class="feature-desc">No downloads, no installs — runs entirely in your browser on any device.</div></div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <p><span id="verSpan">v0.0.69</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
+  <p style="margin-top:6px">Free and open source · Nothing gets uploaded</p>
+</footer>
+
+<script>
+document.getElementById('themeToggle').addEventListener('click',function(){var h=document.documentElement,t=h.getAttribute('data-theme')==='dark'?'light':'dark';h.setAttribute('data-theme',t);try{localStorage.setItem('theme',t)}catch(e){}});
+</script>
+
+<script>
+(function(){
+'use strict';
+
+let selectedFile=null, zipReader=null, parsedData=null, cancelled=false, hasPdfs=false, sourceFormat='', processing=false;
+var _scanStart=0;
+const GAS_URL='https://script.google.com/macros/s/AKfycbzSrDeatu4a0rgT9pkypGDyiWdc-i89XSYoVhnSae7gRUvRaXlHee98ycsDE084TUVN4A/exec';
+function sendAnalytics(data){try{var p=Object.assign({type:'analytics',version:(document.getElementById('verSpan')||{}).textContent||'?',beta:BETA_MODE,ts:new Date().toISOString()},data);fetch(GAS_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(p)})}catch(e){}}
+
+// SUPPORT MATRIX — keep in sync with assets/chart.svg
+// out = can read backups from this format, in = can write files that import on this phone
+const SUPPORT_MATRIX={
+  smsbackup:{out:true, in:true},
+  fig:      {out:true, in:true},
+  wonder:   {out:true, in:false},
+  pom:      {out:'sms', in:false}
+};
+const TEST_MODE=new URLSearchParams(location.search).has('test');
+const BETA_MODE=new URLSearchParams(location.search).has('beta');
+if(BETA_MODE){SUPPORT_MATRIX.pom={out:true,in:false};document.querySelector('.nav-logo').insertAdjacentHTML('beforeend',' <span style="background:#f59e0b;color:#fff;font-size:.6rem;padding:2px 6px;border-radius:4px;vertical-align:middle;font-weight:700;letter-spacing:.04em">BETA</span>');var pe=document.getElementById('pomOut');if(pe){pe.textContent='SMS + MMS';pe.className='c-yes'}}
+
+const $=id=>document.getElementById(id);
+const dropZone=$('dropZone'),fileInput=$('fileInput'),scanBtn=$('scanBtn'),buildBtn=$('buildBtn'),
+  cancelBtn=$('cancelBtn'),progressEl=$('progress'),progressBar=$('progressBar'),progressLabel=$('progressLabel'),
+  scanResults=$('scanResults'),optionsEl=$('options'),infoBox=$('infoBox'),errorBox=$('errorBox'),fileNameEl=$('fileName');
+
+const logPanel=$('logPanel'),logBox=$('logBox');
+function log(msg,type){logPanel.style.display='block';const s=document.createElement('span');if(type)s.className='log-'+type;s.textContent=(new Date().toLocaleTimeString('en-US',{hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'}))+' '+msg+'\n';logBox.appendChild(s);logBox.scrollTop=logBox.scrollHeight}
+function clearLog(){logBox.innerHTML='';logPanel.style.display='none';logPanel.removeAttribute('open')}
+
+function hasAttach(p){return!!(p.data||p._entry||p._fallbackAttach)}
+// Shared index: built once during export, caches all entry positions
+let _entryIndex=null;let _indexBuilding=false;
+async function _buildEntryIndex(file,needed){
+  if(_entryIndex)return _entryIndex;
+  if(_indexBuilding)return null;// prevent re-entry
+  _indexBuilding=true;
+  log('Building attachment index in 4MB chunks...');
+  _entryIndex={};const fileSize=file.size;
+  const startTime=Date.now();let found=0;
+  // Scan file in 4MB chunks looking for PK\x03\x04 headers with data/PART_ names
+  let scanOff=0;
+  while(scanOff<fileSize-60&&found<needed.size){
+    const chunkEnd=Math.min(scanOff+4*1024*1024,fileSize);
+    const buf=new Uint8Array(await file.slice(scanOff,chunkEnd).arrayBuffer());
+    for(let i=0;i<buf.length-60;i++){
+      if(buf[i]===0x50&&buf[i+1]===0x4B&&buf[i+2]===0x03&&buf[i+3]===0x04){
+        const fl=buf[i+26]|(buf[i+27]<<8);const ex=buf[i+28]|(buf[i+29]<<8);
+        if(fl>10&&fl<100&&i+30+fl<=buf.length){
+          const fn=new TextDecoder().decode(buf.slice(i+30,i+30+fl));
+          if(fn.startsWith('data/PART_')){
+            const pn=fn.split('/').pop();
+            if(needed.has(pn)){
+              const m=buf[i+8]|(buf[i+9]<<8);
+              _entryIndex[pn]={dataStart:scanOff+i+30+fl+ex,method:m,compSize:0};
+              found++;
+            }
+          }
+          i+=29;
+        }
+      }
+    }
+    if(scanOff%(16*1024*1024)<4*1024*1024){
+      showProgress('Indexing attachments... '+found+'/'+needed.size+' ('+Math.round(scanOff/fileSize*100)+'%)',Math.round(scanOff/fileSize*90));
+      await tick();
+    }
+    scanOff=chunkEnd-59;
+  }
+  log('Indexed '+found+'/'+needed.size+' entries in '+((Date.now()-startTime)/1000).toFixed(1)+'s','ok');
+  _indexBuilding=false;
+  return _entryIndex;
+}
+async function resolveData(p){if(p.data)return p.data;if(p._entry){try{const b=await p._entry.getData(new zip.BlobWriter());p.data=await b.arrayBuffer();delete p._entry;return p.data}catch(e){log('Failed to read attachment: '+e.message,'warn');return null}}if(p._fallbackAttach){try{const ai=p._fallbackAttach;
+// If needs full scan, look up from the shared entry index
+if(ai._needsFullScan){
+  const needed=new Set();for(const k in attachMap)if(attachMap[k]._needsFullScan)needed.add(k);
+  const idx=await _buildEntryIndex(ai.file,needed);
+  if(!idx){log('Index build failed','warn');return null}
+  // Update ALL deferred entries from the index at once
+  for(const k in attachMap){
+    if(attachMap[k]._needsFullScan&&idx[k]){
+      attachMap[k].zipOffset=idx[k].dataStart;attachMap[k].method=idx[k].method;attachMap[k].compSize=idx[k].compSize;
+      attachMap[k]._needsScan=!idx[k].compSize;delete attachMap[k]._needsFullScan;
+    }
+  }
+  if(ai._needsFullScan){log('Attachment not in index: '+(p.cl||'?'),'warn');return null}
+}
+if(!ai.compSize&&ai._needsScan){
+// Scan forward from zipOffset to find next PK header for compSize
+const scanSize=Math.min(10*1024*1024,ai.file.size-ai.zipOffset);const sb=new Uint8Array(await ai.file.slice(ai.zipOffset,ai.zipOffset+scanSize).arrayBuffer());
+for(let si=1;si<sb.length-4;si++){if(sb[si]===0x50&&sb[si+1]===0x4B&&((sb[si+2]===0x03&&sb[si+3]===0x04)||(sb[si+2]===0x01&&sb[si+3]===0x02))){ai.compSize=si;break}}
+if(!ai.compSize)ai.compSize=scanSize;delete ai._needsScan}
+if(!ai.compSize){log('Attachment has unknown size, skipping: '+(p.cl||'?'),'warn');return null}const compData=ai.file.slice(ai.zipOffset,ai.zipOffset+ai.compSize);let raw;if(ai.method===8){const ds=new DecompressionStream('deflate-raw');const reader=ds.readable.getReader();const writer=ds.writable.getWriter();const chunks=[];const readAll=(async()=>{try{while(true){const{done,value}=await reader.read();if(done)break;chunks.push(value)}}catch(e){}})();const sr=compData.stream().getReader();while(true){const{done,value}=await sr.read();if(done)break;try{await writer.write(value)}catch(we){break}}try{await writer.close()}catch(ce){}await readAll;let total=0;for(const c of chunks)total+=c.byteLength;raw=new Uint8Array(total);let off=0;for(const c of chunks){raw.set(c,off);off+=c.byteLength}p.data=raw.buffer}else{p.data=await compData.arrayBuffer()}delete p._fallbackAttach;return p.data}catch(e){log('Failed to read fallback attachment: '+(p.cl||'?')+' — '+e.message,'warn');return null}}return null}
+
+function formatSize(b){if(b<1048576)return(b/1024).toFixed(0)+' KB';if(b<1073741824)return(b/1048576).toFixed(1)+' MB';return(b/1073741824).toFixed(2)+' GB'}
+function showProgress(l,p){progressEl.style.display='block';progressLabel.textContent=l;progressBar.style.width=p+'%'}
+function tick(){return new Promise(r=>setTimeout(r,0))}
+
+// Extract structure from unsupported formats (no private data)
+function redactValue(s){
+  // Keep date/number patterns, redact text content
+  if(!s)return'';
+  if(/^\d+$/.test(s))return s.length<=4?s:'<number:'+s.length+'digits>';
+  if(/^\d{4}-\d{2}-\d{2}/.test(s))return'<date>';
+  if(/^\+?\d[\d\s()-]{5,}/.test(s))return'<phone>';
+  if(/@/.test(s))return'<email>';
+  if(/^(https?|ftp):\/\//.test(s))return'<url>';
+  if(s.length>100)return'<text:'+s.length+'chars>';
+  return'<text:'+s.length+'>';
+}
+function extractXmlStructure(text,full){
+  const tags={};const nesting=[];const nestingPaths=new Set();
+  const r=/<(\/?)([\w:_-]+)([^>]*?)(\/?)\s*>/g;let m;
+  while((m=r.exec(text))!==null){
+    const isClose=m[1]==='/';const tag=m[2];const isSelfClose=m[4]==='/';
+    if(!tags[tag])tags[tag]={count:0,attrs:{},selfClose:false,parents:new Set(),children:new Set()};
+    if(!isClose)tags[tag].count++;
+    if(isSelfClose)tags[tag].selfClose=true;
+    // Track nesting
+    if(!isClose&&!isSelfClose){if(nesting.length)tags[tag].parents.add(nesting[nesting.length-1]);nesting.push(tag)}
+    if(isClose&&nesting.length){const popped=nesting.pop();if(nesting.length)tags[nesting[nesting.length-1]].children.add(popped)}
+    if(isSelfClose&&nesting.length){tags[nesting[nesting.length-1]].children.add(tag)}
+    // Extract attribute names and redacted sample values
+    if(!isClose){
+      const ar=/(\w[\w_:-]*)=(?:"([^"]*)"|'([^']*)')/g;let am;
+      while((am=ar.exec(m[3]))!==null){
+        const aname=am[1];const aval=am[2]!=null?am[2]:am[3];
+        if(!tags[tag].attrs[aname])tags[tag].attrs[aname]={sampleValue:redactValue(aval),valueCount:0};
+        tags[tag].attrs[aname].valueCount++;
+      }
+    }
+  }
+  const out={};
+  for(const[t,info]of Object.entries(tags)){
+    out[t]={count:info.count,selfClosing:info.selfClose,attributes:{}};
+    for(const[a,ai]of Object.entries(info.attrs))out[t].attributes[a]={sample:ai.sampleValue,seen:ai.valueCount};
+    if(info.parents.size)out[t].parents=[...info.parents];
+    if(info.children.size)out[t].children=[...info.children];
+  }
+  return out;
+}
+function extractJsonStructure(text){
+  try{const obj=JSON.parse(text);return{format:'json',shape:describeJsonShape(obj,3)}}catch(e){
+    // Try NDJSON — first 3 lines
+    const lines=text.split('\n').filter(l=>l.trim());
+    const shapes=[];
+    for(let i=0;i<Math.min(3,lines.length);i++){
+      try{shapes.push(describeJsonShape(JSON.parse(lines[i]),3))}catch(e2){}
+    }
+    if(shapes.length)return{format:'ndjson',totalLines:lines.length,sampleLines:shapes};
+    return{error:'Could not parse JSON/NDJSON'}
+  }
+}
+function describeJsonShape(v,depth){
+  if(depth<=0)return'…';
+  if(v===null)return'null';if(typeof v==='string')return redactValue(v);
+  if(typeof v==='number')return'<number:'+String(v).length+'>';if(typeof v==='boolean')return'boolean';
+  if(Array.isArray(v)){
+    if(v.length===0)return'[]';
+    const unique=new Set();const samples=[];
+    for(let i=0;i<Math.min(3,v.length);i++){const s=describeJsonShape(v[i],depth-1);const k=JSON.stringify(s);if(!unique.has(k)){unique.add(k);samples.push(s)}}
+    return{array:v.length,itemShapes:samples};
+  }
+  const out={};for(const[k,val]of Object.entries(v))out[k]=describeJsonShape(val,depth-1);return out;
+}
+
+async function generateStructureReport(entries,fileName){
+  const report={fileName,totalEntries:entries.length,fileTypes:{},directoryTree:{},files:[]};
+  log('Analyzing '+entries.length+' ZIP entries…');
+  // Count file types
+  for(const e of entries){
+    const ext=e.filename.split('.').pop().toLowerCase();
+    if(!report.fileTypes[ext])report.fileTypes[ext]={count:0,totalSize:0};
+    report.fileTypes[ext].count++;report.fileTypes[ext].totalSize+=e.uncompressedSize;
+    // Directory tree (just folder names)
+    const dir=e.filename.includes('/')?e.filename.substring(0,e.filename.lastIndexOf('/')):'(root)';
+    if(!report.directoryTree[dir])report.directoryTree[dir]=0;
+    report.directoryTree[dir]++;
+  }
+  // Analyze ALL text-based files (up to 10)
+  let analyzed=0;
+  for(let i=0;i<entries.length&&analyzed<10;i++){
+    const e=entries[i];
+    const ext=e.filename.split('.').pop().toLowerCase();
+    const info={name:e.filename,size:e.uncompressedSize,compressedSize:e.compressedSize};
+    if(['xml','json','ndjson','txt','csv','dat','html','cfg','ini','properties','yaml','yml','db','sql'].includes(ext)&&e.uncompressedSize<10000000&&e.uncompressedSize>0){
+      try{
+        const blob=await e.getData(new zip.BlobWriter());
+        const text=await blob.text();
+        // Read more for full structure — up to 50KB
+        const sample=text.substring(0,50000);
+        info.encoding=text.charCodeAt(0)===0xFEFF?'UTF-16 BOM':'UTF-8';
+        info.totalLength=text.length;
+        info.lineCount=text.split('\n').length;
+        if(ext==='xml'||ext==='html')info.structure=extractXmlStructure(sample);
+        else if(ext==='json'||ext==='ndjson')info.structure=extractJsonStructure(sample);
+        else{info.structure={firstLines:text.split('\n').slice(0,5).map(l=>redactValue(l))}}
+        analyzed++;
+      }catch(e){}
+    }else{
+      // For binary files, get first 16 bytes as hex
+      if(e.uncompressedSize>0&&e.uncompressedSize<50000000){
+        try{
+          const blob=await e.getData(new zip.BlobWriter());
+          const arr=new Uint8Array(await blob.slice(0,16).arrayBuffer());
+          info.magicBytes=[...arr].map(b=>b.toString(16).padStart(2,'0')).join(' ');
+        }catch(e){}
+      }
+    }
+    report.files.push(info);
+  }
+  // Add remaining files (just names and sizes)
+  if(entries.length>10){
+    report.remainingFiles=entries.slice(10).map(e=>({name:e.filename,size:e.uncompressedSize}));
+  }
+  downloadReport(report,fileName);
+}
+
+async function generateRawStructureReport(file){
+  const report={fileName:file.name,fileSize:file.size,fileSizeFormatted:formatSize(file.size),type:'raw'};
+  // Read first 50KB for thorough analysis
+  const readSize=Math.min(file.size,50000);
+  const slice=file.slice(0,readSize);
+  const arr=new Uint8Array(await slice.arrayBuffer());
+  report.magicBytes=[...arr.slice(0,16)].map(b=>b.toString(16).padStart(2,'0')).join(' ');
+  const text=new TextDecoder('utf-8',{fatal:false}).decode(arr);
+  const trimmed=text.trimStart();
+  report.startsWithXml=trimmed.startsWith('<?xml')||trimmed.startsWith('<');
+  report.startsWithJson=trimmed.startsWith('{')||trimmed.startsWith('[');
+  if(report.startsWithXml){
+    report.structure=extractXmlStructure(text);
+    // Also get the XML declaration and first few tag names
+    const declMatch=text.match(/<\?xml[^?]*\?>/);
+    if(declMatch)report.xmlDeclaration=declMatch[0];
+    const rootMatch=trimmed.match(/<(\w[\w:-]*)/);
+    if(rootMatch)report.rootElement=rootMatch[1];
+  }else if(report.startsWithJson){
+    report.structure=extractJsonStructure(text);
+  }else{
+    report.format='unknown';
+    report.firstBytesAscii=text.substring(0,100).replace(/[^\x20-\x7E]/g,'.');
+  }
+  // Read a chunk from the middle too for more complete picture
+  if(file.size>100000){
+    const midSlice=file.slice(Math.floor(file.size/2),Math.floor(file.size/2)+10000);
+    const midText=new TextDecoder('utf-8',{fatal:false}).decode(new Uint8Array(await midSlice.arrayBuffer()));
+    if(report.startsWithXml){
+      report.midSampleStructure=extractXmlStructure(midText);
+    }
+  }
+  // ZIP-specific: scan local file headers for structure details
+  if(arr[0]===0x50&&arr[1]===0x4B&&arr[2]===0x03&&arr[3]===0x04){
+    report.isZip=true;
+    const zipEntries=[];let off=0;
+    while(off<arr.length-30&&zipEntries.length<20){
+      if(arr[off]!==0x50||arr[off+1]!==0x4B||arr[off+2]!==0x03||arr[off+3]!==0x04)break;
+      const method=arr[off+8]|(arr[off+9]<<8);
+      const flags=arr[off+6]|(arr[off+7]<<8);
+      const compSize=arr[off+18]|(arr[off+19]<<8)|(arr[off+20]<<16)|(arr[off+21]<<24);
+      const uncompSize=arr[off+22]|(arr[off+23]<<8)|(arr[off+24]<<16)|(arr[off+25]<<24);
+      const fnLen=arr[off+26]|(arr[off+27]<<8);
+      const exLen=arr[off+28]|(arr[off+29]<<8);
+      const fn=new TextDecoder().decode(arr.slice(off+30,off+30+fnLen));
+      zipEntries.push({name:fn,method,flags:'0x'+flags.toString(16).padStart(4,'0'),compSize,uncompSize,hasDataDescriptor:!!(flags&0x08)});
+      if(compSize>0)off=off+30+fnLen+exLen+compSize+(flags&0x08?16:0);
+      else off=off+30+fnLen+exLen+1; // can't skip without size, just record first entries
+      // Try to find next PK header
+      while(off<arr.length-4){if(arr[off]===0x50&&arr[off+1]===0x4B&&arr[off+2]===0x03&&arr[off+3]===0x04)break;off++}
+    }
+    report.zipEntries=zipEntries;
+    // Also scan remaining entries beyond first 50KB for names only
+    if(file.size>readSize){
+      const fullScan=[];let scanOff=0;
+      const scanBuf=new Uint8Array(await file.slice(0,Math.min(file.size,2*1024*1024)).arrayBuffer());
+      while(scanOff<scanBuf.length-30&&fullScan.length<100){
+        if(scanBuf[scanOff]===0x50&&scanBuf[scanOff+1]===0x4B&&scanBuf[scanOff+2]===0x03&&scanBuf[scanOff+3]===0x04){
+          const fl=scanBuf[scanOff+26]|(scanBuf[scanOff+27]<<8);
+          if(scanOff+30+fl<=scanBuf.length){
+            fullScan.push(new TextDecoder().decode(scanBuf.slice(scanOff+30,scanOff+30+fl)));
+          }
+          scanOff+=30+fl;
+        }else scanOff++;
+      }
+      if(fullScan.length>zipEntries.length)report.allFileNames=fullScan;
+    }
+  }
+  downloadReport(report,file.name);
+}
+
+async function sendLog(){
+  try{
+    const btn=$('sendLogBtn');
+    const logText=(logBox||$('logBox')).textContent||'';
+    if(!logText.trim()){btn.textContent='No log';return}
+    btn.textContent='Sending…';btn.disabled=true;
+    const fn=(fileNameEl?fileNameEl.textContent:'')||'unknown';
+    const ver=(document.getElementById('verSpan')&&document.getElementById('verSpan').textContent)||'?';
+    const user=($('logUserInput')||{}).value||'';
+    const payload={type:'log',logText:logText,fileName:fn,version:ver,user:user,timestamp:new Date().toISOString()};
+    await fetch(GAS_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(payload)});
+    btn.textContent='Sent ✓';btn.style.color='#4ade80';
+  }catch(e){
+    var b=$('sendLogBtn');if(b){b.textContent='Failed';b.style.color='#f87171'}
+  }
+}
+$('sendLogBtn').addEventListener('click',sendLog);
+
+const FAKE_NAMES=['Alex Johnson','Sam Rivera','Jordan Lee','Morgan Chen','Casey Kim','Riley Patel','Taylor Brooks','Quinn Adams','Avery Cooper','Dakota Hayes','Jamie Torres','Blake Murphy','Drew Collins','Sage Martin','Phoenix Wright'];
+const FAKE_WORDS=['lorem','ipsum','dolor','sit','amet','hello','thanks','sure','okay','sounds','good','great','later','tomorrow','meeting','check','update','running','late','dinner','lunch','store','pick','home','work','school','call','text','soon','morning'];
+function fakePhone(){return'(555) '+String(Math.floor(Math.random()*900)+100)+'-'+String(Math.floor(Math.random()*9000)+1000)}
+function fakeEmail(i){return'user'+i+'@example.com'}
+function fakeSentence(len){let s='';while(s.length<len){s+=(s?' ':'')+FAKE_WORDS[Math.floor(Math.random()*FAKE_WORDS.length)]}return s.substring(0,len)}
+function fakeName(){return FAKE_NAMES[Math.floor(Math.random()*FAKE_NAMES.length)]}
+
+function anonymizeText(text){
+  // Replace phone numbers
+  let out=text.replace(/\+?\d[\d\s()\-]{7,}\d/g,function(){return fakePhone()});
+  // Replace email addresses
+  let ec=0;out=out.replace(/[\w.+-]+@[\w.-]+\.\w{2,}/g,function(){return fakeEmail(ec++)});
+  return out;
+}
+
+function anonymizeJsonValue(v,depth){
+  if(v===null||v===undefined)return v;
+  if(typeof v==='boolean')return v;
+  if(typeof v==='number'){
+    // Keep small numbers (type codes, flags), randomize large ones (IDs)
+    if(v>9999999999)return Date.now()-Math.floor(Math.random()*86400000*30); // timestamp-like
+    if(v>9999)return Math.floor(Math.random()*v);
+    return v;
+  }
+  if(typeof v==='string'){
+    if(!v)return v;
+    if(/^\+?\d[\d\s()\-]{7,}/.test(v))return fakePhone();
+    if(/@/.test(v))return fakeEmail(Math.floor(Math.random()*50));
+    if(/^(https?|ftp|content):\/\//.test(v))return'https://example.com/'+Math.random().toString(36).substring(2,8);
+    if(/^\d{4}-\d{2}-\d{2}/.test(v))return v; // keep date strings
+    if(/^\d+$/.test(v)&&v.length<=4)return v; // keep short numeric strings (type codes)
+    if(v.length<=3)return v; // keep very short values (status codes, etc.)
+    if(v.length>10)return fakeSentence(v.length);
+    return fakeName().split(' ')[0];
+  }
+  if(Array.isArray(v)){
+    if(depth>5)return v;
+    return v.map(item=>anonymizeJsonValue(item,depth+1));
+  }
+  if(typeof v==='object'){
+    if(depth>5)return v;
+    const out={};
+    for(const[k,val]of Object.entries(v))out[k]=anonymizeJsonValue(val,depth+1);
+    return out;
+  }
+  return v;
+}
+
+function anonymizeNdjson(text){
+  const lines=text.split('\n');
+  return lines.map(line=>{
+    const t=line.trim();if(!t)return'';
+    try{return JSON.stringify(anonymizeJsonValue(JSON.parse(t),0))}
+    catch(e){return anonymizeText(t)}
+  }).join('\n');
+}
+
+function anonymizeXml(text){
+  // Replace attribute values (keep attribute names)
+  let out=text.replace(/(\s[\w:-]+=")([^"]*?)(")/g,function(_,pre,val,post){
+    if(!val)return pre+post;
+    if(/^\d{4}-\d{2}-\d{2}/.test(val))return pre+val+post;
+    if(/^\d+$/.test(val)&&val.length<=4)return pre+val+post;
+    if(/^\+?\d[\d\s()\-]{7,}/.test(val))return pre+fakePhone()+post;
+    if(/@/.test(val))return pre+fakeEmail(Math.floor(Math.random()*50))+post;
+    if(val.length>10)return pre+fakeSentence(val.length)+post;
+    if(val.length<=3)return pre+val+post;
+    return pre+fakeName().split(' ')[0]+post;
+  });
+  // Replace text content between tags
+  out=out.replace(/>([^<]+)</g,function(_,content){
+    const t=content.trim();
+    if(!t||/^\s+$/.test(content))return'>'+content+'<';
+    if(/^\d+$/.test(t)&&t.length<=4)return'>'+t+'<';
+    if(/^\+?\d[\d\s()\-]{7,}/.test(t))return'>'+fakePhone()+'<';
+    if(t.length>10)return'>'+fakeSentence(t.length)+'<';
+    return'>'+t+'<';
+  });
+  return out;
+}
+
+// 1x1 transparent PNG placeholder (89 bytes)
+const PLACEHOLDER_PNG=new Uint8Array([137,80,78,71,13,10,26,10,0,0,0,13,73,72,68,82,0,0,0,1,0,0,0,1,8,2,0,0,0,144,119,83,222,0,0,0,12,73,68,65,84,8,215,99,248,207,192,0,0,0,3,0,1,54,174,213,252,0,0,0,0,73,69,78,68,174,66,96,130]);
+
+async function generateAnonymizedZip(entries,origFile,origName){
+  log('Generating anonymized copy — all private data replaced with fake data…');
+  showProgress('Anonymizing…',0);
+  const zipW=new zip.ZipWriter(new zip.BlobWriter('application/zip'));
+  const total=entries.length;
+  for(let i=0;i<total;i++){
+    const e=entries[i];
+    if(e.directory){await zipW.add(e.filename,null,{directory:true});continue}
+    showProgress('Anonymizing '+e.filename,Math.round(i/total*100));
+    const ext=e.filename.split('.').pop().toLowerCase();
+    if(['json','ndjson','xml','txt','csv','html','cfg','ini','yaml','yml','log'].includes(ext)&&e.uncompressedSize<50000000){
+      try{
+        const blob=await e.getData(new zip.BlobWriter());
+        const text=await blob.text();
+        let anon;
+        if(ext==='xml'||ext==='html')anon=anonymizeXml(text);
+        else if(ext==='json'||ext==='ndjson'){
+          const t=text.trimStart();
+          if(t.startsWith('[')||t.startsWith('{'))try{
+            const parsed=JSON.parse(text);
+            anon=JSON.stringify(anonymizeJsonValue(parsed,0),null,text.includes('\n  ')?2:0);
+          }catch(e2){anon=anonymizeNdjson(text)}
+          else anon=anonymizeNdjson(text);
+        }else anon=anonymizeText(text);
+        await zipW.add(e.filename,new zip.BlobReader(new Blob([anon])));
+      }catch(err){
+        log('Skipping '+e.filename+': '+err.message,'warn');
+      }
+    }else if(['jpg','jpeg','png','gif','bmp','webp','tif','tiff','svg'].includes(ext)){
+      await zipW.add(e.filename,new zip.BlobReader(new Blob([PLACEHOLDER_PNG])));
+    }else if(['amr','mp3','ogg','wav','aac','m4a','opus','3gp','mp4','3gpp'].includes(ext)){
+      // Tiny silent placeholder
+      await zipW.add(e.filename,new zip.BlobReader(new Blob([new Uint8Array(64)])));
+    }else if(ext==='ics'){
+      await zipW.add(e.filename,new zip.BlobReader(new Blob(['BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Anonymized//EN\nEND:VCALENDAR\n'])));
+    }else if(ext==='zip'&&e.uncompressedSize<500000000){
+      // Nested ZIP — extract and recursively anonymize
+      try{
+        const blob=await e.getData(new zip.BlobWriter());
+        const innerReader=new zip.ZipReader(new zip.BlobReader(blob));
+        const innerEntries=await innerReader.getEntries();
+        const innerZipW=new zip.ZipWriter(new zip.BlobWriter('application/zip'));
+        for(let j=0;j<innerEntries.length;j++){
+          const ie=innerEntries[j];
+          if(ie.directory){await innerZipW.add(ie.filename,null,{directory:true});continue}
+          const iext=ie.filename.split('.').pop().toLowerCase();
+          if(['json','ndjson','xml','txt','csv'].includes(iext)&&ie.uncompressedSize<50000000){
+            try{
+              const ib=await ie.getData(new zip.BlobWriter());const it=await ib.text();
+              let ia;
+              if(iext==='xml')ia=anonymizeXml(it);
+              else if(iext==='json'||iext==='ndjson'){
+                const tt=it.trimStart();
+                if(tt.startsWith('[')||tt.startsWith('{'))try{ia=JSON.stringify(anonymizeJsonValue(JSON.parse(it),0),null,it.includes('\n  ')?2:0)}catch(e3){ia=anonymizeNdjson(it)}
+                else ia=anonymizeNdjson(it);
+              }else ia=anonymizeText(it);
+              await innerZipW.add(ie.filename,new zip.BlobReader(new Blob([ia])));
+            }catch(err2){log('Skipping inner '+ie.filename,'warn')}
+          }else if(['jpg','jpeg','png','gif','bmp','webp'].includes(iext)){
+            await innerZipW.add(ie.filename,new zip.BlobReader(new Blob([PLACEHOLDER_PNG])));
+          }else if(['amr','mp3','ogg','wav','aac','m4a','opus','3gp','mp4','3gpp'].includes(iext)){
+            await innerZipW.add(ie.filename,new zip.BlobReader(new Blob([new Uint8Array(64)])));
+          }else{
+            try{const raw=await ie.getData(new zip.BlobWriter());await innerZipW.add(ie.filename,new zip.BlobReader(raw))}catch(e4){}
+          }
+          showProgress('Anonymizing '+e.filename+' ('+Math.round(j/innerEntries.length*100)+'%)',Math.round(i/total*100));
+        }
+        await innerReader.close();
+        const innerBlob=await innerZipW.close();
+        await zipW.add(e.filename,new zip.BlobReader(innerBlob));
+      }catch(err){
+        log('Could not process nested ZIP '+e.filename+': '+err.message,'warn');
+        try{const raw=await e.getData(new zip.BlobWriter());await zipW.add(e.filename,new zip.BlobReader(raw))}catch(e5){}
+      }
+    }else{
+      // Unknown binary — keep as-is (could be database, etc.)
+      try{const raw=await e.getData(new zip.BlobWriter());await zipW.add(e.filename,new zip.BlobReader(raw))}catch(e6){}
+    }
+  }
+  const blob=await zipW.close();
+  showProgress('Done!',100);
+  log('Anonymized ZIP ready ('+formatSize(blob.size)+')','ok');
+  return blob;
+}
+
+function downloadReport(report,origName){
+  progressEl.style.display='none';
+  errorBox.innerHTML='<b>This phone format is not supported yet.</b><br><br>Help us add support! We\'ll create an anonymized copy of your file — <b>all messages, phone numbers, names, and pictures are replaced with fake data</b>. No private information is included.<br><br>This is <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener">open source</a> — you can verify exactly what gets changed in the code.<br><br><input id="phoneBrandInput" type="text" class="report-input" placeholder="Phone brand (e.g. Tak S7, Kosher XL...)"><input id="userEmailInput" type="email" class="report-input" placeholder="Your email (so we can let you know when it\'s supported)"><br><button id="anonBtn" class="report-btn" style="background:#4f46e5">Anonymize &amp; Download</button><div id="anonInstructions" style="display:none;margin-top:14px;padding:12px 16px;border-radius:8px;background:#ecfdf5;color:#065f46;font-size:.85rem;line-height:1.6"><b>Almost done!</b><ol style="margin:8px 0 0 16px;padding:0"><li>Open <a href="https://drive.google.com" target="_blank" rel="noopener">Google Drive</a></li><li>Upload the anonymized file you just downloaded</li><li>Right-click the file → Share</li><li>Share with <b>pythonivelt@gmail.com</b></li></ol><br>Thanks for helping us add support for your phone!</div>';
+  errorBox.style.display='block';scanBtn.disabled=false;cancelBtn.style.display='none';
+  $('anonBtn').onclick=async function(){
+    const brand=($('phoneBrandInput').value||'').trim();
+    if(!brand){$('phoneBrandInput').style.border='2px solid red';$('phoneBrandInput').focus();return}
+    report.phoneBrand=brand;
+    const email=($('userEmailInput').value||'').trim();
+    if(email)report.userEmail=email;
+    this.textContent='Anonymizing…';this.disabled=true;
+    try{
+      // Send structure report
+      await fetch(GAS_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(report)});
+      // Generate anonymized ZIP
+      const anonBlob=await generateAnonymizedZip(window._lastUnknownEntries||[],selectedFile,origName);
+      if(anonBlob){
+        const url=URL.createObjectURL(anonBlob);
+        const a=document.createElement('a');a.href=url;a.download='anonymized-'+origName;a.click();URL.revokeObjectURL(url);
+      }
+      this.textContent='Downloaded!';this.style.background='#16a34a';
+      $('anonInstructions').style.display='block';
+      log('Anonymized file downloaded + structure report sent — thank you!','ok');
+    }catch(e){
+      this.textContent='Failed';this.style.background='#dc2626';
+      log('Error: '+e.message,'err');
+    }
+  };
+}
+function escXml(s){if(s==null)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/\r/g,'&#13;').replace(/\n/g,'&#10;')}
+function fmtDate(ts){const ms=parseInt(ts,10);if(!ms||isNaN(ms))return'';const d=new Date(ms<1e12?ms*1000:ms);return d.toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit',second:'2-digit',hour12:true})}
+function ab2b64(buf){const u=new Uint8Array(buf);let b='';for(let i=0;i<u.length;i+=32768)b+=String.fromCharCode.apply(null,u.subarray(i,i+32768));return btoa(b)}
+function b642ab(s){const b=atob(s),a=new Uint8Array(b.length);for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i);return a.buffer}
+
+// Fallback ZIP reader for ZIPs that zip.js can't handle (e.g. POM phones)
+async function fallbackZipScan(file){
+  // Scan local file headers sequentially from the start of the ZIP
+  const messages=[];const attachMap={};let pdfCount=0,pdfSize=0;
+  let fmt=null;let offset=0;const fileSize=file.size;
+  const PK=0x04034b50;
+  log('Fallback: scanning ZIP entries from file start…');
+
+  // Read entries one by one
+  let entryCount=0;let ndjsonFound=false;
+  while(offset<fileSize-30){
+    // Read local file header (30 bytes)
+    const hdrBuf=new Uint8Array(await file.slice(offset,offset+30).arrayBuffer());
+    const sig=hdrBuf[0]|(hdrBuf[1]<<8)|(hdrBuf[2]<<16)|(hdrBuf[3]<<24);
+    if((sig>>>0)!==PK)break; // No more local file headers
+    const method=hdrBuf[8]|(hdrBuf[9]<<8);
+    const flags=hdrBuf[6]|(hdrBuf[7]<<8);
+    const hasDD=(flags&0x08)!==0; // data descriptor follows
+    let compSize=hdrBuf[18]|(hdrBuf[19]<<8)|(hdrBuf[20]<<16)|(hdrBuf[21]<<24);
+    let uncompSize=hdrBuf[22]|(hdrBuf[23]<<8)|(hdrBuf[24]<<16)|(hdrBuf[25]<<24);
+    const fnLen=hdrBuf[26]|(hdrBuf[27]<<8);
+    const exLen=hdrBuf[28]|(hdrBuf[29]<<8);
+    // Read filename
+    const fnBuf=new Uint8Array(await file.slice(offset+30,offset+30+fnLen).arrayBuffer());
+    const fileName=new TextDecoder().decode(fnBuf);
+    const dataStart=offset+30+fnLen+exLen;
+
+    entryCount++;
+    if(entryCount%50===0){showProgress('Scanning entry '+entryCount+'…',Math.min(80,Math.round(offset/fileSize*80)));await tick()}
+
+    // For NDJSON, decompress and parse
+    if(fileName.endsWith('.ndjson')){
+      log('Found '+fileName+' — decompressing…','ok');
+      ndjsonFound=true;fmt='pom';
+      // Need to find the compressed data size
+      let ndjsonNextOffset=0; // where to resume scanning after this entry
+      if(hasDD&&compSize===0){
+        // Search for next PK signature or data descriptor to find end
+        const chunkSize=1024*1024;
+        let searchOffset=dataStart;let found=false;
+        while(searchOffset<fileSize&&!found){
+          const readSize=Math.min(chunkSize+4,fileSize-searchOffset);
+          const chunk=new Uint8Array(await file.slice(searchOffset,searchOffset+readSize).arrayBuffer());
+          for(let i=0;i<chunk.length-4;i++){
+            if(chunk[i]===0x50&&chunk[i+1]===0x4B){
+              if(chunk[i+2]===0x07&&chunk[i+3]===0x08){
+                // Data descriptor with signature: compressed data ends here
+                compSize=searchOffset+i-dataStart;
+                ndjsonNextOffset=searchOffset+i+20; // skip PK0708(4)+CRC(4)+comp(4)+uncomp(4)
+                found=true;break;
+              }
+              if(chunk[i+2]===0x03&&chunk[i+3]===0x04){
+                // Next local file header — use full distance as compSize
+                // (some ZIPs have unsigned DD before this, some don't — DEFLATE handles either)
+                compSize=searchOffset+i-dataStart;
+                ndjsonNextOffset=searchOffset+i;
+                found=true;break;
+              }
+            }
+          }
+          if(!found)searchOffset+=chunkSize; // no overlap needed — PK is 2 bytes
+        }
+        if(!found){compSize=fileSize-dataStart;ndjsonNextOffset=fileSize}
+      }
+      // Read compressed data and decompress
+      const compData=file.slice(dataStart,dataStart+compSize);
+      let ndjsonText;
+      if(method===8){
+        // DEFLATE — use DecompressionStream
+        try{
+          const ds=new DecompressionStream('deflate-raw');
+          const reader=ds.readable.getReader();
+          const writer=ds.writable.getWriter();
+          const chunks=[];
+          const readAll=(async()=>{while(true){const{done,value}=await reader.read();if(done)break;chunks.push(value)}})();
+          // Feed compressed data in chunks to avoid memory issues
+          const compReader=compData.stream().getReader();
+          while(true){const{done,value}=await compReader.read();if(done)break;await writer.write(value)}
+          await writer.close();await readAll;
+          const dec=new TextDecoder();
+          ndjsonText=chunks.map(c=>dec.decode(c,{stream:true})).join('');
+        }catch(e){log('Decompression failed: '+e.message,'err');return null}
+      }else if(method===0){
+        // STORE — read raw
+        ndjsonText=await compData.text();
+      }else{
+        log('Unsupported compression method: '+method,'err');return null;
+      }
+      // Parse NDJSON lines (same as parseFigZip but from text)
+      log('Parsing NDJSON ('+formatSize(ndjsonText.length)+')…');
+      const lines=ndjsonText.split('\n');
+      for(let li=0;li<lines.length;li++){
+        const line=lines[li].trim();if(!line)continue;
+        try{
+          const obj=JSON.parse(line);
+          if(obj.type!==undefined||obj.body!==undefined){
+            // SMS
+            const t=String(obj.type);
+            messages.push({type:'sms',address:obj.address||'',body:obj.body||'',date:String(obj.date||''),dateSent:String(obj.date_sent||'0'),direction:t==='1'?'in':'out',read:String(obj.read||'0'),contactName:obj.__display_name||'(Unknown)',protocol:obj.protocol,status:obj.status,locked:obj.locked,subId:obj.sub_id,_id:obj._id});
+          }else if(obj.m_type!==undefined||obj.__parts){
+            const isIn=String(obj.msg_box)==='1';
+            const addrs=[];
+            if(obj.__sender_address)addrs.push({address:obj.__sender_address.address,type:parseInt(obj.__sender_address.type)||137});
+            if(obj.__recipient_addresses)for(const a of obj.__recipient_addresses)addrs.push({address:a.address,type:parseInt(a.type)||151});
+            const parts=[];
+            if(obj.__parts)for(const p of obj.__parts){
+              if(p.ct==='application/smil')continue;
+              if(p._data){
+                const pn=p._data.split('/').pop();
+                // Store reference to find in ZIP later — but we can't seek back easily
+                // Mark as needing attachment from ZIP
+                parts.push({ct:p.ct,cl:p.cl||p.name||'',text:p.text||'',_zipRef:pn,seq:parseInt(p.seq)||0});
+              }else{
+                parts.push({ct:p.ct||'text/plain',text:p.text||'',cl:p.cl||'',seq:parseInt(p.seq)||0});
+              }
+            }
+            messages.push({type:'mms',date:String(obj.date||''),dateSent:String(obj.date_sent||'0'),direction:isIn?'in':'out',read:String(obj.read||'0'),address:(addrs[0]||{}).address||'',contactName:obj.__display_name||'(Unknown)',addrs,parts,msgBox:obj.msg_box,ctT:obj.ct_t,mType:obj.m_type,mSize:obj.m_size,mId:obj.m_id,mCls:obj.m_cls,trId:obj.tr_id,v:obj.v,locked:obj.locked,subId:obj.sub_id,seen:obj.seen,creator:obj.creator,_id:obj._id});
+          }
+        }catch(e){}
+        if(li%5000===0&&li>0){showProgress('Parsing messages… '+li+'/'+lines.length,Math.round(li/lines.length*80));await tick()}
+      }
+      // Skip past this entry
+      offset=ndjsonNextOffset||dataStart+compSize;
+      continue;
+    }
+    // For attachment files (data/PART_xxx), store offset for later resolution
+    if(fileName.startsWith('data/')){
+      const pn=fileName.split('/').pop();
+      if(hasDD&&compSize===0){
+        // Skip — we'll try to resolve attachments after
+        // For now just record that we know about this part
+        attachMap[pn]={zipOffset:dataStart,method,hasDD,file};
+      }else{
+        attachMap[pn]={zipOffset:dataStart,compSize,uncompSize,method,hasDD,file};
+      }
+    }
+    // Move to next entry
+    if(hasDD&&compSize===0){
+      // Need to find end of this entry by scanning for next PK header
+      // Scan in 1MB chunks to handle large attachments
+      let found=false;let searchOff=dataStart+1;
+      while(searchOff<fileSize-4&&!found){
+        const readEnd=Math.min(searchOff+1024*1024,fileSize);
+        const chunk=new Uint8Array(await file.slice(searchOff,readEnd).arrayBuffer());
+        for(let i=0;i<chunk.length-4;i++){
+          if(chunk[i]===0x50&&chunk[i+1]===0x4B&&chunk[i+2]===0x03&&chunk[i+3]===0x04){
+            const absPos=searchOff+i;
+            if(fileName.startsWith('data/')){
+              const pn=fileName.split('/').pop();
+              attachMap[pn]={zipOffset:dataStart,compSize:absPos-dataStart,method,hasDD:true,file};
+            }
+            offset=absPos;found=true;break;
+          }
+          if(chunk[i]===0x50&&chunk[i+1]===0x4B&&chunk[i+2]===0x07&&chunk[i+3]===0x08){
+            const absPos=searchOff+i;
+            const ddBuf=new Uint8Array(await file.slice(absPos+4,absPos+20).arrayBuffer());
+            const ddCompSize=ddBuf[4]|(ddBuf[5]<<8)|(ddBuf[6]<<16)|(ddBuf[7]<<24);
+            attachMap[fileName.split('/').pop()]={zipOffset:dataStart,compSize:ddCompSize,uncompSize:ddBuf[8]|(ddBuf[9]<<8)|(ddBuf[10]<<16)|(ddBuf[11]<<24),method,hasDD:true,file};
+            offset=absPos+20;found=true;break;
+          }
+        }
+        if(!found)searchOff=readEnd-3; // overlap to catch signatures spanning chunks
+      }
+      if(!found){
+        log('Could not find end of entry '+fileName+', skipping','warn');
+        break;
+      }
+    }else{
+      offset=dataStart+compSize;
+      if(hasDD){
+        // Check what follows: PK0708 DD (16b), PK0304 next entry (0b), or unsigned DD (12b)
+        const ddPeek=new Uint8Array(await file.slice(offset,offset+4).arrayBuffer());
+        if(ddPeek[0]===0x50&&ddPeek[1]===0x4B&&ddPeek[2]===0x07&&ddPeek[3]===0x08)offset+=16;
+        else if(ddPeek[0]===0x50&&ddPeek[1]===0x4B&&ddPeek[2]===0x03&&ddPeek[3]===0x04){/* no DD, next header */}
+        else offset+=12;
+      }
+    }
+  }
+  if(!ndjsonFound)return null;
+  // Wire up attachment resolution for MMS parts
+  for(const m of messages){
+    if(m.type==='mms'){
+      for(const p of m.parts){
+        if(p._zipRef&&attachMap[p._zipRef]){
+          const ai=attachMap[p._zipRef];
+          p._fallbackAttach=ai; // store for resolveData
+          delete p._zipRef;
+        }
+      }
+    }
+  }
+  let linked=0,unlinked=0;
+  for(const m of messages){if(m.type==='mms')for(const p of m.parts){if(p._fallbackAttach)linked++;else if(p._zipRef)unlinked++}}
+  log('Fallback scan: found '+messages.length+' messages, '+Object.keys(attachMap).length+' attachments in ZIP, '+linked+' linked'+(unlinked?' ('+unlinked+' unlinked!)':''),'ok');
+  return{fmt,messages,attachMap,pdfCount,pdfSize};
+}
+
+
+// ===== OPTION UI =====
+function bindRadioGroup(selector){
+  document.querySelectorAll(selector).forEach(opt=>{
+    opt.addEventListener('click',()=>{
+      document.querySelectorAll(selector).forEach(o=>o.classList.remove('selected'));
+      opt.classList.add('selected');
+      opt.querySelector('input').checked=true;
+      updateUI();
+    });
+  });
+}
+bindRadioGroup('.option[data-value="smsbackup"],.option[data-value="fig"],.option[data-value="pom"],.option[data-value="wonder"]');
+bindRadioGroup('.option[data-value="all"],.option[data-value="text"],.option[data-value="mms"]');
+bindRadioGroup('.option[data-value="pdf-include"],.option[data-value="pdf-skip"]');
+
+function needsPdfChoice(){
+  if(!hasPdfs)return false;
+  const c=document.querySelector('input[name="content"]:checked');
+  return c&&c.value!=='text';
+}
+function updateUI(){
+  const pc=$('pdfChoice');
+  pc.style.display=needsPdfChoice()?'block':'none';
+  const t=document.querySelector('input[name="target"]:checked');
+  buildBtn.disabled=!t;
+  // Wonder: force SMS only, disable MMS options
+  const isWonder=t&&t.value==='wonder';
+  if(isWonder){
+    document.querySelectorAll('.option[data-value="all"],.option[data-value="mms"]').forEach(o=>{o.style.opacity='.4';o.style.pointerEvents='none'});
+    $('optAll').querySelector('input').checked=false;$('optAll').classList.remove('selected');
+    $('optMmsOnly').querySelector('input').checked=false;$('optMmsOnly').classList.remove('selected');
+    $('optText').querySelector('input').checked=true;$('optText').classList.add('selected');
+  }else{
+    document.querySelectorAll('.option[data-value="all"],.option[data-value="mms"]').forEach(o=>{o.style.opacity='';o.style.pointerEvents=''});
+  }
+}
+
+// ===== FILE PICKING =====
+dropZone.addEventListener('click',()=>fileInput.click());
+dropZone.addEventListener('dragover',e=>{e.preventDefault();dropZone.classList.add('active')});
+dropZone.addEventListener('dragleave',()=>dropZone.classList.remove('active'));
+dropZone.addEventListener('drop',e=>{e.preventDefault();dropZone.classList.remove('active');if(e.dataTransfer.files[0])pickFile(e.dataTransfer.files[0])});
+fileInput.addEventListener('change',()=>{if(fileInput.files[0])pickFile(fileInput.files[0])});
+
+function pickFile(f){
+  selectedFile=f;
+  fileNameEl.textContent=f.name+' ('+formatSize(f.size)+')';
+  fileNameEl.style.display='block';
+  scanBtn.disabled=false;cancelBtn.style.display='none';
+  scanResults.style.display='none';optionsEl.style.display='none';infoBox.style.display='none';errorBox.style.display='none';progressEl.style.display='none';$('downloadBtn').style.display='none';
+  dropZone.classList.remove('done');parsedData=null;
+  if(zipReader){try{zipReader.close()}catch{}zipReader=null}
+}
+
+// ===== SCAN =====
+scanBtn.addEventListener('click',()=>{
+  if(!selectedFile)return;
+  scanBtn.disabled=true;cancelled=false;processing=true;$('themeToggle').style.pointerEvents='none';$('themeToggle').style.opacity='.4';cancelBtn.style.display='block';cancelBtn.innerHTML='Cancel';delete cancelBtn.dataset.confirm;errorBox.style.display='none';infoBox.style.display='none';scanResults.style.display='none';optionsEl.style.display='none';$('downloadBtn').style.display='none';
+  scan().finally(()=>{processing=false;$('themeToggle').style.pointerEvents='';$('themeToggle').style.opacity=''});
+});
+
+async function scan(){
+  try{
+    clearLog();_scanStart=Date.now();
+    log('Scanning '+selectedFile.name+' ('+formatSize(selectedFile.size)+')');
+    showProgress('Opening file…',10);await tick();
+    const isZip=selectedFile.name.toLowerCase().endsWith('.zip');
+    let messages,attachMap,fmt,pdfCount=0,pdfSize=0;
+
+    if(isZip){
+      let entries;
+      try{
+        const br=new zip.BlobReader(selectedFile);
+        zipReader=new zip.ZipReader(br);
+        entries=await zipReader.getEntries();
+      }catch(zipErr){
+        // zip.js failed — try fallback for ZIPs it can't handle (e.g. POM)
+        log('Standard ZIP reader failed: '+zipErr.message,'warn');
+        log('Trying fallback ZIP reader…');
+        const fallback=await fallbackZipScan(selectedFile);
+        if(fallback){
+          fmt=fallback.fmt;
+          messages=fallback.messages;attachMap=fallback.attachMap;
+          pdfCount=fallback.pdfCount||0;pdfSize=fallback.pdfSize||0;
+          entries=null; // skip normal flow
+        }else{
+          log('Fallback failed — generating structure report…','warn');
+          await generateRawStructureReport(selectedFile);
+          return;
+        }
+      }
+      if(entries){
+        // Detect format
+        const hasNdjson=entries.some(e=>e.filename.endsWith('.ndjson'));
+        const hasWonderXml=entries.some(e=>e.filename.endsWith('.xml')&&!e.filename.includes('/'));
+        const hasMmsAttach=entries.some(e=>e.filename.startsWith('mms_attachments/'));
+
+        log('ZIP contains '+entries.length+' entries');
+        if(hasNdjson){
+          fmt='fig';log('Detected Fig format (NDJSON)','ok');
+          try{
+            ({messages,attachMap,pdfCount,pdfSize}=await parseFigZip(entries));
+            if(messages.some(m=>m.creator&&m.creator.includes('.pom'))){fmt='pom';log('Detected Pom backup (creator: com.figmessenger.pom)','ok')}
+          }catch(parseErr){
+            log('zip.js read failed: '+parseErr.message+' — trying fallback…','warn');
+            const fallback=await fallbackZipScan(selectedFile);
+            if(fallback){fmt=fallback.fmt;messages=fallback.messages;attachMap=fallback.attachMap;pdfCount=fallback.pdfCount||0;pdfSize=fallback.pdfSize||0}
+            else{log('Fallback also failed','err');return}
+          }
+        }else if(hasWonderXml){
+          fmt='wonder';log('Detected Wonder format (XML)','ok');
+          // Log Wonder ZIP structure for analysis
+          log('Wonder ZIP entries: '+entries.map(e=>e.filename+' ('+formatSize(e.uncompressedSize)+')').join(', '));
+          const xmlEntry=entries.find(e=>e.filename.endsWith('.xml')&&!e.filename.includes('/'));
+          if(xmlEntry){
+            const sample=await xmlEntry.getData(new zip.BlobWriter());
+            const sampleText=await sample.slice(0,10000).text();
+            // Log tag names, attribute names, structure — no private data
+            const tags=[...new Set((sampleText.match(/<(\w[\w:-]*)/g)||[]).map(m=>m.slice(1)))];
+            const attrs=[...new Set((sampleText.match(/\s(\w[\w:-]*)=/g)||[]).map(m=>m.trim().replace('=','')))];
+            log('Wonder XML tags: '+tags.join(', '));
+            log('Wonder XML attrs: '+attrs.join(', '));
+            // Log first SMS/MMS element structure (redacted values)
+            const firstMsg=sampleText.match(/<(sms|mms)[^>]*>/i);
+            if(firstMsg){
+              const redacted=firstMsg[0].replace(/="[^"]*"/g,'="[redacted]"');
+              log('Sample element: '+redacted);
+            }
+          }
+          const mmsDir=entries.filter(e=>e.filename.startsWith('mms_attachments/'));
+          if(mmsDir.length)log('MMS attachment entries: '+mmsDir.length+' (e.g. '+mmsDir.slice(0,3).map(e=>e.filename).join(', ')+')');
+          ({messages,attachMap,pdfCount,pdfSize}=await parseWonderZip(entries));
+        }else{
+          log('Unknown ZIP format — generating structure report…','warn');
+          window._lastUnknownEntries=entries;
+          await generateStructureReport(entries,selectedFile.name);
+          return;
+        }
+      }
+    }else{
+      log('Detected SMS Backup & Restore XML','ok');
+      fmt='smsbackup';
+      ({messages,attachMap,pdfCount,pdfSize}=await parseSmsBackupXmlStream(selectedFile));
+    }
+
+    parsedData={messages,attachMap,fmt};
+    showProgress('Done!',100);await tick();progressEl.style.display='none';
+
+    // Stats
+    let cIn=0,cOut=0,cMms=0,cAttach=0;
+    for(const m of messages){
+      if(m.type==='sms'){m.direction==='in'?cIn++:cOut++}
+      else{cMms++;cAttach+=m.parts.filter(p=>hasAttach(p)).length}
+    }
+
+    log('Parsed '+messages.length+' messages ('+cIn+' in, '+cOut+' out, '+cMms+' MMS, '+cAttach+' attachments)'+(pdfCount?' + '+pdfCount+' PDFs':''),'ok');
+    $('detectedBadge').textContent=fmt==='fig'?'Fig':fmt==='pom'?'Pom':fmt==='wonder'?'Wonder':'SMS Backup & Restore';
+    $('statIn').textContent=cIn.toLocaleString();
+    $('statOut').textContent=cOut.toLocaleString();
+    $('statMms').textContent=cMms.toLocaleString();
+    $('statAttach').textContent=cAttach.toLocaleString();
+    $('statMmsRow').style.display=cMms>0?'':'none';
+    $('statAttachRow').style.display=cAttach>0?'':'none';
+    $('pomMmsWarn').style.display=(fmt==='pom'&&cMms>0&&!BETA_MODE)?'block':'none';
+
+    if(pdfCount>0){
+      const pdfXmlSize=Math.round(pdfSize*1.37);
+      $('statPdf').textContent=pdfCount+' ('+formatSize(pdfSize)+' raw, ~'+formatSize(pdfXmlSize)+' in output)';
+      $('statPdfRow').style.display='';
+      $('pdfSizeInfo').textContent='Found '+pdfCount+' PDF(s) totaling '+formatSize(pdfSize)+'. Including them adds ~'+formatSize(pdfXmlSize)+'.';
+      hasPdfs=true;
+      document.querySelectorAll('input[name="pdfmode"]').forEach(r=>r.checked=false);
+      document.querySelectorAll('.option[data-value="pdf-include"],.option[data-value="pdf-skip"]').forEach(o=>o.classList.remove('selected'));
+    }else{
+      $('statPdfRow').style.display='none';hasPdfs=false;$('pdfChoice').style.display='none';
+    }
+
+    // Hide source format from targets; disable unsupported targets unless ?test mode
+    const targets={smsbackup:'optSms',fig:'optFig',pom:'optPom',wonder:'optWonder'};
+    for(const[k,elId]of Object.entries(targets)){
+      const el=$(elId), sup=SUPPORT_MATRIX[k];
+      el.style.display=k===fmt?'none':'';
+      el.classList.remove('selected','disabled');
+      el.querySelector('input').disabled=false;
+      if(k!==fmt&&sup.in!==true&&!TEST_MODE){
+        el.classList.add('disabled');
+        el.querySelector('input').disabled=true;
+      }
+    }
+    // Reset target selection
+    document.querySelectorAll('input[name="target"]').forEach(r=>r.checked=false);
+
+    // Hide MMS content options if no MMS
+    $('optAll').style.display=cMms>0?'':'none';
+    $('optMmsOnly').style.display=cMms>0?'':'none';
+    $('contentLabel').style.display=cMms>0?'':'none';
+    if(cMms===0){
+      document.querySelector('input[name="content"][value="text"]').checked=true;
+      document.querySelectorAll('.option[data-value="all"],.option[data-value="text"],.option[data-value="mms"]').forEach(o=>o.classList.remove('selected'));
+      $('optText').classList.add('selected');
+    }
+
+    scanResults.style.display='block';
+    dropZone.classList.add('done');
+    optionsEl.style.display='block';
+    sendAnalytics({event:'scan',source:fmt,sms:cIn+cOut,mms:cMms,attachments:cAttach,duration:((Date.now()-_scanStart)/1000).toFixed(1)});
+    scanBtn.disabled=false;cancelBtn.style.display='none';
+    sourceFormat=fmt;
+    updateUI();
+  }catch(err){
+    if(err&&err.cancelled){log('Scan cancelled by user','warn');progressEl.style.display='none';infoBox.textContent='Cancelled.';infoBox.style.display='block';scanBtn.disabled=false;cancelBtn.style.display='none';return}
+    const msg=err.message||String(err);
+    log('Scan failed: '+msg,'err');
+    progressEl.style.display='none';
+    if(msg.includes('central directory')||msg.includes('not a valid')){
+      // Not a ZIP — try reading as raw file for structure report
+      log('Not a ZIP file — analyzing raw structure…','warn');
+      await generateRawStructureReport(selectedFile);
+      return;
+    }
+    errorBox.textContent=msg;
+    errorBox.style.display='block';scanBtn.disabled=false;cancelBtn.style.display='none';
+  }
+}
+
+// ===== PARSERS =====
+
+async function parseFigZip(entries){
+  showProgress('Reading Fig backup…',15);await tick();
+  const ndjEntry=entries.find(e=>e.filename.endsWith('.ndjson'));
+  const partEntries={};
+  for(const e of entries){const n=e.filename.split('/').pop();if(n.startsWith('PART_'))partEntries[n]=e}
+  const totalSize=ndjEntry.uncompressedSize||0;
+  log('NDJSON size: '+formatSize(totalSize)+', '+Object.keys(partEntries).length+' attachment files');
+
+  const blob=await ndjEntry.getData(new zip.BlobWriter());
+  const reader=blob.stream().getReader();
+  const dec=new TextDecoder();
+  let buf='',bytesRead=0,lastPct=0;
+  const messages=[];let pdfCount=0,pdfSize=0;
+
+  async function yld(){if(cancelled)throw{cancelled:true};const p=Math.min(90,Math.round(bytesRead/(totalSize||1)*80)+15);if(p>lastPct+1){lastPct=p;showProgress('Parsing… '+messages.length.toLocaleString()+' messages ('+formatSize(bytesRead)+' / '+formatSize(totalSize)+')',p);await tick()}}
+
+  while(true){
+    const{done,value}=await reader.read();
+    if(value){bytesRead+=value.length;buf+=dec.decode(value,{stream:!done})}
+    let nl;
+    while((nl=buf.indexOf('\n'))!==-1){
+      const line=buf.substring(0,nl).trim();buf=buf.substring(nl+1);
+      if(!line)continue;
+      let obj;try{obj=JSON.parse(line)}catch(e){log('Skipped unparseable line: '+line.slice(0,60)+'…','warn');continue}
+      const t=obj.type;
+      if(t==='1'||t===1||t==='2'||t===2){
+        messages.push({type:'sms',address:(obj.address||'').replace(/\s/g,''),body:obj.body||'',date:obj.date,dateSent:obj.date_sent||'0',direction:(t==='1'||t===1)?'in':'out',read:obj.read||'0',contactName:obj.__display_name||'(Unknown)',protocol:obj.protocol,status:obj.status,locked:obj.locked,subId:obj.sub_id,creator:obj.creator});
+      }else if(obj.m_type!==undefined||obj.__parts){
+        const isIn=String(obj.msg_box)==='1';
+        const addrs=[];
+        if(obj.__sender_address)addrs.push({address:obj.__sender_address.address,type:obj.__sender_address.type||137});
+        if(obj.__recipient_addresses)for(const r of obj.__recipient_addresses)addrs.push({address:r.address,type:r.type||151});
+        const parts=[];
+        for(const p of(obj.__parts||[])){
+          if(p.ct==='application/smil')continue;
+          if(p._data){
+            const pn=p._data.split('/').pop();
+            const entry=partEntries[pn];
+            if(entry){
+              if(p.ct==='application/pdf'){pdfCount++;pdfSize+=entry.uncompressedSize||0}
+              parts.push({ct:p.ct,cl:p.cl||'',cid:p.cid||'',_entry:entry,seq:p.seq||0});
+            }else{log('Attachment not found in ZIP: '+pn,'warn')}
+          }else if(p.text!=null){
+            parts.push({ct:'text/plain',text:p.text,seq:p.seq||0});
+          }
+        }
+        let addr='';let cn='(Unknown)';
+        if(isIn&&obj.__sender_address){addr=obj.__sender_address.address||'';cn=obj.__sender_address.__display_name||'(Unknown)'}
+        else if(!isIn&&obj.__recipient_addresses&&obj.__recipient_addresses[0]){addr=obj.__recipient_addresses[0].address||'';cn=obj.__recipient_addresses[0].__display_name||'(Unknown)'}
+        messages.push({type:'mms',date:obj.date,dateSent:obj.date_sent||'0',direction:isIn?'in':'out',read:obj.read||'0',address:(addr||'').replace(/\s/g,''),contactName:cn,addrs,parts,msgBox:obj.msg_box,ctT:obj.ct_t,mType:obj.m_type,mSize:obj.m_size,mId:obj.m_id,mCls:obj.m_cls,trId:obj.tr_id,v:obj.v,locked:obj.locked,subId:obj.sub_id,seen:obj.seen,creator:obj.creator,_id:obj._id});
+      }
+      if(messages.length%500===0)await yld();
+    }
+    if(done)break;
+    await yld();
+  }
+  if(buf.trim()){let obj;try{obj=JSON.parse(buf.trim());const t=obj.type;if(t==='1'||t===1||t==='2'||t===2)messages.push({type:'sms',address:(obj.address||'').replace(/\s/g,''),body:obj.body||'',date:obj.date,dateSent:obj.date_sent||'0',direction:(t==='1'||t===1)?'in':'out',read:obj.read||'0',contactName:obj.__display_name||'(Unknown)'})}catch{}}
+  log('Streamed '+formatSize(totalSize)+' → '+messages.length+' messages','ok');
+  return{messages,attachMap:{},pdfCount,pdfSize};
+}
+
+async function parseWonderZip(entries){
+  showProgress('Reading Wonder backup…',25);await tick();
+  const xmlEntry=entries.find(e=>e.filename.endsWith('.xml')&&!e.filename.includes('/'));
+  const text=await xmlEntry.getData(new zip.TextWriter());
+  const attachEntries={};
+  for(const e of entries){if(e.filename.startsWith('mms_attachments/'))attachEntries[e.filename.split('/').pop()]=e}
+
+  if(cancelled)throw{cancelled:true};
+  showProgress('Parsing messages…',50);await tick();
+  const parser=new DOMParser();
+  const doc=parser.parseFromString(text,'text/xml');
+  const messages=[];let pdfCount=0,pdfSize=0;
+
+  for(const el of doc.querySelectorAll('sms')){
+    const t=el.getAttribute('type');
+    messages.push({type:'sms',address:el.getAttribute('address')||'',body:el.getAttribute('body')||'',date:el.getAttribute('date')||'',dateSent:el.getAttribute('date_sent')||'0',direction:t==='1'?'in':'out',read:el.getAttribute('read')||'0',contactName:'(Unknown)'});
+  }
+
+  for(const el of doc.querySelectorAll('mms')){
+    const mb=el.getAttribute('msg_box')||'1';
+    const addrs=[];
+    for(const a of el.querySelectorAll('addr'))addrs.push({address:a.getAttribute('address')||'',type:parseInt(a.getAttribute('type'))||137});
+    const parts=[];
+    for(const p of el.querySelectorAll('part')){
+      const ct=p.getAttribute('ct')||'';
+      if(ct==='application/smil')continue;
+      const fileRef=p.getAttribute('file');
+      if(fileRef&&attachEntries[fileRef]){
+        let data=null;
+        try{const blob=await attachEntries[fileRef].getData(new zip.BlobWriter());data=await blob.arrayBuffer()}catch{}
+        if(ct==='application/pdf'){pdfCount++;pdfSize+=(attachEntries[fileRef].uncompressedSize||0)}
+        parts.push({ct,cl:p.getAttribute('cl')||'',data,seq:parts.length});
+      }else if(p.getAttribute('text')!=null){
+        parts.push({ct:'text/plain',text:p.getAttribute('text')||'',seq:parts.length});
+      }
+    }
+    let addr='';
+    const senderAddr=addrs.find(a=>a.type===137);
+    const recipAddr=addrs.find(a=>a.type===151);
+    if(mb==='1'&&senderAddr)addr=senderAddr.address;
+    else if(mb==='2'&&recipAddr)addr=recipAddr.address;
+    messages.push({type:'mms',date:el.getAttribute('date')||'',dateSent:'0',direction:mb==='1'?'in':'out',read:el.getAttribute('read')||'0',address:addr,contactName:'(Unknown)',addrs,parts,msgBox:mb,ctT:el.getAttribute('ct_t')||'application/vnd.wap.multipart.related',mType:el.getAttribute('m_type')||'132',seen:el.getAttribute('seen')||'1'});
+  }
+  return{messages,attachMap:{},pdfCount,pdfSize};
+}
+
+async function parseSmsBackupXmlStream(file){
+  const messages=[];let pdfCount=0,pdfSize=0;
+  const reader=file.stream().getReader();
+  const dec=new TextDecoder();
+  let buf='',bytesRead=0;const tot=file.size;let lastPct=0;
+
+  function pa(s){const a={},r=/(\w[\w_-]*)=(?:"([^"]*)"|'([^']*)')/g;let m;while((m=r.exec(s))!==null)a[m[1]]=m[2]!=null?m[2]:m[3];return a}
+  function ux(s){return s?s.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&apos;/g,"'").replace(/&#13;/g,'\r').replace(/&#10;/g,'\n').replace(/&#x([0-9a-fA-F]+);/g,(_,h)=>String.fromCharCode(parseInt(h,16))).replace(/&#(\d+);/g,(_,d)=>String.fromCharCode(parseInt(d))):''}
+  function fc(from,pat){let q=0;for(let i=from;i<=buf.length-pat.length;i++){const c=buf[i];if(q){if(c===(q===1?'"':"'"))q=0}else if(c==='"')q=1;else if(c==="'")q=2;else if(buf.startsWith(pat,i))return i+pat.length}return -1}
+
+  async function yld(){if(cancelled)throw{cancelled:true};const p=Math.min(90,Math.round(bytesRead/tot*80)+15);if(p>lastPct+1){lastPct=p;showProgress('Parsing… '+formatSize(bytesRead)+' / '+formatSize(tot),p);await tick()}}
+
+  while(true){
+    const{done,value}=await reader.read();
+    if(value){bytesRead+=value.length;buf+=dec.decode(value,{stream:!done})}
+    let moved=true;
+    while(moved){
+      moved=false;
+      const si=buf.indexOf('<sms ');
+      const mi=buf.indexOf('<mms ');
+      if(si===-1&&mi===-1){const lt=buf.lastIndexOf('>');if(lt>0)buf=buf.substring(lt+1);break}
+      const first=(si!==-1&&(mi===-1||si<mi))?'sms':'mms';
+      if(first==='sms'){
+        const end=fc(si,'/>');
+        if(end===-1)break;
+        const tag=buf.substring(si,end);buf=buf.substring(end);moved=true;
+        const a=pa(tag);const t=a.type;
+        messages.push({type:'sms',address:a.address||'',body:ux(a.body)||'',date:a.date||'',dateSent:a.date_sent||'0',direction:t==='1'?'in':'out',read:a.read||'0',contactName:ux(a.contact_name)||'(Unknown)',protocol:a.protocol,status:a.status,locked:a.locked,subId:a.sub_id});
+      }else{
+        const end=buf.indexOf('</mms>',mi);
+        if(end===-1)break;
+        const block=buf.substring(mi,end+6);buf=buf.substring(end+6);moved=true;
+        const mt=block.substring(0,block.indexOf('>'));
+        const ma=pa(mt);const mb=ma.msg_box||'1';
+        const addrs=[];
+        const ar=/<addr\s[^>]*\/>/g;let am;
+        while((am=ar.exec(block))!==null){const aa=pa(am[0]);addrs.push({address:aa.address||'',type:parseInt(aa.type)||137})}
+        const parts=[];
+        const pr=/<part\s[^>]*\/>/g;let pm;
+        while((pm=pr.exec(block))!==null){
+          const pp=pa(pm[0]);const ct=pp.ct||'';
+          if(ct==='application/smil')continue;
+          if(pp.data){const data=b642ab(pp.data);if(ct==='application/pdf'){pdfCount++;pdfSize+=data.byteLength}parts.push({ct,cl:pp.cl||'',data,seq:parseInt(pp.seq)||0})}
+          else parts.push({ct:'text/plain',text:ux(pp.text)||'',seq:parseInt(pp.seq)||0});
+        }
+        messages.push({type:'mms',date:ma.date||'',dateSent:ma.date_sent||'0',direction:mb==='1'?'in':'out',read:ma.read||'0',address:ma.address||'',contactName:ux(ma.contact_name)||'(Unknown)',addrs,parts,msgBox:mb,ctT:ma.ct_t,mType:ma.m_type,mSize:ma.m_size,mId:ma.m_id,mCls:ma.m_cls,trId:ma.tr_id,v:ma.v,locked:ma.locked,subId:ma.sub_id,seen:ma.seen,creator:ma.creator,_id:ma._id});
+      }
+      if(messages.length%500===0)await yld();
+    }
+    if(done)break;
+    await yld();
+  }
+  log('Streamed '+formatSize(tot)+' → '+messages.length+' messages','ok');
+  return{messages,attachMap:{},pdfCount,pdfSize};
+}
+
+// ===== WRITERS =====
+
+function filterMessages(messages,content,skipPdf){
+  let out=messages;
+  if(content==='text')out=messages.map(m=>{if(m.type==='mms')return{...m,parts:m.parts.filter(p=>!hasAttach(p))};return m});
+  else if(content==='mms')out=messages.filter(m=>m.type==='mms');
+  if(skipPdf)out=out.map(m=>{if(m.type==='mms')return{...m,parts:m.parts.filter(p=>p.ct!=='application/pdf')};return m});
+  return out;
+}
+
+async function writeToSmsBackup(messages){
+  const parts=[];
+  const now=new Date();
+  parts.push(`<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>\n<!--File Created By Kosher Phone SMS Converter on ${now.toLocaleString()}-->\n<smses count="__COUNT__" backup_date="${Date.now()}" type="full">\n`);
+  let count=0,i=0;
+
+  for(const m of messages){
+    if(m.type==='sms'){
+      const t=m.direction==='in'?'1':'2';
+      parts.push(`  <sms protocol="${escXml(m.protocol??0)}" address="${escXml(m.address)}" date="${escXml(m.date)}" type="${t}" subject="null" body="${escXml(m.body)}" toa="null" sc_toa="null" service_center="null" read="${escXml(m.read??0)}" status="${escXml(m.status??-1)}" locked="${escXml(m.locked??0)}" date_sent="${escXml(m.dateSent??m.date)}" sub_id="${escXml(m.subId??1)}" readable_date="${escXml(fmtDate(m.date))}" contact_name="${escXml(m.contactName)}" />\n`);
+      count++;
+    }else{
+      const addr=m.address||'';if(!addr)continue;
+      const dateMs=parseInt(m.date,10)<1e12?parseInt(m.date,10)*1000:parseInt(m.date,10);
+      let hasAtt=false;
+      const pLines=[];
+      for(const p of m.parts){
+        if(hasAttach(p)){const d=await resolveData(p);if(d){hasAtt=true;pLines.push(`      <part seq="${p.seq||0}" ct="${escXml(p.ct)}" name="${escXml(p.cl||'attachment')}" chset="null" cd="null" fn="${escXml(p.cl||'')}" cid="" cl="${escXml(p.cl||'')}" ctt_s="null" ctt_t="null" data="${ab2b64(d)}" />`)}
+        }else pLines.push(`      <part seq="${p.seq||0}" ct="text/plain" name="body" chset="106" cd="null" fn="null" cid="null" cl="null" ctt_s="null" ctt_t="null" text="${escXml(p.text||'')}" />`);
+      }
+      if(!pLines.length)pLines.push(`      <part seq="0" ct="text/plain" name="body" chset="106" cd="null" fn="null" cid="null" cl="null" ctt_s="null" ctt_t="null" text="" />`);
+      const aLines=(m.addrs||[]).map(a=>`      <addr address="${escXml((a.address||'').replace(/\s/g,''))}" type="${a.type}" charset="106" />`);
+      if(!aLines.length)aLines.push(`      <addr address="${escXml(addr)}" type="${m.direction==='in'?137:151}" charset="106" />`);
+      parts.push(`  <mms date="${dateMs}" rr="null" sub="" ct_t="${escXml(m.ctT||'application/vnd.wap.multipart.related')}" read_status="null" seen="${escXml(m.seen??1)}" msg_box="${m.direction==='in'?1:2}" address="${escXml(addr)}" sub_cs="null" resp_st="null" retr_st="null" d_tm="null" text_only="${hasAtt?0:1}" exp="null" locked="${escXml(m.locked??0)}" m_id="${escXml(m.mId||'')}" st="null" retr_txt_cs="null" retr_txt="null" creator="${escXml(m.creator||'com.android.mms')}" date_sent="${escXml(m.dateSent??0)}" read="${escXml(m.read??0)}" m_size="${escXml(m.mSize??0)}" rpt_a="null" ct_cls="null" pri="null" sub_id="${escXml(m.subId??1)}" tr_id="${escXml(m.trId||'')}" resp_txt="null" ct_l="null" m_cls="${escXml(m.mCls||'personal')}" d_rpt="null" v="${escXml(m.v||18)}" service_center="null" _id="${escXml(m._id||'')}" m_type="${escXml(m.mType||128)}" readable_date="${escXml(fmtDate(m.date))}" contact_name="${escXml(m.contactName||'(Unknown)')}">
+    <parts>\n${pLines.join('\n')}\n    </parts>
+    <addrs>\n${aLines.join('\n')}\n    </addrs>
+  </mms>\n`);
+      count++;
+    }
+    if(++i%200===0){if(cancelled)throw{cancelled:true};showProgress('Building… '+i.toLocaleString()+' / '+messages.length.toLocaleString(),Math.round(i/messages.length*80)+10);await tick()}
+  }
+  parts.push('</smses>\n');
+  parts[0]=parts[0].replace('__COUNT__',String(count));
+  return new Blob(parts,{type:'text/xml;charset=utf-8'});
+}
+
+async function buildFigZip(messages){
+  const lines=[];let partId=Date.now();
+  let msgId=1,addrId=100001,partObjId=200001;
+  const attachFiles=[];
+
+  // Build thread_id map: group by address
+  const threadMap={};let nextThread=1;
+  for(const m of messages){
+    const addr=(m.address||'').replace(/[^\d+]/g,'');
+    if(addr&&!threadMap[addr])threadMap[addr]=String(nextThread++);
+  }
+
+  for(let mi=0;mi<messages.length;mi++){
+    const m=messages[mi];
+    const id=String(msgId++);
+    const addr=(m.address||'').replace(/[^\d+]/g,'');
+    const tid=threadMap[addr]||'1';
+    if(mi%50===0){if(cancelled)throw{cancelled:true};const pct=Math.round(mi/messages.length*50);showProgress('Building messages… '+mi+'/'+messages.length,50+pct);await tick()}
+
+    if(m.type==='sms'){
+      lines.push(JSON.stringify({_id:id,thread_id:tid,address:m.address,date:m.date,date_sent:m.dateSent||'0',protocol:m.protocol||'0',read:m.read||'0',status:m.status||'-1',type:m.direction==='in'?'1':'2',reply_path_present:'0',body:m.body||'',locked:m.locked||'0',sub_id:m.subId||'1',error_code:'-1',creator:'com.figmessenger',seen:'1',ipmsg_id:'0',__display_name:m.contactName||'(Unknown)'}));
+    }else{
+      const mb=m.direction==='in'?'1':'2';
+      const mmsDate=parseInt(m.date,10)>1e12?String(Math.floor(parseInt(m.date,10)/1000)):m.date;
+      const obj={_id:id,thread_id:tid,date:mmsDate,date_sent:'0',msg_box:mb,read:m.read||'0',m_id:m.mId||'',ct_t:m.ctT||'application/vnd.wap.multipart.related',m_cls:m.mCls||'personal',m_type:m.mType||(mb==='1'?'132':'128'),v:m.v||'18',pri:'129',rr:'129',tr_id:m.trId||'',d_rpt:'129',locked:m.locked||'0',sub_id:m.subId||'1',seen:m.seen||'1',creator:'com.figmessenger',text_only:m.parts.some(p=>hasAttach(p))?'0':'1'};
+      const sAddr=m.addrs?m.addrs.find(a=>a.type===137||a.type==='137'):null;
+      const rAddrs=m.addrs?m.addrs.filter(a=>a.type===151||a.type==='151'):[];
+      const is1on1=sAddr&&rAddrs.length===1;
+      if(is1on1){
+        // 1-on-1: only include the other person's address, not both
+        if(mb==='1'){
+          // Incoming: sender is the other person
+          const aid=String(addrId++);obj.__sender_address={_id:aid,msg_id:id,address:sAddr.address,type:'137',charset:'106',__display_name:m.contactName||'(Unknown)'};
+        }else{
+          // Outgoing: recipient is the other person
+          const aid=String(addrId++);obj.__recipient_addresses=[{_id:aid,msg_id:id,address:rAddrs[0].address,type:'151',charset:'106',__display_name:m.contactName||'(Unknown)'}];
+        }
+      }else{
+        // Group or single addr: pass through as-is
+        if(sAddr){const aid=String(addrId++);obj.__sender_address={_id:aid,msg_id:id,address:sAddr.address,type:'137',charset:'106',__display_name:m.contactName||'(Unknown)'}}
+        if(rAddrs.length)obj.__recipient_addresses=rAddrs.map(a=>{const aid=String(addrId++);return{_id:aid,msg_id:id,address:a.address,type:String(a.type),charset:'106',__display_name:'(Unknown)'}});
+      }
+      obj.__parts=[];
+      // Add SMIL part for MMS with attachments
+      const attachNames=[];
+      for(const p of m.parts){if(hasAttach(p))attachNames.push(p.cl||'image000000.jpg')}
+      if(attachNames.length){
+        const pid=String(partObjId++);
+        let smil='<smil><head><layout><root-layout/><region id="Image" fit="meet" top="0" left="0" height="100%" width="100%"/></layout></head><body>';
+        for(const an of attachNames)smil+='<par dur="5000ms"><img src="'+an+'" region="Image" /></par>';
+        smil+='</body></smil>';
+        obj.__parts.push({_id:pid,mid:id,seq:'-1',ct:'application/smil',name:'smil.xml',cid:'<smil>',cl:'smil.xml',text:smil});
+      }
+      let seq=0;
+      for(const p of m.parts){
+        if(hasAttach(p)){const d=await resolveData(p);if(d){
+          const pn='PART_'+(partId++);
+          const pid=String(partObjId++);
+          const cl=p.cl||'image000000.jpg';
+          attachFiles.push({fn:'data/'+pn,data:d});
+          obj.__parts.push({_id:pid,mid:id,seq:String(seq++),ct:p.ct,name:cl,cid:'<'+cl.replace(/\.[^.]+$/,'')+'>',cl:cl,_data:'/data/user_de/0/com.android.providers.telephony/app_parts/'+pn});
+        }}else{
+          const pid=String(partObjId++);
+          obj.__parts.push({_id:pid,mid:id,seq:String(seq++),ct:'text/plain',text:p.text||''});
+        }
+      }
+      lines.push(JSON.stringify(obj));
+    }
+  }
+  // Build ZIP manually — zip.js output not compatible with Fig's reader
+  const smsCt=lines.filter(l=>!l.includes('"__parts"')).length;
+  const mmsCt=lines.length-smsCt;
+  log('Building Fig ZIP: '+smsCt+' SMS, '+mmsCt+' MMS, '+attachFiles.length+' attachments','ok');
+  const ndjsonData=new TextEncoder().encode(lines.join('\n')+'\n');
+  const zipFiles=[{name:'messages.ndjson',data:ndjsonData}];
+  for(const af of attachFiles)zipFiles.push({name:af.fn,data:new Uint8Array(af.data)});
+  return await buildRawZip(zipFiles);
+}
+
+async function buildRawZip(files){
+  // Pure JS ZIP creator (STORE, no compression) — compatible with Fig
+  // Build CRC32 table once
+  if(!buildRawZip._t){const t=new Uint32Array(256);for(let n=0;n<256;n++){let v=n;for(let k=0;k<8;k++)v=v&1?(0xEDB88320^(v>>>1)):(v>>>1);t[n]=v}buildRawZip._t=t}
+  function crc32(data){
+    let c=0xFFFFFFFF;const t=buildRawZip._t;const len=data.length;
+    // Process 4 bytes at a time for speed
+    let i=0;for(;i+3<len;i+=4){c=t[(c^data[i])&0xFF]^(c>>>8);c=t[(c^data[i+1])&0xFF]^(c>>>8);c=t[(c^data[i+2])&0xFF]^(c>>>8);c=t[(c^data[i+3])&0xFF]^(c>>>8)}
+    for(;i<len;i++)c=t[(c^data[i])&0xFF]^(c>>>8);
+    return(c^0xFFFFFFFF)>>>0;
+  }
+  async function deflate(data){
+    try{
+      const cs=new CompressionStream('deflate-raw');
+      const w=cs.writable.getWriter();const r=cs.readable.getReader();
+      const chunks=[];
+      const readAll=(async()=>{while(true){const{done,value}=await r.read();if(done)break;chunks.push(value)}})();
+      await w.write(data);await w.close();await readAll;
+      let total=0;for(const c of chunks)total+=c.length;
+      const out=new Uint8Array(total);let pos=0;for(const c of chunks){out.set(c,pos);pos+=c.length}
+      return out;
+    }catch(e){return null}
+  }
+  function u16(v){return[v&0xFF,(v>>8)&0xFF]}
+  function u32(v){return[v&0xFF,(v>>8)&0xFF,(v>>16)&0xFF,(v>>24)&0xFF]}
+  const enc=new TextEncoder();
+  const parts=[];const cdirs=[];let offset=0;
+  for(let fi=0;fi<files.length;fi++){
+    const f=files[fi];
+    const nameBytes=enc.encode(f.name);
+    const crc=crc32(f.data);const sz=f.data.length;
+    // Try DEFLATE, fall back to STORE
+    const compressed=await deflate(f.data);
+    const useDeflate=compressed&&compressed.length<sz;
+    const method=useDeflate?8:0;
+    const cData=useDeflate?compressed:f.data;
+    const csz=cData.length;
+    const lh=new Uint8Array([0x50,0x4B,0x03,0x04,...u16(20),...u16(0),...u16(method),...u16(0),...u16(0),...u32(crc),...u32(csz),...u32(sz),...u16(nameBytes.length),...u16(0)]);
+    parts.push(lh,nameBytes,cData);
+    const cd=new Uint8Array([0x50,0x4B,0x01,0x02,...u16(20),...u16(20),...u16(0),...u16(method),...u16(0),...u16(0),...u32(crc),...u32(csz),...u32(sz),...u16(nameBytes.length),...u16(0),...u16(0),...u16(0),...u16(0),...u32(0),...u32(offset)]);
+    cdirs.push(cd,nameBytes);
+    offset+=lh.length+nameBytes.length+cData.length;
+    if(cancelled)throw{cancelled:true};if(fi%2===0){const pct=Math.round(fi/files.length*100);showProgress('Building ZIP… '+pct+'%',90+Math.round(pct/10));await tick()}
+  }
+  const cdirOffset=offset;let cdirSize=0;
+  for(const c of cdirs)cdirSize+=c.length;
+  const eocd=new Uint8Array([0x50,0x4B,0x05,0x06,...u16(0),...u16(0),...u16(files.length),...u16(files.length),...u32(cdirSize),...u32(cdirOffset),...u16(0)]);
+  return new Blob([...parts,...cdirs,eocd],{type:'application/zip'});
+}
+
+async function buildWonderZip(messages){
+  let smsCount=0,mmsCount=0,attachId=1;
+  const xmlParts=[];
+  const attachFiles=[];
+  xmlParts.push('<?xml version="1.0" encoding="UTF-8"?>\n<messages sms_count="__SMS__" mms_count="__MMS__">\n');
+
+  for(let wi=0;wi<messages.length;wi++){
+    if(wi%50===0){if(cancelled)throw{cancelled:true};showProgress('Building Wonder… '+wi+'/'+messages.length,Math.round(wi/messages.length*80)+10);await tick()}
+    const m=messages[wi];
+    if(m.type==='sms'){
+      xmlParts.push(`  <sms address="${escXml(m.address)}" body="${escXml(m.body)}" date="${escXml(m.date)}" date_sent="0" type="${m.direction==='in'?'1':'2'}" read="${escXml(m.read||'1')}" seen="1" />\n`);
+      smsCount++;
+    }else{
+      const mb=m.direction==='in'?'1':'2';
+      const mmsDate=parseInt(m.date,10)>1e12?Math.floor(parseInt(m.date,10)/1000):parseInt(m.date,10)||0;
+      let xml=`  <mms date="${mmsDate}" read="${escXml(m.read||'1')}" msg_box="${mb}" ct_t="${escXml(m.ctT||'application/vnd.wap.multipart.related')}" m_type="${escXml(m.mType||(mb==='1'?'132':'128'))}" seen="${mb==='2'?'0':'1'}">\n`;
+      for(const a of(m.addrs||[]))xml+=`    <addr address="${escXml(a.address)}" type="${a.type}" />\n`;
+      const smilParts=[];
+      for(const p of m.parts){
+        if(hasAttach(p)){const d=await resolveData(p);if(d){
+          const ext=(p.ct||'').split('/').pop().replace('jpeg','jpg')||'bin';
+          const imgName=(p.cl||'image'+String(attachId).padStart(6,'0')+'.'+ext);
+          const fn='mms_'+(mmsCount+1)+'_'+attachId+'.'+ext;attachId++;
+          attachFiles.push({fn,data:d});
+          xml+=`    <part ct="${escXml(p.ct)}" name="${escXml(imgName)}" cl="${escXml(imgName)}" file="${escXml(fn)}" />\n`;
+          smilParts.push({src:imgName,ct:p.ct});
+        }}else{
+          xml+=`    <part ct="text/plain" text="${escXml(p.text||'')}" />\n`;
+        }
+      }
+      if(smilParts.length){
+        let smil='<smil>\n    <head>\n        <layout>\n            <root-layout width="240" height="160"/>\n';
+        smil+='            <region id="Image" width="100%" height="67%" left="0%" top="0%" fit="meet"/>\n';
+        smil+='            <region id="Text" width="100%" height="33%" left="0%" top="67%" fit="meet"/>\n';
+        smil+='        </layout>\n    </head>\n    <body>\n';
+        for(const ap of smilParts){
+          const tag=ap.ct.startsWith('image')?'img':ap.ct.startsWith('video')?'video':'ref';
+          smil+=`    <par dur="8000ms"><${tag} src="${escXml(ap.src)}" region="Image"/></par>`;
+        }
+        smil+=`</body>\n</smil>`;
+        xml=xml.replace(/(\n    <part ct=)/, `    <part ct="application/smil" name="smil.xml" cl="smil.xml" text="${escXml(smil)}" />\n$1`);
+      }
+      xml+=`  </mms>\n`;
+      xmlParts.push(xml);
+      mmsCount++;
+    }
+  }
+  xmlParts.push('</messages>\n');
+  xmlParts[0]=xmlParts[0].replace('__SMS__',String(smsCount)).replace('__MMS__',String(mmsCount));
+
+  const dateStr=new Date().toISOString().slice(0,10);
+  const xmlData=new TextEncoder().encode(xmlParts.join(''));
+  const zipFiles=[{name:'Messages_Backup_'+dateStr+'.xml',data:xmlData}];
+  for(const af of attachFiles)zipFiles.push({name:'mms_attachments/'+af.fn,data:new Uint8Array(af.data)});
+  return await buildRawZip(zipFiles);
+}
+
+// ===== BUILD =====
+buildBtn.addEventListener('click',()=>{
+  if(!parsedData)return;
+  const t=document.querySelector('input[name="target"]:checked');
+  if(!t)return;
+  if(needsPdfChoice()&&!document.querySelector('input[name="pdfmode"]:checked')){
+    const pc=$('pdfChoice');
+    pc.classList.remove('shake');void pc.offsetWidth;pc.classList.add('shake');
+    pc.style.background='#fef2f2';pc.style.borderColor='#fca5a5';
+    setTimeout(()=>{pc.style.background='#fffbeb';pc.style.borderColor='#fde68a'},1500);
+    pc.scrollIntoView({behavior:'smooth',block:'center'});
+    return;
+  }
+  buildBtn.disabled=true;buildBtn.style.display='';cancelled=false;processing=true;$('themeToggle').style.pointerEvents='none';$('themeToggle').style.opacity='.4';cancelBtn.style.display='block';cancelBtn.innerHTML='Cancel';delete cancelBtn.dataset.confirm;errorBox.style.display='none';infoBox.style.display='none';$('downloadBtn').style.display='none';
+  build(t.value).finally(()=>{processing=false;$('themeToggle').style.pointerEvents='';$('themeToggle').style.opacity=''});
+});
+
+cancelBtn.addEventListener('click',()=>{
+  if(cancelBtn.dataset.confirm){cancelled=true;cancelBtn.style.display='none';return}
+  cancelBtn.dataset.confirm='1';cancelBtn.textContent='Are you sure? Tap again to cancel';
+  setTimeout(()=>{if(!cancelled){delete cancelBtn.dataset.confirm;cancelBtn.innerHTML='Cancel'}},3000);
+});
+
+async function build(target){
+  try{
+    const content=(document.querySelector('input[name="content"]:checked')||{}).value||'all';
+    const pdfSel=document.querySelector('input[name="pdfmode"]:checked');
+    const skipPdf=needsPdfChoice()&&(!pdfSel||pdfSel.value==='skip');
+    const msgs=filterMessages(parsedData.messages,content,skipPdf);
+
+    log('Building '+target+' from '+msgs.length+' messages (content='+content+', skipPdf='+skipPdf+')');
+    showProgress('Building…',20);await tick();
+    let blob,filename;
+    const baseName=selectedFile.name.replace(/\.(zip|xml)$/i,'');
+
+    if(target==='smsbackup'){
+      blob=await writeToSmsBackup(msgs);
+      filename='sms-'+baseName+'.xml';
+    }else if(target==='fig'||target==='pom'){
+      showProgress('Building '+(target==='pom'?'Pom':'Fig')+' ZIP…',40);await tick();
+      blob=await buildFigZip(msgs);
+      if(target==='pom'){
+        // POM names its own backups last_HHMMSS.zip — mimic it so POM's restore screen lists the file
+        const n=new Date(),p=x=>String(x).padStart(2,'0');
+        filename='last_'+p(n.getHours())+p(n.getMinutes())+p(n.getSeconds())+'.zip';
+      }else filename='fig-'+baseName+'.zip';
+    }else if(target==='wonder'){
+      showProgress('Building Wonder ZIP (SMS only)…',40);await tick();
+      blob=await buildWonderZip(msgs);
+      const d=new Date(),p=x=>String(x).padStart(2,'0');
+      filename='Messages_Backup_'+d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+'.zip';
+    }
+
+    cancelBtn.style.display='none';
+    progressEl.style.display='none';
+    const smsC=msgs.filter(m=>m.type==='sms').length,mmsC=msgs.length-smsC;
+    const parts=[smsC?smsC.toLocaleString()+' SMS':null,mmsC?mmsC.toLocaleString()+' MMS':null].filter(Boolean).join(' + ');
+    log('Export complete: '+msgs.length+' messages, '+formatSize(blob.size)+' → '+filename,'ok');
+    infoBox.textContent='Converted '+(parts||msgs.length.toLocaleString()+' messages')+' ('+formatSize(blob.size)+') successfully!';
+    infoBox.style.display='block';
+    const dlBtn=$('downloadBtn');
+    if(dlBtn._blobUrl)URL.revokeObjectURL(dlBtn._blobUrl);
+    const url=URL.createObjectURL(blob);dlBtn._blobUrl=url;
+    dlBtn.href=url;dlBtn.download=filename;dlBtn.style.display='block';buildBtn.style.display='none';
+    sendAnalytics({event:'convert',source:parsedData.fmt,target:target,success:true,sms:smsC,mms:mmsC,size:blob.size,duration:((Date.now()-_scanStart)/1000).toFixed(1)});
+  }catch(err){
+    if(err&&err.cancelled){log('Build cancelled by user','warn');progressEl.style.display='none';infoBox.textContent='Cancelled.';infoBox.style.display='block';}
+    else{log('Build failed: '+(err.message||err),'err');progressEl.style.display='none';errorBox.textContent=err.message||String(err);errorBox.style.display='block';sendAnalytics({event:'convert',source:parsedData?parsedData.fmt:'?',target:target,success:false,error:(err.message||String(err)).slice(0,100)});}
+  }
+  cancelBtn.style.display='none';buildBtn.disabled=false;
+}
+
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<messages sms_count="10" mms_count="2">
+  <sms address="+13477862870" body="העלאו " date="1777011080393" date_sent="0" type="1" read="1" seen="1" />
+  <sms address="+13477862870" body="Hi" date="1777011082746" date_sent="0" type="1" read="1" seen="1" />
+  <sms address="+13477862870" body="Hi" date="1777011098550" date_sent="0" type="2" read="1" seen="1" />
+  <sms address="+13477862870" body="Welcome back" date="1777011112257" date_sent="0" type="2" read="1" seen="1" />
+  <sms address="+13477862870" body="Thank you " date="1777011126633" date_sent="0" type="1" read="1" seen="1" />
+  <sms address="+13472861441" body="Hi" date="1777011168091" date_sent="0" type="1" read="1" seen="1" />
+  <sms address="+13472861441" body="Hi" date="1777011175170" date_sent="0" type="2" read="1" seen="1" />
+  <sms address="+13472861441" body="Thank you" date="1777011216761" date_sent="0" type="1" read="1" seen="1" />
+  <sms address="+13472861441" body="Got it?" date="1777011232530" date_sent="0" type="2" read="1" seen="1" />
+  <sms address="+13472861441" body="Yes" date="1777011249158" date_sent="0" type="1" read="1" seen="1" />
+  <mms date="1777011081" read="1" msg_box="1" ct_t="application/vnd.wap.multipart.related" m_type="132" seen="1">
+    <addr address="13477862870" type="137" />
+    <addr address="17185511265" type="151" />
+    <part ct="application/smil" name="smil.xml" cl="smil.xml" text="&lt;smil&gt;
+    &lt;head&gt;
+        &lt;layout&gt;
+            &lt;root-layout width=&quot;240&quot; height=&quot;160&quot;/&gt;
+            &lt;region id=&quot;Image&quot; width=&quot;100%&quot; height=&quot;67%&quot; left=&quot;0%&quot; top=&quot;0%&quot; fit=&quot;meet&quot;/&gt;
+            &lt;region id=&quot;Text&quot; width=&quot;100%&quot; height=&quot;33%&quot; left=&quot;0%&quot; top=&quot;67%&quot; fit=&quot;meet&quot;/&gt;
+        &lt;/layout&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+    &lt;par dur=&quot;8000ms&quot;&gt;&lt;img src=&quot;image000000.jpg&quot; region=&quot;Image&quot;/&gt;&lt;/par&gt;&lt;/body&gt;
+&lt;/smil&gt;" />
+    <part ct="image/jpeg" name="image000000.jpg" cl="image000000.jpg" file="mms_2_2.jpg" />
+  </mms>
+  <mms date="1777011197" read="1" msg_box="2" ct_t="application/vnd.wap.multipart.related" m_type="128" seen="0">
+    <addr address="17185511265" type="137" />
+    <addr address="+13472861441" type="151" />
+    <part ct="application/smil" cl="smil.xml" text="&lt;smil xmlns=&quot;http://www.w3.org/2001/SMIL20/Language&quot;&gt;&lt;head&gt;&lt;layout/&gt;&lt;/head&gt;&lt;body&gt;&lt;par dur=&quot;8000ms&quot;&gt;&lt;img src=&quot;file_557.jpeg&quot;/&gt;&lt;/par&gt;&lt;/body&gt;&lt;/smil&gt;" />
+    <part ct="image/jpeg" cl="file_557.jpeg" file="mms_3_4.jpg" />
+  </mms>
+</messages>

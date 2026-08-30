@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
+<smses count="5" backup_date="1782000000000" type="full">
+  <sms protocol="0" address="+15551230001" date="1769000000000" type="1" subject="null" body="OLD broken import message 1 - must be dropped" toa="null" sc_toa="null" service_center="null" read="1" status="-1" locked="0" date_sent="1769000000000" sub_id="1" readable_date="Jan 2026" contact_name="Old Import" />
+  <sms protocol="0" address="+15551230001" date="1770000000000" type="2" subject="null" body="OLD broken import message 2 - must be dropped" toa="null" sc_toa="null" service_center="null" read="1" status="-1" locked="0" date_sent="1770000000000" sub_id="1" readable_date="Feb 2026" contact_name="Old Import" />
+  <sms protocol="0" address="+15551230002" date="1778000000000" type="1" subject="null" body="NEW message on Mind 1 - must be kept" toa="null" sc_toa="null" service_center="null" read="1" status="-1" locked="0" date_sent="1778000000000" sub_id="1" readable_date="May 2026" contact_name="New Friend" />
+  <sms protocol="0" address="+15551230002" date="1778000060000" type="2" subject="null" body="NEW message on Mind 2 - must be kept" toa="null" sc_toa="null" service_center="null" read="1" status="-1" locked="0" date_sent="1778000060000" sub_id="1" readable_date="May 2026" contact_name="New Friend" />
+  <sms protocol="0" address="+15551230003" date="1778000120000" type="1" subject="null" body="NEW message on Mind 3 - must be kept" toa="null" sc_toa="null" service_center="null" read="1" status="-1" locked="0" date_sent="1778000120000" sub_id="1" readable_date="May 2026" contact_name="Another New" />
+</smses>
