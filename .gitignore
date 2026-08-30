@@ -1,0 +1,48 @@
+﻿# Dependencies
+node_modules/
+vendor/
+.gradle/
+build/
+dist/
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Environment & secrets
+.env
+.env.*
+*.key
+*.pem
+credentials.json
+service-account*.json
+token.json
+
+# Build outputs & binaries
+*.apk
+*.aab
+*.ipa
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Large files
+*.zip
+*.tar.gz
+*.rar
+*.7z
+*.rom
+*.img
+*.bin
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
