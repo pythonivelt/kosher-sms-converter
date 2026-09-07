@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Kosher Phone SMS Converter</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%236366f1'/%3E%3Cstop offset='100%25' stop-color='%234f46e5'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='8' fill='url(%23g)'/%3E%3Cpath d='M22 17a1.5 1.5 0 0 1-1.5 1.5H13l-3 3V11a1.5 1.5 0 0 1 1.5-1.5h9A1.5 1.5 0 0 1 22 11z' fill='none' stroke='white' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
 <meta name="description" content="Convert SMS/MMS backups between Fig, Wonder, Pom and SMS Backup &amp; Restore — 100% in your browser, nothing uploaded." />
 <meta name="color-scheme" content="light dark" />
 <meta name="theme-color" content="#f3f4fb" media="(prefers-color-scheme: light)" />
@@ -83,7 +84,12 @@
   .scan-results{margin-top:20px;padding:20px;background:var(--surface);border:1px solid var(--surface-border);border-radius:16px;font-size:.84rem;color:var(--text-2);display:none}
   .scan-results h3{font-size:.92rem;color:var(--text);margin-bottom:14px;font-weight:600;display:flex;align-items:center;gap:8px}
   .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-  .scan-results div.stat{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--surface-border);border-radius:10px;padding:9px 12px;margin:0}
+  .scan-results div.stat{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--surface-border);border-radius:12px;padding:10px 14px;margin:0;font-size:.85rem;color:var(--text-2)}
+  .stat-icon{width:30px;height:30px;border-radius:8px;background:rgba(79,70,229,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .stat-icon svg{width:15px;height:15px;stroke:#4f46e5;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  [data-theme="dark"] .stat-icon{background:rgba(129,140,248,.15)}
+  [data-theme="dark"] .stat-icon svg{stroke:#a5b4fc}
+  .scan-results div.stat strong{color:var(--text);font-weight:700}
   .scan-results strong{color:var(--text)}
   .detected-badge{display:inline-block;padding:3px 10px;border-radius:7px;font-size:.75rem;font-weight:600;background:var(--accent-soft);color:var(--accent);border:1px solid var(--accent-border)}
   .option-note{display:none;margin-top:6px;padding:8px 10px;border-radius:8px;background:var(--warn-soft,#fef3c7);border:1px solid var(--warn-border,#fde68a);color:var(--warn-text,#92400e);font-size:.72rem;line-height:1.45}
@@ -150,6 +156,16 @@
   .nav-logo-icon{width:32px;height:32px;border-radius:9px;background:var(--accent-grad);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px -2px rgba(99,102,241,.4);flex-shrink:0}
   .nav-logo-icon svg{width:18px;height:18px;display:block}
   .nav-right{display:flex;align-items:center;gap:12px}
+  .faq-section{position:relative;z-index:1;max-width:640px;margin:0 auto;padding:40px 24px}
+  .faq-section h2{text-align:center;margin-bottom:6px}
+  .faq-sub{text-align:center;font-size:.82rem;color:var(--text-2);margin-bottom:24px}
+  .faq-item{background:var(--card);border:1px solid var(--card-border);border-radius:14px;margin-bottom:10px;overflow:hidden;transition:box-shadow .2s}
+  .faq-item:hover{box-shadow:0 4px 16px rgba(0,0,0,.05)}
+  .faq-q{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;cursor:pointer;font-weight:600;font-size:.88rem;color:var(--text);background:none;border:none;width:100%;text-align:left;font-family:inherit;line-height:1.45}
+  .faq-q svg{width:18px;height:18px;stroke:var(--text-3);stroke-width:2;fill:none;flex-shrink:0;margin-left:12px;transition:transform .25s}
+  .faq-item.open .faq-q svg{transform:rotate(180deg)}
+  .faq-a{max-height:0;overflow:hidden;transition:max-height .3s ease}
+  .faq-a-inner{padding:0 20px 16px;font-size:.82rem;color:var(--text-2);line-height:1.6}
   .contact-cta{max-width:900px;margin:0 auto;padding:22px 20px 4px;text-align:center}
   .contact-cta-title{font-size:1.02rem;margin-bottom:4px}
   .contact-cta-sub{font-size:.78rem;color:var(--text-2,#6b7280);line-height:1.55;max-width:420px;margin:0 auto 12px}
@@ -216,12 +232,13 @@
   @media (min-width:1080px){
     .site-nav{max-width:1100px;padding:18px 32px}
     .hero h1{font-size:2.65rem}
-    .hero{padding:64px 24px 40px;max-width:760px}
+    .hero{padding:44px 24px 28px;max-width:760px}
     .hero-sub{font-size:1.06rem;max-width:640px}
-    .converter-section{max-width:640px;padding:0 24px 48px}
-    .site-section{max-width:1000px}
+    .converter-section{max-width:640px;padding:0 24px 36px}
+    .site-section{max-width:1000px;padding:28px 24px}
     .features-grid{max-width:1000px;gap:20px}
-    .compat-section{max-width:740px}
+    .compat-section{max-width:740px;padding:28px 24px}
+    .faq-section{max-width:720px;padding:28px 24px}
     .site-section-title{font-size:1.35rem}
     .contact-cta-title{font-size:1.12rem}
     .contact-cta-sub{font-size:.82rem;max-width:480px}
@@ -241,7 +258,7 @@
 </nav>
 
 <section class="hero">
-  <h1>Transfer your messages to your new phone</h1>
+  <h1>Switching phones? Take your messages with you.</h1>
   <p class="hero-sub">Transfer all your texts and pictures between kosher phones. Works with Fig, Wonder, Pom, and SMS Backup &amp; Restore. Runs in your browser — nothing gets uploaded.</p>
   <div class="hero-badges">
     <span class="hero-badge">SMS &amp; MMS</span>
@@ -273,9 +290,9 @@
 <section class="site-section">
   <h2 class="site-section-title">How it works</h2>
   <div class="steps-grid">
-    <div class="step"><div class="step-num">1</div><div class="step-title">Pick your backup</div><div class="step-desc">Choose the ZIP or XML file from your old phone</div></div>
-    <div class="step"><div class="step-num">2</div><div class="step-title">Choose your phone</div><div class="step-desc">Select which phone you're moving to</div></div>
-    <div class="step"><div class="step-num">3</div><div class="step-title">Download &amp; import</div><div class="step-desc">Get the converted file and import on your new phone</div></div>
+    <div class="step"><div class="step-num">1</div><div class="step-title">Export your messages</div><div class="step-desc">Back up your messages on your old phone</div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-title">Upload &amp; convert</div><div class="step-desc">Open the backup file here and pick your new phone</div></div>
+    <div class="step"><div class="step-num">3</div><div class="step-title">Download &amp; restore</div><div class="step-desc">Save the new file and restore it on your new phone</div></div>
   </div>
 </section>
 
@@ -298,12 +315,12 @@
   <div class="scan-results" id="scanResults">
     <h3>What's inside <span class="detected-badge" id="detectedBadge"></span></h3>
     <div class="stats-grid">
-      <div class="stat">📩 Received: <strong id="statIn">0</strong></div>
-      <div class="stat">📤 Sent: <strong id="statOut">0</strong></div>
-      <div class="stat" id="statMmsRow">📎 MMS: <strong id="statMms">0</strong></div>
-      <div class="stat" id="statAttachRow">🖼️ Attachments: <strong id="statAttach">0</strong></div>
-      <div class="stat" id="statGroupRow" style="display:none">👥 Group chats: <strong id="statGroup">0</strong></div>
-      <div class="stat" id="statPdfRow" style="display:none">📄 PDFs: <strong id="statPdf">0</strong></div>
+      <div class="stat"><span class="stat-icon"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg></span>Received messages: <strong id="statIn">0</strong></div>
+      <div class="stat"><span class="stat-icon"><svg viewBox="0 0 24 24"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg></span>Sent messages: <strong id="statOut">0</strong></div>
+      <div class="stat" id="statMmsRow"><span class="stat-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></span>MMS (pictures &amp; media): <strong id="statMms">0</strong></div>
+      <div class="stat" id="statAttachRow"><span class="stat-icon"><svg viewBox="0 0 24 24"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg></span>Attachments: <strong id="statAttach">0</strong></div>
+      <div class="stat" id="statGroupRow" style="display:none"><span class="stat-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>Group chats: <strong id="statGroup">0</strong></div>
+      <div class="stat" id="statPdfRow" style="display:none"><span class="stat-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>PDFs: <strong id="statPdf">0</strong></div>
     </div>
   </div>
 
@@ -423,6 +440,18 @@
   </div>
 </section>
 
+<section class="faq-section">
+  <h2>FAQ</h2>
+  <p class="faq-sub">Common questions about the converter.</p>
+  <div class="faq-item"><button class="faq-q" onclick="var p=this.parentElement,all=p.parentElement.querySelectorAll('.faq-item');all.forEach(function(i){if(i!==p){i.classList.remove('open');i.querySelector('.faq-a').style.maxHeight=''}});p.classList.toggle('open');var a=this.nextElementSibling;a.style.maxHeight=a.style.maxHeight?'':a.scrollHeight+'px'">Does it work with the MindPhone?<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></button><div class="faq-a"><div class="faq-a-inner">Yes. The MindPhone uses the SMS Backup &amp; Restore app, which is fully supported. Select "SMS Backup &amp; Restore" as your target in the converter and the output file will work directly on your MindPhone.</div></div></div>
+  <div class="faq-item"><button class="faq-q" onclick="var p=this.parentElement,all=p.parentElement.querySelectorAll('.faq-item');all.forEach(function(i){if(i!==p){i.classList.remove('open');i.querySelector('.faq-a').style.maxHeight=''}});p.classList.toggle('open');var a=this.nextElementSibling;a.style.maxHeight=a.style.maxHeight?'':a.scrollHeight+'px'">Do pictures and voice notes lose quality?<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></button><div class="faq-a"><div class="faq-a-inner">No — your pictures, voice notes, and videos come through exactly the same. Nothing changes or gets lower quality.</div></div></div>
+  <div class="faq-item"><button class="faq-q" onclick="var p=this.parentElement,all=p.parentElement.querySelectorAll('.faq-item');all.forEach(function(i){if(i!==p){i.classList.remove('open');i.querySelector('.faq-a').style.maxHeight=''}});p.classList.toggle('open');var a=this.nextElementSibling;a.style.maxHeight=a.style.maxHeight?'':a.scrollHeight+'px'">Can I transfer between a Fig and a TAK?<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></button><div class="faq-a"><div class="faq-a-inner">You don't even need the converter for that! Fig and TAK save messages the same way, so just take your backup file and put it on the other phone — it'll work as is.</div></div></div>
+  <div class="faq-item"><button class="faq-q" onclick="var p=this.parentElement,all=p.parentElement.querySelectorAll('.faq-item');all.forEach(function(i){if(i!==p){i.classList.remove('open');i.querySelector('.faq-a').style.maxHeight=''}});p.classList.toggle('open');var a=this.nextElementSibling;a.style.maxHeight=a.style.maxHeight?'':a.scrollHeight+'px'">Is it safe? Are my messages uploaded anywhere?<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></button><div class="faq-a"><div class="faq-a-inner">Completely safe. Everything happens right on your phone or computer — your messages are never sent anywhere. No one can see them.</div></div></div>
+  <div class="faq-item"><button class="faq-q" onclick="var p=this.parentElement,all=p.parentElement.querySelectorAll('.faq-item');all.forEach(function(i){if(i!==p){i.classList.remove('open');i.querySelector('.faq-a').style.maxHeight=''}});p.classList.toggle('open');var a=this.nextElementSibling;a.style.maxHeight=a.style.maxHeight?'':a.scrollHeight+'px'">What if my backup file is very large?<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></button><div class="faq-a"><div class="faq-a-inner">No problem — it works with even very large backups (2 GB and up), and it won't slow down your phone.</div></div></div>
+  <div class="faq-item"><button class="faq-q" onclick="var p=this.parentElement,all=p.parentElement.querySelectorAll('.faq-item');all.forEach(function(i){if(i!==p){i.classList.remove('open');i.querySelector('.faq-a').style.maxHeight=''}});p.classList.toggle('open');var a=this.nextElementSibling;a.style.maxHeight=a.style.maxHeight?'':a.scrollHeight+'px'">Does it work with iPhone?<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></button><div class="faq-a"><div class="faq-a-inner">Not currently. This tool is designed for kosher Android phones. iPhones use a completely different backup system that is not compatible.</div></div></div>
+  <div class="faq-item"><button class="faq-q" onclick="var p=this.parentElement,all=p.parentElement.querySelectorAll('.faq-item');all.forEach(function(i){if(i!==p){i.classList.remove('open');i.querySelector('.faq-a').style.maxHeight=''}});p.classList.toggle('open');var a=this.nextElementSibling;a.style.maxHeight=a.style.maxHeight?'':a.scrollHeight+'px'">What if my phone isn't listed?<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></button><div class="faq-a"><div class="faq-a-inner">New phones are added regularly. Use the Contact Us button below to request support for your phone.</div></div></div>
+</section>
+
 <section class="contact-cta">
   <h2 class="contact-cta-title">Need help or have a question?</h2>
   <p class="contact-cta-sub">Feedback, a problem with a conversion, or a phone we don't support yet — we'd love to hear from you, and we'll get back to you as soon as possible.</p>
@@ -430,7 +459,7 @@
 </section>
 
 <footer class="site-footer">
-  <p><span id="verSpan">v0.0.90</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
+  <p><span id="verSpan">v0.0.91</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
   <p style="margin-top:6px">Free and open source · Nothing gets uploaded</p>
 </footer>
 
@@ -1334,7 +1363,7 @@ async function scan(){
     let _dMin=Infinity,_dMax=0;
     const _nd=d=>{const n=parseInt(d,10)||0;return n<1e12?n*1000:n};
     for(const m of messages){
-      const _d=_nd(m.date);if(_d){if(_d<_dMin)_dMin=_d;if(_d>_dMax)_dMax=_d}
+      const _d=_nd(m.date);if(_d>1104537600000){if(_d<_dMin)_dMin=_d;if(_d>_dMax)_dMax=_d}
       _thr.add(m.isGroup&&m.addrs?[...new Set(m.addrs.map(a=>normNum(a.address)).filter(Boolean))].sort().join('~'):(normNum(m.address)||String(m.address||'?')));
       if(m.type==='sms'){m.direction==='in'?cIn++:cOut++}
       else{cMms++;for(const p of m.parts){if(!hasAttach(p))continue;cAttach++;const c=String(p.ct||'').toLowerCase();if(c.indexOf('image/')===0)_att.img++;else if(c.indexOf('audio/')===0)_att.aud++;else if(c.indexOf('video/')===0)_att.vid++;else if(c==='application/pdf')_att.pdf++;else _att.other++}}
@@ -1996,6 +2025,7 @@ cancelBtn.addEventListener('click',()=>{
 
 async function build(target){
   _buildStart=Date.now();
+  optionsEl.style.display='none';$('figTakNotice').style.display='none';
   try{
     const content=(document.querySelector('input[name="content"]:checked')||{}).value||'all';
     const pdfSel=document.querySelector('input[name="pdfmode"]:checked');
