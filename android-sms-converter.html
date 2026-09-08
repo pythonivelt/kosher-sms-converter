@@ -332,14 +332,14 @@
       <input type="radio" name="target" value="smsbackup" />
       <div>
         <div class="option-label">SMS Backup &amp; Restore</div>
-        <div class="option-desc">XML file — import on any Android phone</div>
+        <div class="option-desc" id="smsDesc">XML file — import on any Android phone</div>
       </div>
     </label>
     <label class="option" data-value="wonder" id="optWonder">
       <input type="radio" name="target" value="wonder" />
       <div>
         <div class="option-label">Wonder</div>
-        <div class="option-desc">ZIP file — for Wonder phones</div>
+        <div class="option-desc" id="wonderDesc">ZIP file — for Wonder phones</div>
         <div class="option-note" id="wonderNote">Wonder may only show the last few messages per conversation after the first import. If that happens, just import the same file again and everything will come through — messages, pictures, and voice notes.</div>
       </div>
     </label>
@@ -1404,12 +1404,18 @@ async function scan(){
     const targets={smsbackup:'optSms',fig:'optFig',pom:'optPom',wonder:'optWonder'};
     for(const[k,elId]of Object.entries(targets)){
       const el=$(elId), sup=SUPPORT_MATRIX[k];
-      if(k===fmt&&k==='fig'){
-        el.style.display='';$('cleanupLabel').style.display='';
-        $('figDesc').textContent='Remove MMS or filter content — stays in Fig format';
+      const descIds={smsbackup:'smsDesc',fig:'figDesc',wonder:'wonderDesc'};
+      const defaultDescs={smsbackup:'XML file — import on any Android phone',fig:'NDJSON ZIP — for Fig & TAK phones',wonder:'ZIP file — for Wonder phones'};
+      const cleanupDesc='Remove MMS or filter content — stays in same format';
+      const cl=$('cleanupLabel');
+      if(k===fmt&&descIds[k]){
+        el.style.display='';cl.style.display='';
+        cl.parentNode.insertBefore(el,cl.nextSibling);
+        $(descIds[k]).textContent=cleanupDesc;
         el.classList.remove('selected','disabled');el.querySelector('input').disabled=false;
       }else{
-        if(k==='fig'&&fmt!=='fig'){$('figDesc').textContent='NDJSON ZIP — for Fig & TAK phones';$('cleanupLabel').style.display='none';}
+        if(descIds[k]&&k!==fmt)$(descIds[k]).textContent=defaultDescs[k];
+        if(k===fmt)cl.style.display='none';
         el.style.display=k===fmt?'none':'';
         el.classList.remove('selected','disabled');
         el.querySelector('input').disabled=false;
@@ -1445,7 +1451,10 @@ async function scan(){
     sendAnalytics(Object.assign({event:'scan',source:fmt,sms:cIn+cOut,mms:cMms,attachments:cAttach,groups:grp.groupCount,merge:MERGE.on?1:0,duration:((Date.now()-_scanStart)/1000).toFixed(1)},scanExtras));
     scanBtn.disabled=false;cancelBtn.style.display='none';
     sourceFormat=fmt;
-    if(fmt==='fig'){$('figTakNotice').innerHTML='<b>Switching to another Fig or TAK?</b> No conversion needed — just import your backup directly. To remove pictures or keep only certain messages, select Fig / TAK below and choose what to keep.';$('figTakNotice').style.display='block';}else{$('figTakNotice').style.display='none';}
+    if(fmt==='fig'){$('figTakNotice').innerHTML='<b>Switching to another Fig or TAK?</b> No conversion needed — just import your backup directly. To remove pictures or keep only certain messages, select Fig / TAK below and choose what to keep.';$('figTakNotice').style.display='block';}
+    else if(fmt==='wonder'){$('figTakNotice').innerHTML='<b>Want to clean up your Wonder backup?</b> Select Wonder below to remove pictures or keep only certain messages.';$('figTakNotice').style.display='block';}
+    else if(fmt==='smsbackup'){$('figTakNotice').innerHTML='<b>Want to clean up your backup?</b> Select SMS Backup &amp; Restore below to remove MMS or keep only certain messages.';$('figTakNotice').style.display='block';}
+    else{$('figTakNotice').style.display='none';}
     updateUI();
     if(MERGE.on&&!MERGE.old){
       // merge step 1 complete — stash and ask for the new-phone backup
@@ -2013,7 +2022,7 @@ buildBtn.addEventListener('click',()=>{
     infoBox.innerHTML='<b>No conversion needed!</b><br>Wonder accepts Fig backups directly. Just take your Fig backup file and import it into Wonder — no conversion required.';
     infoBox.style.display='block';infoBox.scrollIntoView({behavior:'smooth',block:'center'});return;
   }
-  if(parsedData.fmt==='fig'&&t.value==='fig'){
+  if(parsedData.fmt===t.value){
     const content=(document.querySelector('input[name="content"]:checked')||{}).value||'all';
     if(content==='all'){
       infoBox.innerHTML='<b>No changes selected.</b><br>Choose "Messages only" or "MMS only" under Content to filter your backup.';
