@@ -1844,7 +1844,7 @@ async function buildFigZip(messages){
     const id=String(msgId++);
     const addr=(m.address||'').replace(/[^\d+]/g,'');
     const tid=threadMap[m._threadKey||addr]||'1';
-    if(mi%50===0){if(cancelled)throw{cancelled:true};const pct=Math.round(mi/messages.length*50);showProgress('Building messages… '+mi+'/'+messages.length,50+pct);await tick()}
+    if(mi%50===0){if(cancelled)throw{cancelled:true};const pct=Math.round(mi/messages.length*50);showProgress('Building messages… '+mi.toLocaleString()+'/'+messages.length.toLocaleString(),10+pct);await tick()}
 
     if(m.type==='sms'){
       lines.push(JSON.stringify({_id:id,thread_id:tid,address:m.address,date:m.date,date_sent:m.dateSent||'0',protocol:m.protocol||'0',read:m.read||'0',status:m.status||'-1',type:m.direction==='in'?'1':'2',reply_path_present:'0',body:m.body||'',locked:m.locked||'0',sub_id:m.subId||'1',error_code:'-1',creator:'com.figmessenger',seen:'1',ipmsg_id:'0',__display_name:m.contactName||'(Unknown)'}));
@@ -1947,7 +1947,7 @@ async function buildRawZip(files){
     offset+=lh.length+nameBytes.length+csz;
     f.data=null;
     if(partsSz>FLUSH)flush();
-    if(cancelled)throw{cancelled:true};if(fi%2===0){const pct=Math.round(fi/files.length*100);showProgress('Building ZIP… '+pct+'%',90+Math.round(pct/10));await tick()}
+    if(cancelled)throw{cancelled:true};if(fi%2===0){showProgress('Building ZIP… '+(fi+1)+'/'+files.length,60+Math.round(fi/files.length*35));await tick()}
   }
   flush();
   const cdirOffset=offset;let cdirSize=0;
@@ -2083,9 +2083,10 @@ async function build(target){
     cancelBtn.style.display='none';
     progressEl.style.display='none';
     const smsC=msgs.filter(m=>m.type==='sms').length,mmsC=msgs.length-smsC;
-    const parts=[smsC?smsC.toLocaleString()+' SMS':null,mmsC?mmsC.toLocaleString()+' MMS':null].filter(Boolean).join(' + ');
+    const total=msgs.length.toLocaleString();
+    const detail=mmsC&&smsC?' ('+smsC.toLocaleString()+' SMS + '+mmsC.toLocaleString()+' MMS)':'';
     log('Export complete: '+msgs.length+' messages, '+formatSize(blob.size)+' → '+filename,'ok');
-    infoBox.textContent='Converted '+(parts||msgs.length.toLocaleString()+' messages')+' ('+formatSize(blob.size)+') successfully!';
+    infoBox.textContent='Converted '+total+' messages'+detail+' ('+formatSize(blob.size)+') successfully!';
     if(parsedData.fmt==='merge'){infoBox.innerHTML+='<br><br><b>Now on the new phone:</b><br>1. SMS Backup &amp; Restore → menu → Tools → <b>Delete Messages</b> → All messages.<br>2. Restore this merged file.<br>3. Done — old chats correctly grouped, new messages kept, no duplicates.';}
     infoBox.style.display='block';
     const dlBtn=$('downloadBtn');
