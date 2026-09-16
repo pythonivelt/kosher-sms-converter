@@ -1,0 +1,10 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Backup viewer browser checks</title>
+<style>body{font:15px system-ui;margin:24px}button{padding:10px}iframe{width:1200px;height:800px;max-width:100%;border:1px solid #ccc}pre{white-space:pre-wrap}</style>
+<h1>Backup viewer browser checks</h1>
+<p>Uses generated, fictional backups only. Run from a local HTTP server.</p>
+<button id="smoke">Run checks</button> <button id="stress">Run 100,000-message check</button>
+<pre id="result" role="status">Ready</pre>
+<iframe id="app" src="../index.html#backupViewer" title="Viewer under test"></iframe>
+<script src="browser.js"></script>

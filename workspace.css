@@ -1,0 +1,14 @@
+[hidden]{display:none!important}
+.workspace-tabs{position:relative;z-index:1;display:flex;gap:6px;max-width:1200px;margin:0 auto;padding:0 24px 12px;border-bottom:1px solid var(--surface-border)}
+.workspace-tabs button{font:600 14px system-ui;padding:10px 22px;border:1px solid transparent;border-radius:10px;cursor:pointer;color:var(--text-2);background:transparent}
+.workspace-tabs button[aria-selected=true]{color:var(--text);background:var(--accent-soft);border-color:var(--accent-border)}
+.workspace-tabs button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+body[data-workspace] .site-nav{max-width:1200px;padding:14px 24px}
+/* Avoid flashing the former landing page while deferred scripts initialize. */
+body[data-workspace=messages]>.hero,body[data-workspace=messages]>.compat-section,body[data-workspace=messages]>.site-section,body[data-workspace=messages]>.faq-section,body[data-workspace=messages]>.contact-cta,body[data-workspace=messages]>.site-footer,body[data-workspace=messages]>#converter{display:none}
+body[data-workspace] #backupViewer{margin:16px auto;padding:18px 24px}
+body[data-workspace] .bv-layout{height:calc(100dvh - 258px);min-height:360px;max-height:none}
+body[data-workspace] #converter{margin-top:24px}
+body[data-workspace] #converter>.card{max-width:720px}
+.bv-progress{display:flex;align-items:center;gap:12px;margin-bottom:12px}.bv-progress progress{width:100%;height:12px;accent-color:var(--accent)}.bv-progress button{white-space:nowrap}
+@media(max-width:650px){.workspace-tabs{padding:0 12px 10px}.workspace-tabs button{padding:9px 16px}body[data-workspace] .site-nav{padding:12px}body[data-workspace] #backupViewer{margin:10px 8px;padding:12px}body[data-workspace] .bv-layout{height:calc(100dvh - 320px);min-height:400px}}

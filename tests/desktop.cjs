@@ -1,0 +1,17 @@
+'use strict';
+const assert = require('node:assert/strict');
+const {isTrustedPage, isExternalLink, windowOptions} = require('../desktop/policy.cjs');
+const entry = 'file:///C:/Apps/Kosher%20SMS/index.html';
+assert(isTrustedPage(entry + '?desktop=1#messages', entry));
+assert(!isTrustedPage('file:///C:/Users/private.txt', entry));
+assert(!isTrustedPage('https://example.com/index.html', entry));
+assert(!isTrustedPage('javascript:alert(1)', entry));
+assert(isExternalLink('https://github.com/technobulb/kosher-sms-converter'));
+for (const url of ['javascript:alert(1)', 'file:///C:/Windows/System32/cmd.exe', 'https://github.com.evil.example/', 'https://user:secret@github.com/', 'http://github.com/', 'not a URL']) assert(!isExternalLink(url));
+assert.equal(windowOptions.webPreferences.nodeIntegration, false);
+assert.equal(windowOptions.webPreferences.contextIsolation, true);
+assert.equal(windowOptions.webPreferences.sandbox, true);
+assert.equal(windowOptions.webPreferences.webSecurity, true);
+assert.equal(windowOptions.webPreferences.webviewTag, false);
+assert(!windowOptions.webPreferences.partition.startsWith('persist:'));
+console.log('PASS desktop navigation, external links, renderer isolation and ephemeral session');

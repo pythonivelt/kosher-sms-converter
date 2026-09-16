@@ -1,0 +1,16 @@
+{
+  "name": "kosher-sms-desktop",
+  "productName": "Kosher SMS",
+  "version": "0.1.0",
+  "description": "Local SMS, MMS and contacts viewer with backup conversion",
+  "private": true,
+  "main": "desktop/main.cjs",
+  "scripts": {
+    "start": "electron .",
+    "test": "node tests/parsers.cjs && node tests/desktop.cjs",
+    "package:win": "python scripts/package_windows.py"
+  },
+  "devDependencies": {
+    "electron": "44.3.0"
+  }
+}
