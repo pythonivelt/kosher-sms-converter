@@ -6,6 +6,12 @@
 <title>Kosher Phone SMS Converter</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%236366f1'/%3E%3Cstop offset='100%25' stop-color='%234f46e5'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='8' fill='url(%23g)'/%3E%3Cpath d='M22 17a1.5 1.5 0 0 1-1.5 1.5H13l-3 3V11a1.5 1.5 0 0 1 1.5-1.5h9A1.5 1.5 0 0 1 22 11z' fill='none' stroke='white' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
 <meta name="description" content="Convert SMS/MMS backups between Fig, Wonder, Pom and SMS Backup &amp; Restore — 100% in your browser, nothing uploaded." />
+<meta name="keywords" content="kosher phone, SMS converter, kosher SMS, Fig phone, Wonder phone, Pom phone, MMS transfer, SMS Backup Restore, message transfer, kosher phone backup" />
+<link rel="canonical" href="https://pythonivelt.github.io/kosher-sms-converter/" />
+<meta property="og:title" content="Kosher Phone SMS Converter" />
+<meta property="og:description" content="Transfer texts and pictures between kosher phones. Works with Fig, Wonder, Pom, and SMS Backup &amp; Restore. Free, private, runs in your browser." />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://pythonivelt.github.io/kosher-sms-converter/" />
 <meta name="color-scheme" content="light dark" />
 <meta name="theme-color" content="#f3f4fb" media="(prefers-color-scheme: light)" />
 <meta name="theme-color" content="#141418" media="(prefers-color-scheme: dark)" />
@@ -13,7 +19,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@zip.js/zip.js@2.7.52/dist/zip.min.js"></script>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
-  :root{--accent:#6366f1;--accent-2:#8b5cf6;--accent-grad:linear-gradient(135deg,#6366f1,#8b5cf6);--ok:#10b981;--ok-2:#059669;--danger:#ef4444;--danger-2:#dc2626}
+  :root{--accent:#7c3aed;--accent-2:#8b5cf6;--accent-grad:linear-gradient(135deg,#7c3aed,#8b5cf6);--ok:#10b981;--ok-2:#059669;--danger:#ef4444;--danger-2:#dc2626}
   [data-theme="light"]{
     --bg:#f3f4fb;--glow-1:rgba(99,102,241,.14);--glow-2:rgba(16,185,129,.10);
     --card:#ffffff;--card-border:rgba(15,23,42,.08);
@@ -245,6 +251,52 @@
     .contact-cta-sub{font-size:.82rem;max-width:480px}
   }
   @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+  .vw-overlay{position:fixed;inset:0;z-index:10000;background:var(--bg);display:none;flex-direction:column}
+  .vw-overlay.open{display:flex}
+  .vw-topbar{display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--card-border);background:var(--card);flex:0 0 auto}
+  .vw-topbar input{flex:1;padding:8px 12px;border-radius:10px;border:1px solid var(--field-border);background:var(--field);color:var(--text);font-size:.88rem;outline:none}
+  .vw-topbar input:focus{border-color:var(--accent)}
+  .vw-topbar input::placeholder{color:var(--text-3)}
+  .vw-close{width:36px;height:36px;border-radius:10px;border:1px solid var(--surface-border);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-2);font-size:1.3rem;line-height:1;padding:0}
+  .vw-close:hover{border-color:var(--accent-border);color:var(--accent)}
+  .vw-body{display:flex;flex:1;overflow:hidden}
+  .vw-sidebar{width:320px;border-right:1px solid var(--card-border);overflow-y:auto;background:var(--card);flex:0 0 320px}
+  .vw-contact{padding:12px 16px;cursor:pointer;border-bottom:1px solid var(--surface-border);transition:background .15s}
+  .vw-contact:hover{background:var(--surface)}
+  .vw-contact.active{background:var(--accent-soft);border-left:3px solid var(--accent)}
+  .vw-contact-name{font-weight:600;font-size:.9rem;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .vw-contact-preview{font-size:.8rem;color:var(--text-2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .vw-contact-meta{display:flex;justify-content:space-between;font-size:.72rem;color:var(--text-3);margin-top:4px}
+  .vw-main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+  .vw-chat-header{padding:12px 20px;font-weight:600;font-size:.95rem;border-bottom:1px solid var(--card-border);background:var(--card);color:var(--text)}
+  .vw-chat{flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:4px}
+  .vw-bubble-wrap{display:flex;flex-direction:column;max-width:75%;margin-bottom:2px}
+  .vw-in{align-self:flex-start}
+  .vw-out{align-self:flex-end}
+  .vw-bubble{padding:8px 12px;border-radius:14px;font-size:.88rem;line-height:1.45;word-wrap:break-word;white-space:pre-wrap}
+  .vw-in .vw-bubble{background:var(--surface-2);color:var(--text);border-bottom-left-radius:4px}
+  .vw-out .vw-bubble{background:var(--accent);color:#fff;border-bottom-right-radius:4px}
+  .vw-time{font-size:.68rem;color:var(--text-3);margin-top:2px;padding:0 4px}
+  .vw-out .vw-time{text-align:right}
+  .vw-media{max-width:250px;max-height:300px;border-radius:10px;display:block;margin:4px 0;cursor:pointer}
+  .vw-media-full{position:fixed;inset:0;z-index:10001;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;cursor:pointer}
+  .vw-media-full img{max-width:90vw;max-height:90vh;border-radius:8px}
+  .vw-attach{font-size:.8rem;color:var(--text-3);font-style:italic;padding:4px 0}
+  .vw-load-more{display:block;margin:0 auto 12px;padding:6px 16px;border-radius:8px;border:1px solid var(--surface-border);background:var(--surface);color:var(--text-2);font-size:.8rem;cursor:pointer}
+  .vw-load-more:hover{border-color:var(--accent-border);color:var(--accent)}
+  .vw-date-sep{text-align:center;font-size:.72rem;color:var(--text-3);padding:8px 0;font-weight:500}
+  .vw-empty{flex:1;display:flex;align-items:center;justify-content:center;color:var(--text-3);font-size:.9rem}
+  .vw-count{display:inline-block;background:var(--accent-soft);color:var(--accent);font-size:.7rem;padding:1px 7px;border-radius:10px;font-weight:600}
+  .btn-preview{background:var(--surface);color:var(--accent);border:1px solid var(--accent-border);margin-right:8px}
+  .btn-preview:hover{background:var(--accent-soft)}
+  @media(max-width:700px){
+    .vw-sidebar{width:100%;flex:0 0 100%}
+    .vw-main{display:none}
+    .vw-body.vw-chat-open .vw-sidebar{display:none}
+    .vw-body.vw-chat-open .vw-main{display:flex;flex:1}
+    .vw-back{display:inline-flex!important}
+  }
+  .vw-back{display:none;align-items:center;gap:4px;background:none;border:none;color:var(--accent);cursor:pointer;font-size:.85rem;padding:0;margin-right:8px}
 </style>
 </head>
 <body>
@@ -280,7 +332,7 @@
       <tr><td>Buggy Backup App</td><td class="c-yes">SMS only</td><td class="c-no">Not in plan as of now</td></tr>
       <tr><td>Fig</td><td class="c-yes">SMS + MMS</td><td class="c-yes">SMS + MMS</td></tr>
       <tr><td>Wonder</td><td class="c-yes">SMS + MMS</td><td class="c-yes">SMS + MMS</td></tr>
-      <tr id="pomRow"><td>Pom</td><td class="c-yes" id="pomOut">SMS only</td><td class="c-no">Not yet</td></tr>
+      <tr id="pomRow"><td>Pom</td><td class="c-yes" id="pomOut">SMS + MMS</td><td class="c-yes">SMS + MMS</td></tr>
       <tr><td>TAK</td><td class="c-yes">SMS + MMS</td><td class="c-yes">SMS + MMS</td></tr>
     </tbody>
   </table>
@@ -348,7 +400,7 @@
       <input type="radio" name="target" value="pom" />
       <div>
         <div class="option-label">Pom</div>
-        <div class="option-desc">Import to Pom not yet supported</div>
+        <div class="option-desc" id="pomDesc">ZIP file — for Pom phones</div>
       </div>
     </label>
     <div class="section-label" id="cleanupLabel" style="display:none">Clean up your backup</div>
@@ -406,6 +458,7 @@
     </div>
 
     <div id="convertNotice" style="display:none"><strong>⚠ Please note:</strong> This tool is tested but some messages may end up in a different chat — for example, group messages might land in a private chat. This can't be undone by re-converting. If you run into any issues, <a href="#" onclick="document.getElementById('contactModal').classList.add('open');return false">let us know</a> and we'll work on a fix.</div>
+    <button class="btn btn-preview" id="previewBtn" style="display:none" type="button">Preview Messages</button>
     <button class="btn btn-success" id="buildBtn" disabled>Convert</button>
   </div>
 
@@ -460,6 +513,22 @@
   <button class="contact-cta-btn" id="contactCta" type="button">Contact Us</button>
 </section>
 
+<div class="vw-overlay" id="viewerModal">
+  <div class="vw-topbar">
+    <input type="text" id="viewerSearch" placeholder="Search messages…" autocomplete="off">
+    <button class="vw-close" id="viewerClose" type="button">×</button>
+  </div>
+  <div class="vw-body" id="viewerBody">
+    <div class="vw-sidebar" id="viewerSidebar">
+      <div id="viewerList"></div>
+    </div>
+    <div class="vw-main">
+      <div class="vw-chat-header"><button class="vw-back" id="viewerBack" type="button">← Back</button><span id="viewerChatHeader">Select a conversation</span></div>
+      <div class="vw-chat" id="viewerChat"><div class="vw-empty">Select a conversation to view messages</div></div>
+    </div>
+  </div>
+</div>
+
 <footer class="site-footer">
   <p><span id="verSpan">v0.0.95</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
   <p style="margin-top:6px">Free and open source · Nothing gets uploaded</p>
@@ -489,12 +558,12 @@ const SUPPORT_MATRIX={
   smsbackup:{out:true, in:true},
   fig:      {out:true, in:true},
   wonder:   {out:true, in:true},
-  pom:      {out:'sms', in:false},
+  pom:      {out:true, in:true},
   buggy:    {out:'sms', in:false}
 };
 const TEST_MODE=new URLSearchParams(location.search).has('test');
 const BETA_MODE=new URLSearchParams(location.search).has('beta');
-if(BETA_MODE){SUPPORT_MATRIX.pom={out:true,in:false};document.querySelector('.nav-logo').insertAdjacentHTML('beforeend',' <span style="background:#f59e0b;color:#fff;font-size:.6rem;padding:2px 6px;border-radius:4px;vertical-align:middle;font-weight:700;letter-spacing:.04em">BETA</span>');var pe=document.getElementById('pomOut');if(pe){pe.textContent='SMS + MMS';pe.className='c-yes'}}
+if(BETA_MODE){document.querySelector('.nav-logo').insertAdjacentHTML('beforeend',' <span style="background:#f59e0b;color:#fff;font-size:.6rem;padding:2px 6px;border-radius:4px;vertical-align:middle;font-weight:700;letter-spacing:.04em">BETA</span>')}
 
 const $=id=>document.getElementById(id);
 const dropZone=$('dropZone'),fileInput=$('fileInput'),scanBtn=$('scanBtn'),buildBtn=$('buildBtn'),
@@ -1214,7 +1283,7 @@ $('mergeLink').addEventListener('click',e=>{
   $('mergeLink').innerHTML=MERGE.on?'✖ Exit merge mode — back to normal convert':'🔧 Already imported with an old version? Fix &amp; merge →';
   $('mergeBanner').style.display=MERGE.on?'block':'none';
   selectedFile=null;parsedData=null;fileInput.value='';fileNameEl.style.display='none';scanBtn.style.display='none';
-  scanResults.style.display='none';optionsEl.style.display='none';infoBox.style.display='none';errorBox.style.display='none';$('downloadBtn').style.display='none';$('convertNotice').style.display='none';$('figTakNotice').style.display='none';buildBtn.disabled=true;dropZone.classList.remove('done');dropZone.style.display='';$('mergeLink').parentElement.style.display='';
+  scanResults.style.display='none';optionsEl.style.display='none';infoBox.style.display='none';errorBox.style.display='none';$('downloadBtn').style.display='none';$('convertNotice').style.display='none';$('figTakNotice').style.display='none';$('previewBtn').style.display='none';buildBtn.disabled=true;dropZone.classList.remove('done');dropZone.style.display='';$('mergeLink').parentElement.style.display='';
   document.querySelector('.drop-text').textContent=MERGE.on?'Upload the OLD phone backup (step 1)':DEFAULT_DROP_TEXT;
   if(zipReader){try{zipReader.close()}catch{}zipReader=null}
 });
@@ -1243,7 +1312,7 @@ function pickFile(f){
   fileNameEl.textContent=f.name+' ('+formatSize(f.size)+')';
   fileNameEl.style.display='block';
   scanBtn.style.display='';scanBtn.disabled=false;cancelBtn.style.display='none';
-  scanResults.style.display='none';optionsEl.style.display='none';infoBox.style.display='none';errorBox.style.display='none';progressEl.style.display='none';$('downloadBtn').style.display='none';
+  scanResults.style.display='none';optionsEl.style.display='none';infoBox.style.display='none';errorBox.style.display='none';progressEl.style.display='none';$('downloadBtn').style.display='none';$('previewBtn').style.display='none';
   dropZone.classList.remove('done');dropZone.style.display='';parsedData=null;
   if(zipReader){try{zipReader.close()}catch{}zipReader=null}
 }
@@ -1304,6 +1373,9 @@ async function scan(){
             if(fallback){fmt=fallback.fmt;messages=fallback.messages;attachMap=fallback.attachMap;pdfCount=fallback.pdfCount||0;pdfSize=fallback.pdfSize||0}
             else{log('Fallback also failed','err');return}
           }
+        }else if(entries.some(e=>e.filename==='_pom_backup_manifest.json')||entries.some(e=>e.filename==='sms.xml'&&entries.some(e2=>e2.filename==='mms.xml'))){
+          fmt='pom';log('Detected Pom native backup (XML)','ok');
+          ({messages,attachMap,pdfCount,pdfSize}=await parsePomZip(entries));
         }else if(hasWonderXml){
           fmt='wonder';log('Detected Wonder format (XML)','ok');
           // Log Wonder ZIP structure for analysis
@@ -1387,7 +1459,7 @@ async function scan(){
     $('optGroups').style.display=grp.groupCount>0?'':'none';
     $('groupsChk').checked=true;$('optGroups').classList.add('selected');
     $('groupsDesc').textContent=grp.groupCount.toLocaleString()+' messages in group chats — uncheck to leave them out (group threading fixed in v0.0.71, feedback welcome)';
-    const pmw=$('pomMmsWarn');if(pmw)pmw.style.display=(fmt==='pom'&&cMms>0&&!BETA_MODE)?'block':'none';
+    const pmw=$('pomMmsWarn');if(pmw)pmw.style.display='none';
 
     if(pdfCount>0){
       const pdfXmlSize=Math.round(pdfSize*1.37);
@@ -1405,8 +1477,8 @@ async function scan(){
     const targets={smsbackup:'optSms',fig:'optFig',pom:'optPom',wonder:'optWonder'};
     for(const[k,elId]of Object.entries(targets)){
       const el=$(elId), sup=SUPPORT_MATRIX[k];
-      const descIds={smsbackup:'smsDesc',fig:'figDesc',wonder:'wonderDesc'};
-      const defaultDescs={smsbackup:'XML file — import on any Android phone',fig:'NDJSON ZIP — for Fig & TAK phones',wonder:'ZIP file — for Wonder phones'};
+      const descIds={smsbackup:'smsDesc',fig:'figDesc',wonder:'wonderDesc',pom:'pomDesc'};
+      const defaultDescs={smsbackup:'XML file — import on any Android phone',fig:'NDJSON ZIP — for Fig & TAK phones',wonder:'ZIP file — for Wonder phones',pom:'ZIP file — for Pom phones'};
       const cleanupDesc='Remove MMS or filter content — stays in same format';
       const cl=$('cleanupLabel');
       if(k===fmt&&descIds[k]){
@@ -1446,6 +1518,7 @@ async function scan(){
 
     scanBtn.style.display='none';
     scanResults.style.display='block';
+    $('previewBtn').style.display='';
     dropZone.classList.add('done');dropZone.style.display='none';$('mergeLink').parentElement.style.display='none';
     optionsEl.style.display='block';
     $('convertNotice').style.display='block';
@@ -1454,6 +1527,7 @@ async function scan(){
     sourceFormat=fmt;
     if(fmt==='fig'){$('figTakNotice').innerHTML='<b>Switching to another Fig or TAK?</b> No conversion needed — just import your backup directly. To remove pictures or keep only certain messages, select Fig / TAK below and choose what to keep.';$('figTakNotice').style.display='block';}
     else if(fmt==='wonder'){$('figTakNotice').innerHTML='<b>Want to clean up your Wonder backup?</b> Select Wonder below to remove pictures or keep only certain messages.';$('figTakNotice').style.display='block';}
+    else if(fmt==='pom'){$('figTakNotice').innerHTML='<b>Want to clean up your Pom backup?</b> Select Pom below to remove pictures or keep only certain messages.';$('figTakNotice').style.display='block';}
     else if(fmt==='smsbackup'){$('figTakNotice').innerHTML='<b>Want to clean up your backup?</b> Select SMS Backup &amp; Restore below to remove MMS or keep only certain messages.';$('figTakNotice').style.display='block';}
     else{$('figTakNotice').style.display='none';}
     updateUI();
@@ -1710,6 +1784,119 @@ async function rehydrateSmsBackupStream(file,messages){
   log('Attachments loaded for '+mmsIdx+' MMS messages','ok');
 }
 
+// ===== POM NATIVE PARSER =====
+
+async function parsePomZip(entries){
+  showProgress('Reading Pom backup…',15);await tick();
+  const smsEntry=entries.find(e=>e.filename==='sms.xml');
+  const mmsEntry=entries.find(e=>e.filename==='mms.xml');
+  const messages=[];let pdfCount=0,pdfSize=0;
+
+  // Parse sms.xml (SyncTech format)
+  if(smsEntry){
+    log('Parsing sms.xml ('+formatSize(smsEntry.uncompressedSize||0)+')');
+    const blob=await smsEntry.getData(new zip.BlobWriter());
+    const reader=blob.stream().getReader();
+    const dec=new TextDecoder();
+    let buf='',bytesRead=0;const tot=blob.size;let lastPct=0;
+    function pa(s){const a={},r=/(\w[\w_-]*)=(?:"([^"]*)"|'([^']*)')/g;let m;while((m=r.exec(s))!==null)a[m[1]]=m[2]!=null?m[2]:m[3];return a}
+    function ux(s){return s?s.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&apos;/g,"'").replace(/&#13;/g,'\r').replace(/&#10;/g,'\n').replace(/&#x([0-9a-fA-F]+);/g,(_,h)=>String.fromCodePoint(parseInt(h,16))).replace(/&#(\d+);/g,(_,d)=>String.fromCodePoint(parseInt(d))):''}
+    while(true){
+      const{done,value}=await reader.read();
+      if(value){bytesRead+=value.length;buf+=dec.decode(value,{stream:!done})}
+      let moved=true;
+      while(moved){
+        moved=false;
+        const si=buf.indexOf('<sms ');
+        if(si===-1){const lt=buf.lastIndexOf('>');if(lt>0)buf=buf.substring(lt+1);break}
+        const end=buf.indexOf('/>',si);
+        if(end===-1)break;
+        const tag=buf.substring(si,end+2);buf=buf.substring(end+2);moved=true;
+        const a=pa(tag);const t=a.type;
+        const cn=a.contact_name&&a.contact_name!=='null'?ux(a.contact_name):'(Unknown)';
+        messages.push({type:'sms',address:a.address||'',body:ux(a.body)||'',date:a.date||'',dateSent:a.date_sent||'0',direction:t==='1'?'in':'out',read:a.read||'0',contactName:cn,protocol:a.protocol,status:a.status,locked:a.locked,subId:a.sub_id});
+        if(messages.length%500===0){if(cancelled)throw{cancelled:true};const p=Math.min(40,Math.round(bytesRead/tot*25)+15);if(p>lastPct+1){lastPct=p;showProgress('Parsing SMS… '+messages.length.toLocaleString()+' messages',p);await tick()}}
+      }
+      if(done)break;
+    }
+    log('Parsed '+messages.length+' SMS from sms.xml','ok');
+  }
+
+  // Parse mms.xml (Pom native format)
+  if(mmsEntry){
+    log('Parsing mms.xml ('+formatSize(mmsEntry.uncompressedSize||0)+')');
+    const blob=await mmsEntry.getData(new zip.BlobWriter());
+    const reader=blob.stream().getReader();
+    const dec=new TextDecoder();
+    let buf='',bytesRead=0,mmsCount=0;const tot=blob.size;let lastPct=40;
+    function pa2(s){const a={},r=/(\w[\w_-]*)=(?:"([^"]*)"|'([^']*)')/g;let m;while((m=r.exec(s))!==null)a[m[1]]=m[2]!=null?m[2]:m[3];return a}
+    function ux2(s){return s?s.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&apos;/g,"'").replace(/&#13;/g,'\r').replace(/&#10;/g,'\n').replace(/&#x([0-9a-fA-F]+);/g,(_,h)=>String.fromCodePoint(parseInt(h,16))).replace(/&#(\d+);/g,(_,d)=>String.fromCodePoint(parseInt(d))):''}
+    function nv(v){return v==='null'?null:v}
+
+    while(true){
+      const{done,value}=await reader.read();
+      if(value){bytesRead+=value.length;buf+=dec.decode(value,{stream:!done})}
+      let moved=true;
+      while(moved){
+        moved=false;
+        const mi=buf.indexOf('<mms ');
+        if(mi===-1){const lt=buf.lastIndexOf('>');if(lt>0)buf=buf.substring(lt+1);break}
+        const end=buf.indexOf('</mms>',mi);
+        if(end===-1)break;
+        const block=buf.substring(mi,end+6);buf=buf.substring(end+6);moved=true;
+
+        const mt=block.substring(0,block.indexOf('>'));
+        const ma=pa2(mt);
+        const mb=ma.msg_box||'1';
+        // Pom MMS date is in SECONDS — convert to ms for internal model
+        const rawDate=parseInt(ma.date)||0;
+        const dateMs=rawDate<1e12?String(rawDate*1000):String(rawDate);
+
+        // Parse addrs
+        const addrs=[];
+        const ar=/<addr\s[^>]*\/?\s*>/g;let am;
+        while((am=ar.exec(block))!==null){const aa=pa2(am[0]);addrs.push({address:(aa.address||'').replace(/\/TYPE=PLMN$/i,''),type:parseInt(aa.type)||137,charset:aa.charset||'106'})}
+
+        // Parse recipients
+        const recipients=[];
+        const rr=/<r\s[^>]*\/?\s*>/g;let rm;
+        while((rm=rr.exec(block))!==null){const ra=pa2(rm[0]);if(ra.address)recipients.push(ra.address)}
+
+        // Parse parts
+        const parts=[];
+        const pr=/<part\s[^>]*\/?\s*>/g;let pm;
+        while((pm=pr.exec(block))!==null){
+          const pp=pa2(pm[0]);const ct=pp.ct||'';
+          if(ct==='application/smil')continue;
+          if(pp._data_b64&&pp._data_b64!=='null'){
+            const raw=b642ab(pp._data_b64);
+            if(ct==='application/pdf'){pdfCount++;pdfSize+=raw.byteLength}
+            parts.push({ct,cl:nv(pp.cl)||nv(pp.name)||'',cid:nv(pp.cid)||'',data:raw,seq:parseInt(pp.seq)||0});
+          }else if(pp.text!=null&&pp.text!=='null'){
+            parts.push({ct:ct||'text/plain',text:ux2(pp.text),seq:parseInt(pp.seq)||0});
+          }
+        }
+
+        // Determine primary address and contact name
+        let addr='',cn='(Unknown)';
+        const senderAddr=addrs.find(a=>a.type===137);
+        const recipAddr=addrs.find(a=>a.type===151);
+        if(mb==='1'&&senderAddr)addr=senderAddr.address;
+        else if(recipAddr)addr=recipAddr.address;
+        else if(recipients.length)addr=recipients[0];
+
+        messages.push({type:'mms',date:dateMs,dateSent:ma.date_sent?String((parseInt(ma.date_sent)||0)<1e12?(parseInt(ma.date_sent)||0)*1000:parseInt(ma.date_sent)||0):'0',direction:mb==='1'?'in':'out',read:ma.read||'0',address:(addr||'').replace(/\s/g,''),contactName:cn,addrs,parts,msgBox:mb,ctT:nv(ma.ct_t)||'application/vnd.wap.multipart.related',mType:nv(ma.m_type)||'132',mSize:nv(ma.m_size),mId:nv(ma.m_id),trId:nv(ma.tr_id),locked:ma.locked||'0',seen:ma.seen||'1',_pomRecipients:recipients.length?recipients:null});
+        mmsCount++;
+        if(mmsCount%100===0){if(cancelled)throw{cancelled:true};const p=Math.min(90,Math.round(bytesRead/tot*50)+40);if(p>lastPct+1){lastPct=p;showProgress('Parsing MMS… '+mmsCount+' messages ('+formatSize(bytesRead)+')',p);await tick()}}
+      }
+      if(done)break;
+    }
+    log('Parsed '+mmsCount+' MMS from mms.xml','ok');
+  }
+
+  return{messages,attachMap:{},pdfCount,pdfSize};
+}
+
 // ===== WRITERS =====
 
 function normNum(a){const d=String(a||'').replace(/\D/g,'');return d.length>=10?d.slice(-10):d}
@@ -1902,8 +2089,8 @@ async function buildFigZip(messages){
   return await buildRawZip(zipFiles);
 }
 
-async function buildRawZip(files){
-  // Pure JS ZIP creator (STORE, no compression) — compatible with Fig
+async function buildRawZip(files,zipComment){
+  // Pure JS ZIP creator — compatible with Fig; optional zipComment for Pom
   // Build CRC32 table once
   if(!buildRawZip._t){const t=new Uint32Array(256);for(let n=0;n<256;n++){let v=n;for(let k=0;k<8;k++)v=v&1?(0xEDB88320^(v>>>1)):(v>>>1);t[n]=v}buildRawZip._t=t}
   function crc32(data){
@@ -1953,8 +2140,9 @@ async function buildRawZip(files){
   flush();
   const cdirOffset=offset;let cdirSize=0;
   for(const c of cdirs)cdirSize+=c.length;
-  const eocd=new Uint8Array([0x50,0x4B,0x05,0x06,...u16(0),...u16(0),...u16(files.length),...u16(files.length),...u32(cdirSize),...u32(cdirOffset),...u16(0)]);
-  return new Blob([...blobs,...cdirs,eocd],{type:'application/zip'});
+  const commentBytes=zipComment?enc.encode(zipComment):new Uint8Array(0);
+  const eocd=new Uint8Array([0x50,0x4B,0x05,0x06,...u16(0),...u16(0),...u16(files.length),...u16(files.length),...u32(cdirSize),...u32(cdirOffset),...u16(commentBytes.length)]);
+  return new Blob([...blobs,...cdirs,eocd,commentBytes],{type:'application/zip'});
 }
 
 async function buildWonderZip(messages){
@@ -2014,6 +2202,88 @@ async function buildWonderZip(messages){
   return await buildRawZip(zipFiles);
 }
 
+async function buildPomZip(messages){
+  const own=detectOwnNumber(messages);
+  let smsCount=0,mmsCount=0;
+  const smsParts=[];const mmsParts=[];
+
+  smsParts.push("<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>\n<smses count=\"__COUNT__\">\n");
+  mmsParts.push("<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>\n<mmses count=\"__COUNT__\">\n");
+
+  for(let i=0;i<messages.length;i++){
+    if(i%100===0){if(cancelled)throw{cancelled:true};showProgress('Building Pom… '+i+'/'+messages.length,Math.round(i/messages.length*80)+10);await tick()}
+    const m=messages[i];
+    if(m.type==='sms'){
+      const t=m.direction==='in'?'1':'2';
+      smsParts.push(`  <sms protocol="${escXml(m.protocol??0)}" address="${escXml(m.address)}" date="${escXml(m.date)}" type="${t}" subject="null" body="${escXml(m.body)}" service_center="null" read="${escXml(m.read??0)}" status="${escXml(m.status??-1)}" locked="${escXml(m.locked??0)}" date_sent="${escXml(m.dateSent??0)}" toa="null" sc_toa="null" readable_date="null" contact_name="null" />\n`);
+      smsCount++;
+    }else{
+      const mb=m.direction==='in'?'1':'2';
+      const dateS=parseInt(m.date,10)>1e12?Math.floor(parseInt(m.date,10)/1000):parseInt(m.date,10)||0;
+      const dateSentS=parseInt(m.dateSent,10)>1e12?Math.floor(parseInt(m.dateSent,10)/1000):parseInt(m.dateSent,10)||0;
+      let xml=`  <mms date="${dateS}" date_sent="${dateSentS}" msg_box="${mb}" read="${escXml(m.read??0)}" m_type="${escXml(m.mType||(mb==='1'?'132':'128'))}" ct_t="${escXml(m.ctT||'application/vnd.wap.multipart.related')}" m_size="${escXml(m.mSize??0)}" sub="null" sub_cs="106" locked="${escXml(m.locked??0)}" m_id="${escXml(m.mId||'')}" tr_id="${escXml(m.trId||'')}">\n    <parts>\n`;
+      // SMIL part first
+      const attachNames=[];
+      for(const p of m.parts){if(hasAttach(p))attachNames.push(p.cl||'image000000.jpg')}
+      if(attachNames.length){
+        let smil='<smil><head><layout><root-layout/><region id="Image" fit="meet" top="0" left="0" height="100%" width="100%"/></layout></head><body>';
+        for(const an of attachNames)smil+='<par dur="5000ms"><img src="'+an+'" region="Image" /></par>';
+        smil+='</body></smil>';
+        xml+=`      <part seq="-1" ct="application/smil" name="smil.xml" cid="&lt;smil&gt;" cl="smil.xml" text="${escXml(smil)}" _data="null" />\n`;
+      }
+      let seq=0;
+      for(const p of m.parts){
+        if(hasAttach(p)){
+          const d=await resolveData(p);
+          if(d){
+            const cl=p.cl||'image000000.jpg';
+            xml+=`      <part seq="${seq++}" ct="${escXml(p.ct)}" name="${escXml(cl)}" cl="${escXml(cl)}" cid="${escXml(p.cid||'')}" chset="null" cd="null" fn="null" _data="null" _data_b64="${ab2b64(d)}" />\n`;
+          }
+        }else{
+          xml+=`      <part seq="${seq++}" ct="text/plain" chset="106" text="${escXml(p.text||'')}" _data="null" />\n`;
+        }
+      }
+      if(!m.parts.length)xml+=`      <part seq="0" ct="text/plain" chset="106" text="" _data="null" />\n`;
+      xml+=`    </parts>\n    <addrs>\n`;
+      for(const a of(m.addrs||[]))xml+=`      <addr address="${escXml((a.address||'').replace(/\/TYPE=PLMN$/i,''))}" type="${a.type}" charset="${a.charset||106}" />\n`;
+      if(!(m.addrs||[]).length){
+        if(mb==='1')xml+=`      <addr address="${escXml(m.address)}" type="137" charset="106" />\n`;
+        else xml+=`      <addr address="${escXml(m.address)}" type="151" charset="106" />\n`;
+      }
+      xml+=`    </addrs>\n`;
+      // recipients block
+      const recipSet=new Set();
+      if(m._pomRecipients){for(const r of m._pomRecipients)recipSet.add(r)}
+      else{
+        const seen=new Set();
+        for(const a of(m.addrs||[])){const n=normNum(a.address);if(n&&n!==own&&!seen.has(n)){seen.add(n);recipSet.add(a.address)}}
+      }
+      if(recipSet.size){
+        xml+=`    <recipients>\n`;
+        for(const r of recipSet)xml+=`      <r address="${escXml(r)}" />\n`;
+        xml+=`    </recipients>\n`;
+      }
+      xml+=`  </mms>\n`;
+      mmsParts.push(xml);
+      mmsCount++;
+    }
+  }
+  smsParts.push('</smses>\n');
+  mmsParts.push('</mmses>\n');
+  smsParts[0]=smsParts[0].replace('__COUNT__',String(smsCount));
+  mmsParts[0]=mmsParts[0].replace('__COUNT__',String(mmsCount));
+
+  const manifest=JSON.stringify({magic:'POM_BACKUP_v1',createdAt:Date.now(),mode:'Full',counts:{sms:smsCount,mms:mmsCount},apps:['sms','mms']});
+  const enc=new TextEncoder();
+  const zipFiles=[
+    {name:'sms.xml',data:enc.encode(smsParts.join(''))},
+    {name:'mms.xml',data:enc.encode(mmsParts.join(''))},
+    {name:'_pom_backup_manifest.json',data:enc.encode(manifest)}
+  ];
+  log('Building Pom ZIP: '+smsCount+' SMS, '+mmsCount+' MMS','ok');
+  return await buildRawZip(zipFiles,'POM_BACKUP_v1');
+}
+
 // ===== BUILD =====
 buildBtn.addEventListener('click',()=>{
   if(!parsedData)return;
@@ -2067,14 +2337,15 @@ async function build(target){
     if(target==='smsbackup'){
       blob=await writeToSmsBackup(msgs);
       filename='sms-'+baseName+'.xml';
-    }else if(target==='fig'||target==='pom'){
-      showProgress('Building '+(target==='pom'?'Pom':'Fig')+' ZIP…',40);await tick();
+    }else if(target==='pom'){
+      showProgress('Building Pom ZIP…',40);await tick();
+      blob=await buildPomZip(msgs);
+      const n=new Date(),p=x=>String(x).padStart(2,'0');
+      filename='MessagesBackup_'+n.getFullYear()+p(n.getMonth()+1)+p(n.getDate())+'_'+p(n.getHours())+p(n.getMinutes())+p(n.getSeconds())+'.zip';
+    }else if(target==='fig'){
+      showProgress('Building Fig ZIP…',40);await tick();
       blob=await buildFigZip(msgs);
-      if(target==='pom'){
-        // POM names its own backups last_HHMMSS.zip — mimic it so POM's restore screen lists the file
-        const n=new Date(),p=x=>String(x).padStart(2,'0');
-        filename='last_'+p(n.getHours())+p(n.getMinutes())+p(n.getSeconds())+'.zip';
-      }else filename='fig-'+baseName+'.zip';
+      filename='fig-'+baseName+'.zip';
     }else if(target==='wonder'){
       showProgress('Building Fig ZIP for Wonder…',40);await tick();
       blob=await buildFigZip(msgs);
@@ -2102,8 +2373,199 @@ async function build(target){
   cancelBtn.style.display='none';if($('downloadBtn').style.display==='none'){buildBtn.disabled=false;buildBtn.style.display='';}
 }
 
+window._normNum=normNum;window._hasAttach=hasAttach;window._resolveData=resolveData;
+Object.defineProperty(window,'_parsedData',{get:function(){return parsedData},configurable:true});
+
+})();
+
+// ── Message Viewer ──
+(function(){
+'use strict';
+var _convos=[],_active=null,_batch=50,_searchTimer=null;
+
+function nd(d){var n=parseInt(d,10)||0;return n<1e12?n*1000:n}
+function shortDate(ts){if(!ts)return'';var d=new Date(ts),now=new Date();if(d.toDateString()===now.toDateString())return d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});if(d.getFullYear()===now.getFullYear())return d.toLocaleDateString([],{month:'short',day:'numeric'});return d.toLocaleDateString([],{month:'short',day:'numeric',year:'numeric'})}
+function stamp(ts){if(!ts)return'';return new Date(ts).toLocaleString([],{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}
+function dayLabel(ts){return new Date(ts).toLocaleDateString([],{weekday:'long',month:'long',day:'numeric',year:'numeric'})}
+function hesc(s){var d=document.createElement('div');d.textContent=s||'';return d.innerHTML}
+
+function groupMessages(msgs){
+  var convos={},normNum=window._normNum;
+  for(var i=0;i<msgs.length;i++){
+    var m=msgs[i],key;
+    if(m.isGroup&&m.addrs){
+      var nums=[];for(var j=0;j<m.addrs.length;j++){var n=normNum(m.addrs[j].address);if(n)nums.push(n)}
+      key=[...new Set(nums)].sort().join('~');
+    }else{key=normNum(m.address)||m.address||'?'}
+    if(!convos[key])convos[key]={key:key,msgs:[],name:'',lastDate:0,lastBody:'',isGroup:false};
+    convos[key].msgs.push(m);
+    var d=nd(m.date);
+    if(d>convos[key].lastDate){
+      convos[key].lastDate=d;
+      convos[key].name=m.contactName||m.address||key;
+      if(m.type==='sms')convos[key].lastBody=(m.body||'').slice(0,80);
+      else if(m.parts){var tp=null;for(var k=0;k<m.parts.length;k++){if(m.parts[k].text){tp=m.parts[k].text;break}}convos[key].lastBody=tp?(tp).slice(0,80):'[Media]'}
+    }
+    if(m.isGroup)convos[key].isGroup=true;
+  }
+  var arr=Object.values(convos);arr.sort(function(a,b){return b.lastDate-a.lastDate});return arr;
+}
+
+function renderSidebar(convos,filter){
+  var list=document.getElementById('viewerList');list.innerHTML='';
+  var f=(filter||'').toLowerCase(),shown=0;
+  for(var i=0;i<convos.length;i++){
+    var c=convos[i];
+    if(f){
+      var match=c.name.toLowerCase().indexOf(f)>=0||c.key.indexOf(f)>=0||c.lastBody.toLowerCase().indexOf(f)>=0;
+      if(!match){var found=false;for(var j=0;j<c.msgs.length;j++){var b=c.msgs[j].body||'';if(b.toLowerCase().indexOf(f)>=0){found=true;break}}if(!found)continue}
+    }
+    var el=document.createElement('div');
+    el.className='vw-contact'+(c===_active?' active':'');
+    el.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center"><div class="vw-contact-name">'+hesc(c.name)+'</div>'+(c.isGroup?'<span style="font-size:.65rem;color:var(--text-3)">Group</span>':'')+'</div><div class="vw-contact-preview">'+hesc(c.lastBody)+'</div><div class="vw-contact-meta"><span class="vw-count">'+c.msgs.length+'</span><span>'+shortDate(c.lastDate)+'</span></div>';
+    el._convo=c;
+    el.addEventListener('click',function(){selectConvo(this._convo)});
+    list.appendChild(el);
+    shown++;
+  }
+  if(!shown){list.innerHTML='<div style="padding:20px;text-align:center;color:var(--text-3);font-size:.85rem">No conversations found</div>'}
+}
+
+function selectConvo(c){
+  _active=c;
+  document.querySelectorAll('.vw-contact').forEach(function(el){el.classList.toggle('active',el._convo===c)});
+  document.getElementById('viewerChatHeader').textContent=c.name+(c.isGroup?' (Group)':'');
+  document.getElementById('viewerBody').classList.add('vw-chat-open');
+  var chatEl=document.getElementById('viewerChat');chatEl.innerHTML='';
+  var sorted=c.msgs.slice().sort(function(a,b){return nd(a.date)-nd(b.date)});
+  var start=Math.max(0,sorted.length-_batch);
+  if(start>0){
+    var more=document.createElement('button');more.className='vw-load-more';
+    more.textContent='Load earlier messages ('+start+' more)';
+    more._start=start;more._sorted=sorted;
+    more.addEventListener('click',function(){
+      var s=Math.max(0,this._start-_batch),batch=this._sorted.slice(s,this._start);
+      var prevH=chatEl.scrollHeight,frag=document.createDocumentFragment();
+      var lastDay='';
+      for(var i=0;i<batch.length;i++){
+        var dl=dayLabel(nd(batch[i].date));
+        if(dl!==lastDay){lastDay=dl;var sep=document.createElement('div');sep.className='vw-date-sep';sep.textContent=dl;frag.appendChild(sep)}
+        frag.appendChild(makeBubble(batch[i]));
+      }
+      chatEl.insertBefore(frag,this.nextSibling);
+      chatEl.scrollTop=chatEl.scrollHeight-prevH;
+      this._start=s;
+      if(s>0)this.textContent='Load earlier messages ('+s+' more)';
+      else this.remove();
+      batch.forEach(function(m){if(m.type==='mms')loadMedia(m)});
+    });
+    chatEl.appendChild(more);
+  }
+  var batch=sorted.slice(start),lastDay='';
+  for(var i=0;i<batch.length;i++){
+    var dl=dayLabel(nd(batch[i].date));
+    if(dl!==lastDay){lastDay=dl;var sep=document.createElement('div');sep.className='vw-date-sep';sep.textContent=dl;chatEl.appendChild(sep)}
+    chatEl.appendChild(makeBubble(batch[i]));
+  }
+  chatEl.scrollTop=chatEl.scrollHeight;
+  batch.forEach(function(m){if(m.type==='mms')loadMedia(m)});
+}
+
+function makeBubble(m){
+  var wrap=document.createElement('div');
+  wrap.className='vw-bubble-wrap '+(m.direction==='in'?'vw-in':'vw-out');
+  var bubble=document.createElement('div');bubble.className='vw-bubble';
+  if(m.type==='sms'){
+    bubble.textContent=m.body||'';
+  }else if(m.parts){
+    var hasContent=false;
+    for(var i=0;i<m.parts.length;i++){
+      var p=m.parts[i],ct=(p.ct||'').toLowerCase();
+      if(p.text&&!window._hasAttach(p)){
+        var t=document.createElement('div');t.textContent=p.text;bubble.appendChild(t);hasContent=true;
+      }else if(ct.indexOf('image/')===0){
+        var img=document.createElement('img');img.className='vw-media';img.alt='Image';img.dataset.mid=nd(m.date)+'_'+(p.seq||i);
+        img.addEventListener('click',function(){
+          var ov=document.createElement('div');ov.className='vw-media-full';
+          var big=document.createElement('img');big.src=this.src;ov.appendChild(big);
+          ov.addEventListener('click',function(){this.remove()});
+          document.body.appendChild(ov);
+        });
+        bubble.appendChild(img);hasContent=true;
+      }else if(ct.indexOf('video/')===0){
+        var vid=document.createElement('video');vid.className='vw-media';vid.controls=true;vid.dataset.mid=nd(m.date)+'_'+(p.seq||i);
+        bubble.appendChild(vid);hasContent=true;
+      }else if(ct.indexOf('audio/')===0){
+        var aud=document.createElement('audio');aud.controls=true;aud.style.maxWidth='100%';aud.style.display='block';aud.dataset.mid=nd(m.date)+'_'+(p.seq||i);
+        bubble.appendChild(aud);hasContent=true;
+      }else if(window._hasAttach(p)){
+        var att=document.createElement('div');att.className='vw-attach';att.textContent='['+ct+' attachment]';bubble.appendChild(att);hasContent=true;
+      }
+    }
+    if(!hasContent)bubble.textContent='[MMS]';
+  }else{bubble.textContent='[MMS]'}
+  var time=document.createElement('div');time.className='vw-time';time.textContent=stamp(nd(m.date));
+  wrap.appendChild(bubble);wrap.appendChild(time);return wrap;
+}
+
+function loadMedia(m){
+  if(!m.parts)return;
+  for(var i=0;i<m.parts.length;i++){
+    (function(p,idx){
+      if(!window._hasAttach(p))return;
+      var ct=(p.ct||'').toLowerCase();
+      if(ct.indexOf('image/')!==0&&ct.indexOf('video/')!==0&&ct.indexOf('audio/')!==0)return;
+      window._resolveData(p).then(function(data){
+        if(!data)return;
+        var blob=new Blob([data],{type:p.ct||'application/octet-stream'});
+        var url=URL.createObjectURL(blob);
+        var mid=nd(m.date)+'_'+(p.seq||idx);
+        var el=document.querySelector('[data-mid="'+mid+'"]');
+        if(!el)return;
+        if(el.tagName==='IMG')el.src=url;
+        else if(el.tagName==='VIDEO')el.src=url;
+        else if(el.tagName==='AUDIO'){var src=document.createElement('source');src.src=url;src.type=p.ct;el.appendChild(src);el.load()}
+      }).catch(function(){});
+    })(m.parts[i],i);
+  }
+}
+
+document.getElementById('previewBtn').addEventListener('click',function(){
+  if(!window._parsedData||!window._parsedData.messages.length)return;
+  _convos=groupMessages(window._parsedData.messages);
+  _active=null;
+  document.getElementById('viewerSearch').value='';
+  document.getElementById('viewerBody').classList.remove('vw-chat-open');
+  renderSidebar(_convos);
+  document.getElementById('viewerChat').innerHTML='<div class="vw-empty">Select a conversation to view messages</div>';
+  document.getElementById('viewerModal').classList.add('open');
+  document.body.style.overflow='hidden';
+});
+
+document.getElementById('viewerClose').addEventListener('click',function(){
+  document.getElementById('viewerModal').classList.remove('open');
+  document.body.style.overflow='';
+});
+
+document.getElementById('viewerBack').addEventListener('click',function(){
+  document.getElementById('viewerBody').classList.remove('vw-chat-open');
+});
+
+document.getElementById('viewerSearch').addEventListener('input',function(){
+  var val=this.value;
+  clearTimeout(_searchTimer);
+  _searchTimer=setTimeout(function(){renderSidebar(_convos,val)},200);
+});
+
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape'&&document.getElementById('viewerModal').classList.contains('open')){
+    document.getElementById('viewerModal').classList.remove('open');
+    document.body.style.overflow='';
+  }
+});
 })();
 </script>
+<script src="viewer.js"></script>
 
 <div class="modal-overlay" id="contactModal" role="dialog" aria-modal="true" aria-labelledby="contactTitle">
   <div class="modal-wrap">
