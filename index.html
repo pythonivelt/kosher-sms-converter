@@ -500,7 +500,7 @@ const SUPPORT_MATRIX={
 };
 const TEST_MODE=new URLSearchParams(location.search).has('test');
 const BETA_MODE=new URLSearchParams(location.search).has('beta');
-if(BETA_MODE){SUPPORT_MATRIX.pom={out:true,in:false};document.querySelector('.nav-logo').insertAdjacentHTML('beforeend',' <span style="background:#f59e0b;color:#fff;font-size:.6rem;padding:2px 6px;border-radius:4px;vertical-align:middle;font-weight:700;letter-spacing:.04em">BETA</span>');var pe=document.getElementById('pomOut');if(pe){pe.textContent='SMS + MMS';pe.className='c-yes'}}
+if(BETA_MODE){SUPPORT_MATRIX.pom={out:true,in:true};document.querySelector('.nav-logo').insertAdjacentHTML('beforeend',' <span style="background:#f59e0b;color:#fff;font-size:.6rem;padding:2px 6px;border-radius:4px;vertical-align:middle;font-weight:700;letter-spacing:.04em">BETA</span>');var pe=document.getElementById('pomOut');if(pe){pe.textContent='SMS + MMS';pe.className='c-yes'};var pd=document.getElementById('optPom');if(pd){var dd=pd.querySelector('.option-desc');if(dd)dd.textContent='ZIP file — for Pom phones'}}
 
 const $=id=>document.getElementById(id);
 const dropZone=$('dropZone'),fileInput=$('fileInput'),scanBtn=$('scanBtn'),buildBtn=$('buildBtn'),
@@ -1189,9 +1189,10 @@ async function fallbackZipScan(file){
   }
   let linked=0,unlinked=0;
   for(const m of messages){if(m.type==='mms')for(const p of m.parts){if(p._fallbackAttach)linked++;else if(p._zipRef)unlinked++}}
-  if(messages.some(m=>m.creator&&m.creator.includes('.pom'))){fmt='pom';log('Detected Pom backup (creator contains .pom)','ok')}
+  let pomLegacy=false;
+  if(messages.some(m=>m.creator&&m.creator.includes('.pom'))){fmt='pom';pomLegacy=true;log('Detected Pom legacy backup (creator contains .pom)','ok')}
   log('Fallback scan: found '+messages.length+' messages, '+Object.keys(attachMap).length+' attachments in ZIP, '+linked+' linked'+(unlinked?' ('+unlinked+' unlinked!)':''),'ok');
-  return{fmt,messages,attachMap,pdfCount,pdfSize};
+  return{fmt,messages,attachMap,pdfCount,pdfSize,pomLegacy};
 }
 
 
@@ -1267,7 +1268,7 @@ async function scan(){
     log('Scanning '+selectedFile.name+' ('+formatSize(selectedFile.size)+')');
     showProgress('Opening file…',10);await tick();
     const isZip=selectedFile.name.toLowerCase().endsWith('.zip');
-    let messages,attachMap,fmt,pdfCount=0,pdfSize=0;
+    let messages,attachMap,fmt,pdfCount=0,pdfSize=0,pomLegacy=false;
 
     if(isZip){
       let entries;
@@ -1303,13 +1304,16 @@ async function scan(){
           fmt='fig';log('Detected Fig format (NDJSON)','ok');
           try{
             ({messages,attachMap,pdfCount,pdfSize}=await parseFigZip(entries));
-            if(messages.some(m=>m.creator&&m.creator.includes('.pom'))){fmt='pom';log('Detected Pom backup (creator: com.figmessenger.pom)','ok')}
+            if(messages.some(m=>m.creator&&m.creator.includes('.pom'))){fmt='pom';pomLegacy=true;log('Detected Pom legacy backup (creator: com.figmessenger.pom)','ok')}
           }catch(parseErr){
             log('zip.js read failed: '+parseErr.message+' — trying fallback…','warn');
             const fallback=await fallbackZipScan(selectedFile);
-            if(fallback){fmt=fallback.fmt;messages=fallback.messages;attachMap=fallback.attachMap;pdfCount=fallback.pdfCount||0;pdfSize=fallback.pdfSize||0}
+            if(fallback){fmt=fallback.fmt;messages=fallback.messages;attachMap=fallback.attachMap;pdfCount=fallback.pdfCount||0;pdfSize=fallback.pdfSize||0;if(fallback.pomLegacy)pomLegacy=true}
             else{log('Fallback also failed','err');return}
           }
+        }else if(BETA_MODE&&(entries.some(e=>e.filename==='_pom_backup_manifest.json')||entries.some(e=>e.filename==='sms.xml'&&entries.some(e2=>e2.filename==='mms.xml')))){
+          fmt='pom';log('Detected Pom native backup (XML)','ok');
+          ({messages,attachMap,pdfCount,pdfSize}=await parsePomZip(entries));
         }else if(hasWonderXml){
           fmt='wonder';log('Detected Wonder format (XML)','ok');
           // Log Wonder ZIP structure for analysis
@@ -1381,7 +1385,7 @@ async function scan(){
     {const _fp=(cIn+cOut)+'|'+cMms+'|'+cAttach+'|'+(_dMin<Infinity?_dMin:0)+'|'+(_dMax||0);let _h=2166136261;for(let _i=0;_i<_fp.length;_i++){_h^=_fp.charCodeAt(_i);_h=Math.imul(_h,16777619)}scanExtras.bkp=('0000000'+(_h>>>0).toString(16)).slice(-8)}
 
     log('Parsed '+messages.length+' messages ('+cIn+' in, '+cOut+' out, '+cMms+' MMS, '+cAttach+' attachments)'+(pdfCount?' + '+pdfCount+' PDFs':''),'ok');
-    $('detectedBadge').textContent=fmt==='merge'?'Merged':fmt==='fig'?'Fig / TAK':fmt==='pom'?'Pom':fmt==='wonder'?'Wonder':fmt==='buggy'?'Buggy Backup App':'SMS Backup & Restore';
+    $('detectedBadge').textContent=fmt==='merge'?'Merged':fmt==='fig'?'Fig / TAK':fmt==='pom'?(pomLegacy?'Pom (old system)':'Pom'):fmt==='wonder'?'Wonder':fmt==='buggy'?'Buggy Backup App':'SMS Backup & Restore';
     $('statIn').textContent=cIn.toLocaleString();
     $('statOut').textContent=cOut.toLocaleString();
     $('statMms').textContent=cMms.toLocaleString();
@@ -1716,6 +1720,100 @@ async function rehydrateSmsBackupStream(file,messages){
   log('Attachments loaded for '+mmsIdx+' MMS messages','ok');
 }
 
+async function parsePomZip(entries){
+  showProgress('Reading Pom backup…',15);await tick();
+  const smsEntry=entries.find(e=>e.filename==='sms.xml');
+  const mmsEntry=entries.find(e=>e.filename==='mms.xml');
+  const messages=[];let pdfCount=0,pdfSize=0;
+  if(smsEntry){
+    log('Parsing sms.xml ('+formatSize(smsEntry.uncompressedSize||0)+')');
+    const blob=await smsEntry.getData(new zip.BlobWriter());
+    const reader=blob.stream().getReader();
+    const dec=new TextDecoder();
+    let buf='',bytesRead=0;const tot=blob.size;let lastPct=0;
+    function pa(s){const a={},r=/(\w[\w_-]*)=(?:"([^"]*)"|'([^']*)')/g;let m;while((m=r.exec(s))!==null)a[m[1]]=m[2]!=null?m[2]:m[3];return a}
+    function ux(s){return s?s.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&apos;/g,"'").replace(/&#13;/g,'\r').replace(/&#10;/g,'\n').replace(/&#x([0-9a-fA-F]+);/g,(_,h)=>String.fromCodePoint(parseInt(h,16))).replace(/&#(\d+);/g,(_,d)=>String.fromCodePoint(parseInt(d))):''}
+    while(true){
+      const{done,value}=await reader.read();
+      if(value){bytesRead+=value.length;buf+=dec.decode(value,{stream:!done})}
+      let moved=true;
+      while(moved){
+        moved=false;
+        const si=buf.indexOf('<sms ');
+        if(si===-1){const lt=buf.lastIndexOf('>');if(lt>0)buf=buf.substring(lt+1);break}
+        const end=buf.indexOf('/>',si);
+        if(end===-1)break;
+        const tag=buf.substring(si,end+2);buf=buf.substring(end+2);moved=true;
+        const a=pa(tag);const t=a.type;
+        const cn=a.contact_name&&a.contact_name!=='null'?ux(a.contact_name):'(Unknown)';
+        messages.push({type:'sms',address:a.address||'',body:ux(a.body)||'',date:a.date||'',dateSent:a.date_sent||'0',direction:t==='1'?'in':'out',read:a.read||'0',contactName:cn,protocol:a.protocol,status:a.status,locked:a.locked,subId:a.sub_id});
+        if(messages.length%500===0){if(cancelled)throw{cancelled:true};const p=Math.min(40,Math.round(bytesRead/tot*25)+15);if(p>lastPct+1){lastPct=p;showProgress('Parsing SMS… '+messages.length.toLocaleString()+' messages',p);await tick()}}
+      }
+      if(done)break;
+    }
+    log('Parsed '+messages.length+' SMS from sms.xml','ok');
+  }
+  if(mmsEntry){
+    log('Parsing mms.xml ('+formatSize(mmsEntry.uncompressedSize||0)+')');
+    const blob=await mmsEntry.getData(new zip.BlobWriter());
+    const reader=blob.stream().getReader();
+    const dec=new TextDecoder();
+    let buf='',bytesRead=0,mmsCount=0;const tot=blob.size;let lastPct=40;
+    function pa2(s){const a={},r=/(\w[\w_-]*)=(?:"([^"]*)"|'([^']*)')/g;let m;while((m=r.exec(s))!==null)a[m[1]]=m[2]!=null?m[2]:m[3];return a}
+    function ux2(s){return s?s.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&apos;/g,"'").replace(/&#13;/g,'\r').replace(/&#10;/g,'\n').replace(/&#x([0-9a-fA-F]+);/g,(_,h)=>String.fromCodePoint(parseInt(h,16))).replace(/&#(\d+);/g,(_,d)=>String.fromCodePoint(parseInt(d))):''}
+    function nv(v){return v==='null'?null:v}
+    while(true){
+      const{done,value}=await reader.read();
+      if(value){bytesRead+=value.length;buf+=dec.decode(value,{stream:!done})}
+      let moved=true;
+      while(moved){
+        moved=false;
+        const mi=buf.indexOf('<mms ');
+        if(mi===-1){const lt=buf.lastIndexOf('>');if(lt>0)buf=buf.substring(lt+1);break}
+        const end=buf.indexOf('</mms>',mi);
+        if(end===-1)break;
+        const block=buf.substring(mi,end+6);buf=buf.substring(end+6);moved=true;
+        const mt=block.substring(0,block.indexOf('>'));
+        const ma=pa2(mt);
+        const mb=ma.msg_box||'1';
+        const rawDate=parseInt(ma.date)||0;
+        const dateMs=rawDate<1e12?String(rawDate*1000):String(rawDate);
+        const addrs=[];
+        const ar=/<addr\s[^>]*\/?\s*>/g;let am;
+        while((am=ar.exec(block))!==null){const aa=pa2(am[0]);addrs.push({address:(aa.address||'').replace(/\/TYPE=PLMN$/i,''),type:parseInt(aa.type)||137,charset:aa.charset||'106'})}
+        const recipients=[];
+        const rr=/<r\s[^>]*\/?\s*>/g;let rm;
+        while((rm=rr.exec(block))!==null){const ra=pa2(rm[0]);if(ra.address)recipients.push(ra.address)}
+        const parts=[];
+        const pr=/<part\s[^>]*\/?\s*>/g;let pm;
+        while((pm=pr.exec(block))!==null){
+          const pp=pa2(pm[0]);const ct=pp.ct||'';
+          if(ct==='application/smil')continue;
+          if(pp._data_b64&&pp._data_b64!=='null'){
+            const raw=b642ab(pp._data_b64);
+            if(ct==='application/pdf'){pdfCount++;pdfSize+=raw.byteLength}
+            parts.push({ct,cl:nv(pp.cl)||nv(pp.name)||'',cid:nv(pp.cid)||'',data:raw,seq:parseInt(pp.seq)||0});
+          }else if(pp.text!=null&&pp.text!=='null'){
+            parts.push({ct:ct||'text/plain',text:ux2(pp.text),seq:parseInt(pp.seq)||0});
+          }
+        }
+        let addr='',cn='(Unknown)';
+        const senderAddr=addrs.find(a=>a.type===137);
+        const recipAddr=addrs.find(a=>a.type===151);
+        if(mb==='1'&&senderAddr)addr=senderAddr.address;
+        else if(recipAddr)addr=recipAddr.address;
+        else if(recipients.length)addr=recipients[0];
+        messages.push({type:'mms',date:dateMs,dateSent:ma.date_sent?String((parseInt(ma.date_sent)||0)<1e12?(parseInt(ma.date_sent)||0)*1000:parseInt(ma.date_sent)||0):'0',direction:mb==='1'?'in':'out',read:ma.read||'0',address:(addr||'').replace(/\s/g,''),contactName:cn,addrs,parts,msgBox:mb,ctT:nv(ma.ct_t)||'application/vnd.wap.multipart.related',mType:nv(ma.m_type)||'132',mSize:nv(ma.m_size),mId:nv(ma.m_id),trId:nv(ma.tr_id),locked:ma.locked||'0',seen:ma.seen||'1',_pomRecipients:recipients.length?recipients:null});
+        mmsCount++;
+        if(mmsCount%100===0){if(cancelled)throw{cancelled:true};const p=Math.min(90,Math.round(bytesRead/tot*50)+40);if(p>lastPct+1){lastPct=p;showProgress('Parsing MMS… '+mmsCount+' messages ('+formatSize(bytesRead)+')',p);await tick()}}
+      }
+      if(done)break;
+    }
+    log('Parsed '+mmsCount+' MMS from mms.xml','ok');
+  }
+  return{messages,attachMap:{},pdfCount,pdfSize};
+}
+
 // ===== WRITERS =====
 
 function normNum(a){const d=String(a||'').replace(/\D/g,'');return d.length>=10?d.slice(-10):d}
@@ -1908,7 +2006,7 @@ async function buildFigZip(messages){
   return await buildRawZip(zipFiles);
 }
 
-async function buildRawZip(files){
+async function buildRawZip(files,zipComment){
   // Pure JS ZIP creator (STORE, no compression) — compatible with Fig
   // Build CRC32 table once
   if(!buildRawZip._t){const t=new Uint32Array(256);for(let n=0;n<256;n++){let v=n;for(let k=0;k<8;k++)v=v&1?(0xEDB88320^(v>>>1)):(v>>>1);t[n]=v}buildRawZip._t=t}
@@ -1959,8 +2057,9 @@ async function buildRawZip(files){
   flush();
   const cdirOffset=offset;let cdirSize=0;
   for(const c of cdirs)cdirSize+=c.length;
-  const eocd=new Uint8Array([0x50,0x4B,0x05,0x06,...u16(0),...u16(0),...u16(files.length),...u16(files.length),...u32(cdirSize),...u32(cdirOffset),...u16(0)]);
-  return new Blob([...blobs,...cdirs,eocd],{type:'application/zip'});
+  const commentBytes=zipComment?enc.encode(zipComment):new Uint8Array(0);
+  const eocd=new Uint8Array([0x50,0x4B,0x05,0x06,...u16(0),...u16(0),...u16(files.length),...u16(files.length),...u32(cdirSize),...u32(cdirOffset),...u16(commentBytes.length)]);
+  return new Blob([...blobs,...cdirs,eocd,commentBytes],{type:'application/zip'});
 }
 
 async function buildWonderZip(messages){
@@ -2020,6 +2119,83 @@ async function buildWonderZip(messages){
   return await buildRawZip(zipFiles);
 }
 
+async function buildPomZip(messages){
+  const own=detectOwnNumber(messages);
+  let smsCount=0,mmsCount=0;
+  const smsParts=[];const mmsParts=[];
+  smsParts.push("<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>\n<smses count=\"__COUNT__\">\n");
+  mmsParts.push("<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>\n<mmses count=\"__COUNT__\">\n");
+  for(let i=0;i<messages.length;i++){
+    if(i%100===0){if(cancelled)throw{cancelled:true};showProgress('Building Pom… '+i+'/'+messages.length,Math.round(i/messages.length*80)+10);await tick()}
+    const m=messages[i];
+    if(m.type==='sms'){
+      const t=m.direction==='in'?'1':'2';
+      smsParts.push(`  <sms protocol="${escXml(m.protocol??0)}" address="${escXml(m.address)}" date="${escXml(m.date)}" type="${t}" subject="null" body="${escXml(m.body)}" service_center="null" read="${escXml(m.read??0)}" status="${escXml(m.status??-1)}" locked="${escXml(m.locked??0)}" date_sent="${escXml(m.dateSent??0)}" toa="null" sc_toa="null" readable_date="null" contact_name="null" />\n`);
+      smsCount++;
+    }else{
+      const mb=m.direction==='in'?'1':'2';
+      const dateS=parseInt(m.date,10)>1e12?Math.floor(parseInt(m.date,10)/1000):parseInt(m.date,10)||0;
+      const dateSentS=parseInt(m.dateSent,10)>1e12?Math.floor(parseInt(m.dateSent,10)/1000):parseInt(m.dateSent,10)||0;
+      let xml=`  <mms date="${dateS}" date_sent="${dateSentS}" msg_box="${mb}" read="${escXml(m.read??0)}" m_type="${escXml(m.mType||(mb==='1'?'132':'128'))}" ct_t="${escXml(m.ctT||'application/vnd.wap.multipart.related')}" m_size="${escXml(m.mSize??0)}" sub="null" sub_cs="106" locked="${escXml(m.locked??0)}" m_id="${escXml(m.mId||'')}" tr_id="${escXml(m.trId||'')}">\n    <parts>\n`;
+      const attachNames=[];
+      for(const p of m.parts){if(hasAttach(p))attachNames.push(p.cl||'image000000.jpg')}
+      if(attachNames.length){
+        let smil='<smil><head><layout><root-layout/><region id="Image" fit="meet" top="0" left="0" height="100%" width="100%"/></layout></head><body>';
+        for(const an of attachNames)smil+='<par dur="5000ms"><img src="'+an+'" region="Image" /></par>';
+        smil+='</body></smil>';
+        xml+=`      <part seq="-1" ct="application/smil" name="smil.xml" cid="&lt;smil&gt;" cl="smil.xml" text="${escXml(smil)}" _data="null" />\n`;
+      }
+      let seq=0;
+      for(const p of m.parts){
+        if(hasAttach(p)){
+          const d=await resolveData(p);
+          if(d){
+            const cl=p.cl||'image000000.jpg';
+            xml+=`      <part seq="${seq++}" ct="${escXml(p.ct)}" name="${escXml(cl)}" cl="${escXml(cl)}" cid="${escXml(p.cid||'')}" chset="null" cd="null" fn="null" _data="null" _data_b64="${ab2b64(d)}" />\n`;
+          }
+        }else{
+          xml+=`      <part seq="${seq++}" ct="text/plain" chset="106" text="${escXml(p.text||'')}" _data="null" />\n`;
+        }
+      }
+      if(!m.parts.length)xml+=`      <part seq="0" ct="text/plain" chset="106" text="" _data="null" />\n`;
+      xml+=`    </parts>\n    <addrs>\n`;
+      for(const a of(m.addrs||[]))xml+=`      <addr address="${escXml((a.address||'').replace(/\/TYPE=PLMN$/i,''))}" type="${a.type}" charset="${a.charset||106}" />\n`;
+      if(!(m.addrs||[]).length){
+        if(mb==='1')xml+=`      <addr address="${escXml(m.address)}" type="137" charset="106" />\n`;
+        else xml+=`      <addr address="${escXml(m.address)}" type="151" charset="106" />\n`;
+      }
+      xml+=`    </addrs>\n`;
+      const recipSet=new Set();
+      if(m._pomRecipients){for(const r of m._pomRecipients)recipSet.add(r)}
+      else{
+        const seen=new Set();
+        for(const a of(m.addrs||[])){const n=normNum(a.address);if(n&&n!==own&&!seen.has(n)){seen.add(n);recipSet.add(a.address)}}
+      }
+      if(recipSet.size){
+        xml+=`    <recipients>\n`;
+        for(const r of recipSet)xml+=`      <r address="${escXml(r)}" />\n`;
+        xml+=`    </recipients>\n`;
+      }
+      xml+=`  </mms>\n`;
+      mmsParts.push(xml);
+      mmsCount++;
+    }
+  }
+  smsParts.push('</smses>\n');
+  mmsParts.push('</mmses>\n');
+  smsParts[0]=smsParts[0].replace('__COUNT__',String(smsCount));
+  mmsParts[0]=mmsParts[0].replace('__COUNT__',String(mmsCount));
+  const manifest=JSON.stringify({magic:'POM_BACKUP_v1',createdAt:Date.now(),mode:'Full',counts:{sms:smsCount,mms:mmsCount},apps:['sms','mms']});
+  const enc=new TextEncoder();
+  const zipFiles=[
+    {name:'sms.xml',data:enc.encode(smsParts.join(''))},
+    {name:'mms.xml',data:enc.encode(mmsParts.join(''))},
+    {name:'_pom_backup_manifest.json',data:enc.encode(manifest)}
+  ];
+  log('Building Pom ZIP: '+smsCount+' SMS, '+mmsCount+' MMS','ok');
+  return await buildRawZip(zipFiles,'POM_BACKUP_v1');
+}
+
 // ===== BUILD =====
 buildBtn.addEventListener('click',()=>{
   if(!parsedData)return;
@@ -2073,11 +2249,15 @@ async function build(target){
     if(target==='smsbackup'){
       blob=await writeToSmsBackup(msgs);
       filename='sms-'+baseName+'.xml';
+    }else if(target==='pom'&&BETA_MODE){
+      showProgress('Building Pom ZIP…',40);await tick();
+      blob=await buildPomZip(msgs);
+      const n=new Date(),p=x=>String(x).padStart(2,'0');
+      filename='MessagesBackup_'+n.getFullYear()+p(n.getMonth()+1)+p(n.getDate())+'_'+p(n.getHours())+p(n.getMinutes())+p(n.getSeconds())+'.zip';
     }else if(target==='fig'||target==='pom'){
       showProgress('Building '+(target==='pom'?'Pom':'Fig')+' ZIP…',40);await tick();
       blob=await buildFigZip(msgs);
       if(target==='pom'){
-        // POM names its own backups last_HHMMSS.zip — mimic it so POM's restore screen lists the file
         const n=new Date(),p=x=>String(x).padStart(2,'0');
         filename='last_'+p(n.getHours())+p(n.getMinutes())+p(n.getSeconds())+'.zip';
       }else filename='fig-'+baseName+'.zip';
