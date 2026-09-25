@@ -286,7 +286,7 @@
       <tr><td>Buggy Backup App</td><td class="c-yes">SMS only</td><td class="c-no">Not in plan as of now</td></tr>
       <tr><td>Fig</td><td class="c-yes">SMS + MMS</td><td class="c-yes">SMS + MMS</td></tr>
       <tr><td>Wonder</td><td class="c-yes">SMS + MMS</td><td class="c-yes">SMS + MMS</td></tr>
-      <tr id="pomRow"><td>Pom</td><td class="c-yes" id="pomOut">SMS only</td><td class="c-no">Not yet</td></tr>
+      <tr id="pomRow"><td>Pom</td><td class="c-yes" id="pomOut">SMS only</td><td class="c-no" id="pomIn">Not yet</td></tr>
       <tr><td>TAK</td><td class="c-yes">SMS + MMS</td><td class="c-yes">SMS + MMS</td></tr>
     </tbody>
   </table>
@@ -500,7 +500,7 @@ const SUPPORT_MATRIX={
 };
 const TEST_MODE=new URLSearchParams(location.search).has('test');
 const BETA_MODE=new URLSearchParams(location.search).has('beta');
-if(BETA_MODE){SUPPORT_MATRIX.pom={out:true,in:true};document.querySelector('.nav-logo').insertAdjacentHTML('beforeend',' <span style="background:#f59e0b;color:#fff;font-size:.6rem;padding:2px 6px;border-radius:4px;vertical-align:middle;font-weight:700;letter-spacing:.04em">BETA</span>');var pe=document.getElementById('pomOut');if(pe){pe.textContent='SMS + MMS';pe.className='c-yes'};var pd=document.getElementById('optPom');if(pd){var dd=pd.querySelector('.option-desc');if(dd)dd.textContent='ZIP file — for Pom phones'}}
+if(BETA_MODE){SUPPORT_MATRIX.pom={out:true,in:true};document.querySelector('.nav-logo').insertAdjacentHTML('beforeend',' <span style="background:#f59e0b;color:#fff;font-size:.6rem;padding:2px 6px;border-radius:4px;vertical-align:middle;font-weight:700;letter-spacing:.04em">BETA</span>');var pe=document.getElementById('pomOut');if(pe){pe.textContent='SMS + MMS';pe.className='c-yes'};var pi=document.getElementById('pomIn');if(pi){pi.textContent='SMS + MMS';pi.className='c-yes'};var pd=document.getElementById('optPom');if(pd){var dd=pd.querySelector('.option-desc');if(dd)dd.textContent='ZIP file — for Pom phones'}}
 
 const $=id=>document.getElementById(id);
 const dropZone=$('dropZone'),fileInput=$('fileInput'),scanBtn=$('scanBtn'),buildBtn=$('buildBtn'),
