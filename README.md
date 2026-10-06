@@ -32,7 +32,7 @@ Free, nothing to install, and your messages never leave your device.
 - **Pictures and voice notes come along** — photos, voice notes, videos and other MMS attachments are converted together with the texts.
 - **Keep only what you want** — everything, text messages only, or MMS only. You can also leave out group chats or PDF files.
 - **Clean up a backup without converting it** — remove pictures or keep only some messages, and get a file in the same format back.
-- **Handles very big backups** — see below.
+- **Handles very big backups** — opens backups of 2 GB and more, and saves very big conversions in parts (see below).
 
 ## Very big backups
 
