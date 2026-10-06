@@ -1,12 +1,14 @@
 # Kosher Phone SMS Converter
 
-Switching kosher phones? This tool converts your text messages (SMS) and picture messages (MMS) so they transfer between phones — even when the phones use completely different backup formats.
+Move your text messages and picture messages from one kosher phone to another — even when the two phones save their backups in completely different formats.
 
-**[Open the converter](https://pythonivelt.github.io/kosher-sms-converter/)** — runs 100% in your browser, nothing gets uploaded.
+**[Open the converter →](https://pythonivelt.github.io/kosher-sms-converter/)**
 
-## What works
+Free, nothing to install, and your messages never leave your device.
 
-| Phone / App | Read backup (out) | Import (in) |
+## Supported phones and apps
+
+| Phone / App | Can read its backup | Can make a file it imports |
 |-------|:---:|:---:|
 | SMS Backup & Restore App * | ✅ SMS + MMS | ✅ SMS + MMS |
 | Buggy Backup App | ✅ SMS only | ❌ Not in plan as of now |
@@ -15,23 +17,43 @@ Switching kosher phones? This tool converts your text messages (SMS) and picture
 | Pom | ✅ SMS only | ❌ Not yet |
 | TAK | ✅ SMS + MMS | ✅ SMS + MMS |
 
-\* SMS Backup & Restore is an app that works on any open Android phone and some kosher phones.
+\* SMS Backup & Restore is an app that works on any regular Android phone and on some kosher phones.
 
-## How it works
+## How to use it
 
-1. Open the converter in your phone's browser (or on a computer)
-2. Pick your backup file (ZIP or XML)
-3. The converter scans it and shows you what's inside
-4. Choose the phone you want to convert to
-5. Download the converted file and import it on your new phone
+1. **Back up** the messages on your old phone.
+2. **Open the converter** — on a computer is best, especially for big backups. A phone's browser works too.
+3. **Choose your backup file** (ZIP or XML). The converter shows what's inside: how many messages, pictures and group chats.
+4. **Pick the phone or app you're moving to**, and what you want to keep.
+5. **Click Convert**, save the new file, and restore it on your new phone.
 
-## Key details
+## What it can do
 
-- **Large files** — handles 2+ GB backups by streaming, works even on low-end phones
-- **MMS support** — pictures, voice notes, and other attachments all transfer
-- **Privacy** — your messages never leave your device, everything runs locally in the browser
-- **Filtering** — convert just SMS, just MMS, or everything; option to skip PDFs
+- **Pictures and voice notes come along** — photos, voice notes, videos and other MMS attachments are converted together with the texts.
+- **Keep only what you want** — everything, text messages only, or MMS only. You can also leave out group chats or PDF files.
+- **Clean up a backup without converting it** — remove pictures or keep only some messages, and get a file in the same format back.
+- **Handles very big backups** — see below.
 
-## Contact
+## Very big backups
 
-Questions, problems, or a phone format we don't support yet? Reach out: **pythonivelt@gmail.com** — email or Google Chat, both work.
+Backups with lots of pictures can be several gigabytes. Browsers can't reliably save one file that big, so when the converted backup is larger than about 500 MB, the converter saves it as several smaller files, named `…-part1`, `…-part2`, and so on.
+
+- The parts download one after another, automatically, with a short pause in between and a "time left" estimate. Keep the page open until it says all parts are saved.
+- Messages are never cut in half, and each chat stays in one file whenever possible.
+- **To restore:** copy all the parts to your phone, restore part 1, then part 2, and continue in order. Once every part is restored, all your messages and chats are complete.
+- If one part doesn't download, a "Download it again" link saves that same part again — you never have to start over.
+- Use a computer for big backups. Phones usually can't save files this big.
+
+## Privacy
+
+Everything happens inside your browser. Your backup file, your messages, phone numbers, contact names and pictures are never uploaded anywhere.
+
+To know the converter is working, it sends an anonymous summary of each conversion — totals like how many messages were converted, how big the file was and whether it worked. It never includes the content of any message.
+
+## Questions or problems?
+
+Found a bug, or have a phone the converter doesn't support yet? Write to **pythonivelt@gmail.com** (email or Google Chat), or use the **Contact** link at the bottom of the converter page.
+
+## Open source
+
+The whole converter is one HTML file — [`index.html`](index.html) — so anyone can check exactly what it does.

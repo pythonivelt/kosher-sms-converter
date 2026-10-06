@@ -118,6 +118,18 @@
   .pdf-panel-info{font-size:.78rem;color:var(--warn-text-2);margin-bottom:10px;line-height:1.5}
   .pdf-panel-desc{font-size:.78rem;color:var(--warn-text);margin-bottom:12px;line-height:1.5}
   .info{background:var(--ok-soft);border:1px solid var(--ok-border);border-radius:12px;padding:12px 14px;font-size:.82rem;color:var(--ok-text);margin-top:14px;display:none;line-height:1.5}
+  .parts-title{font-weight:700;font-size:.92rem;margin-bottom:4px}
+  .parts-sub{font-size:.85rem;margin:12px 0 2px}
+  .parts-bar{height:8px;border-radius:99px;background:var(--surface-2);overflow:hidden;margin:12px 0 6px}
+  .parts-bar>div{height:100%;border-radius:99px;background:linear-gradient(135deg,var(--ok),var(--ok-2));transition:width .4s}
+  .parts-count{font-size:.78rem;font-weight:600}
+  .parts-steps{margin:4px 0 0;padding-left:20px}
+  .parts-steps li{margin:3px 0}
+  .parts-link{display:block;background:none;border:none;padding:0;margin-top:10px;color:inherit;font:inherit;font-size:.78rem;text-decoration:underline;cursor:pointer;opacity:.85}
+  .parts-link:hover{opacity:1}
+  .parts-auto{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:.82rem;font-weight:600;cursor:pointer}
+  .parts-auto input{width:16px;height:16px;accent-color:var(--ok);cursor:pointer}
+  #phoneNote{font-size:.85rem;margin-top:14px;padding:10px 12px}
   .error{background:var(--err-soft);border:1px solid var(--err-border);border-radius:12px;padding:12px 14px;font-size:.82rem;color:var(--err-text);margin-top:14px;display:none;line-height:1.5}
   .report-input{width:100%;padding:9px 12px;border-radius:10px;border:1px solid var(--field-border);background:var(--field);color:var(--text);margin-bottom:8px;font-size:1rem}
   .report-btn{padding:9px 22px;border-radius:10px;border:none;background:var(--accent-grad);color:#fff;font-weight:600;cursor:pointer}
@@ -419,10 +431,9 @@
     <div class="progress-label" id="progressLabel">Reading…</div>
     <div class="progress-bar-wrap"><div class="progress-bar" id="progressBar"></div></div>
   </div>
-  <button class="btn btn-cancel" id="cancelBtn" style="display:none">Cancel</button>
-
   <div class="info" id="infoBox"></div>
   <a class="btn btn-success" id="downloadBtn" style="display:none;text-decoration:none;text-align:center;margin-top:8px" download="">Download</a>
+  <button class="btn btn-cancel" id="cancelBtn" style="display:none">Cancel</button>
   <div class="error" id="errorBox"></div>
 
   <details class="log-panel" id="logPanel" style="display:none">
@@ -467,7 +478,7 @@
 </section>
 
 <footer class="site-footer">
-  <p><span id="verSpan">v0.0.95</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
+  <p><span id="verSpan">v0.0.96</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
   <p style="margin-top:6px">Free and open source · Nothing gets uploaded</p>
 </footer>
 
@@ -553,7 +564,7 @@ async function _buildEntryIndex(file,needed){
   _indexBuilding=false;
   return _entryIndex;
 }
-async function resolveData(p){if(p.data)return p.data;if(p._dataBlob){return await p._dataBlob.arrayBuffer()}if(p._entry){try{const b=await p._entry.getData(new zip.BlobWriter());p.data=await b.arrayBuffer();delete p._entry;return p.data}catch(e){log('Failed to read attachment: '+e.message,'warn');return null}}if(p._fallbackAttach){try{const ai=p._fallbackAttach;
+async function resolveData(p){if(p.data)return p.data;if(p._dataBlob){return await p._dataBlob.arrayBuffer()}if(p._entry){try{const b=await p._entry.getData(new zip.BlobWriter());const ab=await b.arrayBuffer();if(!_attCache)return ab;p.data=ab;delete p._entry;return p.data}catch(e){log('Failed to read attachment: '+e.message,'warn');return null}}if(p._fallbackAttach){try{const ai=p._fallbackAttach;
 // If needs full scan, look up from the shared entry index
 if(ai._needsFullScan){
   const needed=new Set();for(const k in attachMap)if(attachMap[k]._needsFullScan)needed.add(k);
@@ -573,7 +584,7 @@ if(!ai.compSize&&ai._needsScan){
 const scanSize=Math.min(10*1024*1024,ai.file.size-ai.zipOffset);const sb=new Uint8Array(await ai.file.slice(ai.zipOffset,ai.zipOffset+scanSize).arrayBuffer());
 for(let si=1;si<sb.length-4;si++){if(sb[si]===0x50&&sb[si+1]===0x4B&&((sb[si+2]===0x03&&sb[si+3]===0x04)||(sb[si+2]===0x01&&sb[si+3]===0x02))){ai.compSize=si;break}}
 if(!ai.compSize)ai.compSize=scanSize;delete ai._needsScan}
-if(!ai.compSize){log('Attachment has unknown size, skipping: '+(p.cl||'?'),'warn');return null}const compData=ai.file.slice(ai.zipOffset,ai.zipOffset+ai.compSize);let raw;if(ai.method===8){const ds=new DecompressionStream('deflate-raw');const reader=ds.readable.getReader();const writer=ds.writable.getWriter();const chunks=[];const readAll=(async()=>{try{while(true){const{done,value}=await reader.read();if(done)break;chunks.push(value)}}catch(e){}})();const sr=compData.stream().getReader();while(true){const{done,value}=await sr.read();if(done)break;try{await writer.write(value)}catch(we){break}}try{await writer.close()}catch(ce){}await readAll;let total=0;for(const c of chunks)total+=c.byteLength;raw=new Uint8Array(total);let off=0;for(const c of chunks){raw.set(c,off);off+=c.byteLength}p.data=raw.buffer}else{p.data=await compData.arrayBuffer()}delete p._fallbackAttach;return p.data}catch(e){log('Failed to read fallback attachment: '+(p.cl||'?')+' — '+e.message,'warn');return null}}return null}
+if(!ai.compSize){log('Attachment has unknown size, skipping: '+(p.cl||'?'),'warn');return null}const compData=ai.file.slice(ai.zipOffset,ai.zipOffset+ai.compSize);let raw;if(ai.method===8){const ds=new DecompressionStream('deflate-raw');const reader=ds.readable.getReader();const writer=ds.writable.getWriter();const chunks=[];const readAll=(async()=>{try{while(true){const{done,value}=await reader.read();if(done)break;chunks.push(value)}}catch(e){}})();const sr=compData.stream().getReader();while(true){const{done,value}=await sr.read();if(done)break;try{await writer.write(value)}catch(we){break}}try{await writer.close()}catch(ce){}await readAll;let total=0;for(const c of chunks)total+=c.byteLength;raw=new Uint8Array(total);let off=0;for(const c of chunks){raw.set(c,off);off+=c.byteLength}p.data=raw.buffer}else{p.data=await compData.arrayBuffer()}if(!_attCache){const ab=p.data;delete p.data;return ab}delete p._fallbackAttach;return p.data}catch(e){log('Failed to read fallback attachment: '+(p.cl||'?')+' — '+e.message,'warn');return null}}return null}
 
 function formatSize(b){if(b<1048576)return(b/1024).toFixed(0)+' KB';if(b<1073741824)return(b/1048576).toFixed(1)+' MB';return(b/1073741824).toFixed(2)+' GB'}
 function showProgress(l,p){progressEl.style.display='block';progressLabel.textContent=l;progressBar.style.width=p+'%'}
@@ -1236,6 +1247,13 @@ function updateUI(){
   pc.style.display=needsPdfChoice()?'block':'none';
   const t=document.querySelector('input[name="target"]:checked');
   buildBtn.disabled=!t;
+  if(t&&parsedData){
+    const c=(document.querySelector('input[name="content"]:checked')||{}).value||'all';
+    const est=estimateOutput(t.value,c);
+    if(needsParts(t.value,est))buildBtn.textContent='Convert (about '+formatSize(est)+')';
+    else buildBtn.textContent='Convert';
+    phoneNote(IS_MOBILE&&needsParts(t.value,est)?est:0);
+  }else{buildBtn.textContent='Convert';phoneNote(0)}
 }
 
 // ===== FILE PICKING =====
@@ -1268,7 +1286,7 @@ async function scan(){
     log('Scanning '+selectedFile.name+' ('+formatSize(selectedFile.size)+')');
     showProgress('Opening file…',10);await tick();
     const isZip=selectedFile.name.toLowerCase().endsWith('.zip');
-    let messages,attachMap,fmt,pdfCount=0,pdfSize=0,pomLegacy=false;
+    let messages,attachMap,fmt,pdfCount=0,pdfSize=0,pomLegacy=false,attachBytes=0;
 
     if(isZip){
       let entries;
@@ -1303,7 +1321,7 @@ async function scan(){
         if(hasNdjson){
           fmt='fig';log('Detected Fig format (NDJSON)','ok');
           try{
-            ({messages,attachMap,pdfCount,pdfSize}=await parseFigZip(entries));
+            ({messages,attachMap,pdfCount,pdfSize,attachBytes}=await parseFigZip(entries));
             if(messages.some(m=>m.creator&&m.creator.includes('.pom'))){fmt='pom';pomLegacy=true;log('Detected Pom legacy backup (creator: com.figmessenger.pom)','ok')}
           }catch(parseErr){
             log('zip.js read failed: '+parseErr.message+' — trying fallback…','warn');
@@ -1366,7 +1384,7 @@ async function scan(){
       fmt='merge';
     }
     const grp=markGroups(messages);
-    parsedData={messages,attachMap,fmt,groupCount:grp.groupCount};
+    parsedData={messages,attachMap,fmt,groupCount:grp.groupCount,attachBytes:attachBytes||0};
     showProgress('Done!',100);await tick();progressEl.style.display='none';
 
     // Stats (also feeds anonymous analytics: counts only — no numbers, names or content)
@@ -1553,8 +1571,9 @@ async function parseFigZip(entries){
     await yld();
   }
   if(buf.trim()){let obj;try{obj=JSON.parse(buf.trim());const t=obj.type;if(t==='1'||t===1||t==='2'||t===2)messages.push({type:'sms',address:(obj.address||'').replace(/\s/g,''),body:obj.body||'',date:obj.date,dateSent:obj.date_sent||'0',direction:(t==='1'||t===1)?'in':'out',read:obj.read||'0',contactName:obj.__display_name||'(Unknown)'})}catch{}}
-  log('Streamed '+formatSize(totalSize)+' → '+messages.length+' messages','ok');
-  return{messages,attachMap:{},pdfCount,pdfSize};
+  let attachBytes=0;for(const m of messages)if(m.parts)for(const p of m.parts)if(p._entry)attachBytes+=p._entry.uncompressedSize||0;
+  log('Streamed '+formatSize(totalSize)+' → '+messages.length+' messages, '+formatSize(attachBytes)+' attachments','ok');
+  return{messages,attachMap:{},pdfCount,pdfSize,attachBytes};
 }
 
 async function parseWonderZip(entries){
@@ -1854,25 +1873,204 @@ function filterMessages(messages,content,skipPdf,skipGroups){
 }
 
 function extFromCt(ct){return({'image/jpeg':'.jpg','image/jpg':'.jpg','image/png':'.png','image/gif':'.gif','image/bmp':'.bmp','image/webp':'.webp','audio/amr':'.amr','audio/mpeg':'.mp3','audio/mp4':'.m4a','video/mp4':'.mp4','video/3gpp':'.3gp','application/pdf':'.pdf','text/x-vcard':'.vcf'})[String(ct||'').toLowerCase()]||'.bin'}
-async function writeToSmsBackup(messages){
-  const own=detectOwnNumber(messages);
-  const blobs=[];let parts=[];let partsSz=0;
-  const FLUSH=50*1024*1024;
-  function flush(){if(parts.length){blobs.push(new Blob(parts));parts=[];partsSz=0}}
+// ===== OUTPUT =====
+let _attCache=true,_forceParts=false;
+function estimateOutput(target,content){
+  if(content==='text'||!selectedFile)return 0;
+  const s=selectedFile.size,xmlIn=parsedData.fmt==='smsbackup',ab=parsedData.attachBytes||0;
+  if(ab>0&&target==='smsbackup')return s*1.4+ab*1.37;
+  return target==='smsbackup'?(xmlIn?s:s*1.4):(xmlIn?s*0.8:s*1.05);
+}
+function blobSink(type){
+  const blobs=[];let parts=[],sz=0;
+  const flush=async()=>{
+    if(!parts.length)return;
+    const b=new Blob(parts);parts=[];sz=0;blobs.push(b);
+    // an unreadable piece means the browser ran out of room — stop now instead of handing out a download that fails
+    try{await b.slice(0,1).arrayBuffer()}catch(e){throw{tooBig:true}}
+  };
+  return{
+    async write(x){parts.push(x);sz+=typeof x==='string'?x.length:x.byteLength;if(sz>50*1024*1024)await flush()},
+    async close(){await flush();return new Blob(blobs,{type})},
+    async abort(){}
+  };
+}
+
+function smsBackupMmsAddr(m,own){const seen=new Set(),others=[];for(const a of(m.addrs||[])){const raw=(a.address||'').replace(/\s/g,'');const n=normNum(raw);if(!n||n===own||seen.has(n))continue;seen.add(n);others.push(raw)}return others.length?others.join('~'):(m.address||'')}
+// In testing, Chrome downloads of ~700 MB+ sometimes failed while ~500 MB never did; low-memory PCs get smaller parts still.
+const PART_MAX=512*1024*1024,PART_MIN=64*1024*1024;
+let _partSize=(m=>m>=8?PART_MAX:m>=4?PART_MAX/2:m>0?PART_MAX/4:PART_MAX/2)(navigator.deviceMemory);
+function needsParts(target,est){return(_forceParts||est>_partSize)&&!(target==='pom'&&BETA_MODE)}
+function partsCard(title,text,done,total,steps,actions){
+  infoBox.textContent='';
+  const add=(tag,cls,txt,parent)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;(parent||infoBox).appendChild(e);return e};
+  add('div','parts-title',title);add('div','',text);
+  if(total){add('div','parts-bar').appendChild(document.createElement('div')).style.width=Math.round(done/total*100)+'%';add('div','parts-count',done+' of '+total+' parts saved')}
+  if(steps){add('div','parts-title parts-sub','How to restore');const ol=add('ol','parts-steps');for(const s of steps)add('li','',s,ol)}
+  for(const a of actions||[])add('button',a.primary?'btn btn-success':'parts-link',a.text).onclick=a.onClick;
+  infoBox.style.display='block';
+}
+function offerFile(blob,name,label){
+  const dlBtn=$('downloadBtn');
+  if(dlBtn._blobUrl)URL.revokeObjectURL(dlBtn._blobUrl);
+  dlBtn._blobUrl=URL.createObjectURL(blob);dlBtn.href=dlBtn._blobUrl;dlBtn.download=name;
+  if(dlBtn._label===undefined)dlBtn._label=dlBtn.innerHTML;
+  if(label)dlBtn.textContent=label;else dlBtn.innerHTML=dlBtn._label;
+  dlBtn.style.display='block';buildBtn.style.display='none';
+}
+function shrinkParts(job,from,kind,why){
+  _partSize=Math.max(PART_MIN,_partSize/2);job.log.push(kind+'@'+(from+1));
+  job.groups=job.groups.slice(0,from).concat(splitParts([].concat(...job.groups.slice(from)),job.target,1));
+  job.k=from;job.names.length=from;job.sizes.length=from;
+  log(why+' — continuing with smaller parts (up to '+formatSize(_partSize)+')','warn');
+}
+async function runParts(job){
+  _attCache=false;
+  const dlBtn=$('downloadBtn');
+  const wait=setup=>new Promise(res=>{let stop;const end=v=>{clearInterval(iv);if(stop)stop();dlBtn.onclick=null;res(v)},iv=setInterval(()=>{if(cancelled)end('cancel')},500);stop=setup(end)});
+  const avg=()=>job.buildMs.length?job.buildMs.reduce((a,b)=>a+b,0)/job.buildMs.length:0;
+  const eta=()=>{const el=$('partsEta');if(!el)return;const left=job.auto&&job.etaEnd?Math.max(1,Math.round((job.etaEnd-Date.now())/1000)):0;el.textContent=left?'About '+(left>=90?Math.ceil(left/60)+' minutes':left+' seconds')+' left until all parts are saved.':''};
+  const card=(text,done,actions)=>{
+    const N=job.groups.length;partsCard('Saving in '+N+' parts',text,done,N,null,actions);
+    const e=document.createElement('div');e.id='partsEta';e.className='parts-count';const cnt=infoBox.querySelector('.parts-count');if(cnt)cnt.after(e);else infoBox.appendChild(e);
+    const lab=document.createElement('label'),cb=document.createElement('input');lab.className='parts-auto';cb.type='checkbox';cb.checked=job.auto;
+    cb.onchange=()=>{job.auto=cb.checked;try{localStorage.setItem('ksc-auto-parts',cb.checked?'1':'0')}catch(_){}eta();if(job.auto&&dlBtn.onclick&&dlBtn.style.display==='block')dlBtn.click()};
+    lab.append(cb,' Save the next parts automatically');infoBox.appendChild(lab);eta();
+  };
+  const etaTimer=setInterval(eta,1000);
+  try{
+  while(job.k<job.groups.length){
+    const k=job.k,N=job.groups.length,title='Saving in '+N+' parts';
+    const intro='Your backup is big (about '+formatSize(job.est)+'), so it will be saved as '+N+' smaller files, one at a time. Nothing gets lost: once you restore all the parts, every message is back. Keep this page open until it says all parts are saved.';
+    job.etaEnd=avg()?Date.now()+(N-k)*avg()+(N-1-k)*15000:0;
+    card(intro,k);
+    dlBtn.style.display='none';cancelBtn.style.display='block';
+    showProgress('Preparing part '+(k+1)+' of '+N+'…',10);await tick();
+    let blob;const t0=Date.now();
+    try{blob=await job.writeOne(job.groups[k],blobSink(job.type),job.own)}
+    catch(e){if(e&&e.tooBig&&_partSize>PART_MIN){shrinkParts(job,k,'memory','Not enough memory for part '+(k+1));continue}throw e}
+    job.buildMs.push(Date.now()-t0);
+    const name=job.stem+'-part'+(k+1)+job.ext,size=blob.size,label='Save part '+(k+1)+' of '+N+' ('+formatSize(size)+')';
+    log('Part '+(k+1)+' of '+N+' ready: '+name+' ('+job.groups[k].length.toLocaleString()+' messages, '+formatSize(size)+')','ok');
+    progressEl.style.display='none';
+    let r,tries=0;
+    while(true){
+      offerFile(blob,name,label);
+      r=await wait(end=>{dlBtn.onclick=()=>setTimeout(()=>end('saved'),300);card(tries?'Click the button to download part '+(k+1)+' again.':intro,k,k&&!tries?[{text:'Part '+k+' didn\'t download? Make it again',onClick:()=>end('prev')}]:null);if(job.auto)setTimeout(()=>{if(dlBtn.onclick)dlBtn.click()},800)});
+      if(r!=='saved')break;
+      job.names[k]=name;job.sizes[k]=size;
+      dlBtn.style.display='none';
+      if(k+1===N){job.last={blob,name,label};break}
+      r=await wait(end=>{
+        let s=15;
+        const acts=[{text:'Part '+(k+1)+' didn\'t download? Download it again',onClick:()=>end('again')}];
+        if(tries)acts.push({text:'Still not working? Try smaller files',onClick:()=>end('smaller')});
+        job.etaEnd=Date.now()+15000+(N-k-1)*avg()+Math.max(0,N-k-2)*15000;
+        const draw=()=>{const sec=s+(s===1?' second':' seconds');card('Part '+(k+1)+' is downloading. Part '+(k+2)+' starts in '+sec+(job.auto?' and downloads by itself':'')+'. This short pause gives your computer time to finish saving part '+(k+1)+' first.'+(job.auto&&k<2?' If your browser asks to allow downloading multiple files, click Allow.':''),k+1,acts)};
+        draw();
+        const t=setInterval(()=>{if(--s>0)draw();else end('next')},1000);
+        return()=>clearInterval(t);
+      });
+      if(r!=='again')break;
+      tries++;job.log.push('again@'+(k+1));job.names.length=k;job.sizes.length=k;
+    }
+    blob=null;
+    if(r!=='saved'){URL.revokeObjectURL(dlBtn._blobUrl);dlBtn._blobUrl=null}
+    if(r==='cancel')throw{cancelled:true};
+    if(r==='prev'){job.log.push('redo@'+k);job.k=k-1;job.names.length=k-1;job.sizes.length=k-1;continue}
+    if(r==='smaller'){shrinkParts(job,k,'download','Part '+(k+1)+' did not download');continue}
+    job.k++;
+  }
+  }finally{clearInterval(etaTimer)}
+  dlBtn.style.display='none';cancelBtn.style.display='none';progressEl.style.display='none';
+}
+function partsInfo(job){return job?{parts:job.names.length,partsPlanned:job.groups.length,partFails:job.log.filter(s=>!s.startsWith('memory')).length,partMemRetries:job.log.filter(s=>s.startsWith('memory')).length,partLog:job.log.join(',')}:{}}
+function partsDone(job){
+  const N=job.names.length,app={smsbackup:'SMS Backup & Restore',fig:'Fig',wonder:'Wonder',pom:'Pom'}[job.target]||'the app';
+  partsCard('All '+N+' parts are saved',job.summary+', '+formatSize(job.sizes.reduce((a,b)=>a+b,0))+' in total. Find them in your Downloads folder, named '+job.names[0]+' to '+job.names[N-1]+'. The last one may need a few more seconds to finish saving.',0,0,
+    ['Copy all '+N+' files to your phone.','In '+app+', restore part 1.','When it finishes, restore part 2, then the rest in order, up to part '+N+'.'],
+    [{text:'Part '+N+' didn\'t download? Download it again',onClick:()=>againLast(job)}]);
+}
+function againLast(job){
+  const L=job.last,N=job.names.length,dlBtn=$('downloadBtn');
+  if(!L||processing)return;
+  job.log.push('again@'+N);
+  offerFile(L.blob,L.name,L.label);
+  partsCard('Download part '+N+' again','Click the button to download part '+N+' again.',N-1,N,null,[{text:'Still not working? Try smaller files',onClick:()=>retryLast(job)}]);
+  dlBtn.onclick=()=>{dlBtn.onclick=null;setTimeout(()=>{dlBtn.style.display='none';partsDone(job)},300)};
+}
+async function retryLast(job){
+  if(processing)return;
+  processing=true;cancelled=false;delete cancelBtn.dataset.confirm;cancelBtn.innerHTML='Cancel';
+  const dlBtn=$('downloadBtn');dlBtn.onclick=null;dlBtn.style.display='none';job.last=null;
+  shrinkParts(job,job.groups.length-1,'download','Part '+job.groups.length+' did not download');
+  try{await runParts(job);partsDone(job)}
+  catch(err){$('downloadBtn').style.display='none';progressEl.style.display='none';cancelBtn.style.display='none';infoBox.textContent=err&&err.cancelled?'Cancelled.':'Something went wrong: '+((err&&err.message)||err);infoBox.style.display='block'}
+  finally{processing=false;_attCache=true}
+}
+function phoneNote(est){
+  let n=$('phoneNote');
+  if(!est){if(n)n.style.display='none';return}
+  if(!n){n=document.createElement('div');n.id='phoneNote';n.className='option-note';buildBtn.before(n)}
+  n.textContent='This backup is big (about '+formatSize(est)+'). Phones usually can\'t save files this big, so please open this site on a computer and convert it there.';
+  n.style.display='block';
+}
+function outFilename(target){
+  const baseName=selectedFile.name.replace(/\.(zip|xml)$/i,'');
+  const n=new Date(),p=x=>String(x).padStart(2,'0');
+  return target==='smsbackup'?'sms-'+baseName+'.xml'
+    :target==='pom'&&BETA_MODE?'MessagesBackup_'+n.getFullYear()+p(n.getMonth()+1)+p(n.getDate())+'_'+p(n.getHours())+p(n.getMinutes())+p(n.getSeconds())+'.zip'
+    :target==='pom'?'last_'+p(n.getHours())+p(n.getMinutes())+p(n.getSeconds())+'.zip'
+    :'fig-'+baseName+'.zip';
+}
+function msgBytes(m,target){
+  let b=m.type==='sms'?400+(m.body||'').length*1.2:1500;
+  for(const p of m.parts||[]){
+    const raw=p._entry?p._entry.uncompressedSize||0:p._dataBlob?p._dataBlob.size:typeof p.data==='string'?p.data.length*0.75:p.data?p.data.byteLength||0:0;
+    b+=300+(p.text||'').length*1.2+raw*(target==='smsbackup'?1.34:1);
+  }
+  return b;
+}
+function splitParts(msgs,target,min=2){
+  const own=detectOwnNumber(msgs),chats=new Map(),size=new Map();let total=0,biggest=0;
+  for(const m of msgs){
+    const k=m.type==='sms'?normNum(m.address)||m.address||'':(m.addrs||[]).map(a=>normNum(a.address)).filter(x=>x&&x!==own).sort().join('~')||normNum(m.address);
+    const b=msgBytes(m,target);size.set(m,b);total+=b;if(b>biggest)biggest=b;
+    let c=chats.get(k);if(!c)chats.set(k,c={msgs:[],bytes:0});c.msgs.push(m);c.bytes+=b;
+  }
+  const order=new Map(msgs.map((m,i)=>[m,i])),list=[...chats.values()].sort((a,b)=>b.bytes-a.bytes),fill=_partSize*0.95;
+  for(let n=Math.max(min,Math.ceil(total/fill));;n++){
+    const cap=Math.max(biggest,Math.min(fill,total/n*1.05)),bins=Array.from({length:n},()=>({msgs:[],bytes:0})),rest=[];
+    const roomiest=()=>bins.reduce((a,b)=>b.bytes<a.bytes?b:a);
+    for(const c of list){const b=roomiest();if(b.bytes+c.bytes<=cap){for(const m of c.msgs)b.msgs.push(m);b.bytes+=c.bytes}else rest.push(c)}
+    let ok=true;
+    for(const c of rest){
+      let b=roomiest();
+      for(const m of c.msgs){
+        const s=size.get(m);
+        if(b.bytes+s>cap){b=roomiest();if(b.bytes+s>cap){ok=false;break}}
+        b.msgs.push(m);b.bytes+=s;
+      }
+      if(!ok)break;
+    }
+    if(ok||n>=msgs.length)return bins.filter(q=>q.msgs.length).map(q=>q.msgs.sort((a,b)=>order.get(a)-order.get(b))).sort((a,b)=>order.get(a[0])-order.get(b[0]));
+  }
+}
+async function writeToSmsBackup(messages,sink,own){
+  own=own||detectOwnNumber(messages);
+  // count up front: a streamed file can't be patched afterwards
+  let count=0;for(const m of messages)if(m.type==='sms'||smsBackupMmsAddr(m,own))count++;
   const now=new Date();
-  const hdr=`<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>\n<!--File Created By Kosher Phone SMS Converter on ${now.toLocaleString()}-->\n<smses count="__COUNT__" backup_date="${Date.now()}" type="full">\n`;
-  parts.push(hdr);partsSz+=hdr.length;
-  let count=0,i=0;
+  await sink.write(`<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>\n<!--File Created By Kosher Phone SMS Converter on ${now.toLocaleString()}-->\n<smses count="${count}" backup_date="${Date.now()}" type="full">\n`);
+  let i=0;
 
   for(const m of messages){
     if(m.type==='sms'){
       const t=m.direction==='in'?'1':'2';
       const s=`  <sms protocol="${escXml(m.protocol??0)}" address="${escXml(m.address)}" date="${escXml(m.date)}" type="${t}" subject="null" body="${escXml(m.body)}" toa="null" sc_toa="null" service_center="null" read="${escXml(m.read??0)}" status="${escXml(m.status??-1)}" locked="${escXml(m.locked??0)}" date_sent="${escXml(m.dateSent??m.date)}" sub_id="${escXml(m.subId??1)}" readable_date="${escXml(fmtDate(m.date))}" contact_name="${escXml(m.contactName)}" />\n`;
-      parts.push(s);partsSz+=s.length;count++;
+      await sink.write(s);
     }else{
-      const seen=new Set(),others=[];
-      for(const a of(m.addrs||[])){const raw=(a.address||'').replace(/\s/g,'');const n=normNum(raw);if(!n||n===own||seen.has(n))continue;seen.add(n);others.push(raw)}
-      const addr=others.length?others.join('~'):(m.address||'');
+      const addr=smsBackupMmsAddr(m,own);
       if(!addr)continue;
       const dateMs=parseInt(m.date,10)<1e12?parseInt(m.date,10)*1000:parseInt(m.date,10);
       const items=[];let hasAtt=false,missingMedia=0;
@@ -1914,19 +2112,15 @@ async function writeToSmsBackup(messages){
     <parts>\n${pLines.join('\n')}\n    </parts>
     <addrs>\n${aLines.join('\n')}\n    </addrs>
   </mms>\n`;
-      parts.push(s);partsSz+=s.length;count++;
+      await sink.write(s);
     }
-    if(partsSz>FLUSH)flush();
     if(++i%200===0){if(cancelled)throw{cancelled:true};showProgress('Building… '+i.toLocaleString()+' / '+messages.length.toLocaleString(),Math.round(i/messages.length*80)+10);await tick()}
   }
-  parts.push('</smses>\n');
-  flush();
-  const hdrBlob=blobs[0];const hdrBuf=await hdrBlob.text();
-  blobs[0]=new Blob([hdrBuf.replace('__COUNT__',String(count))]);
-  return new Blob(blobs,{type:'text/xml;charset=utf-8'});
+  await sink.write('</smses>\n');
+  return await sink.close();
 }
 
-async function buildFigZip(messages){
+async function buildFigZip(messages,sink){
   const lines=[];let partId=Date.now();
   let msgId=1,addrId=100001,partObjId=200001;
   const attachFiles=[];
@@ -2003,10 +2197,10 @@ async function buildFigZip(messages){
   const ndjsonData=new TextEncoder().encode(lines.join('\n')+'\n');
   const zipFiles=[{name:'messages.ndjson',data:ndjsonData}];
   for(const af of attachFiles)zipFiles.push({name:af.fn,data:af.data});
-  return await buildRawZip(zipFiles);
+  return await buildRawZip(zipFiles,undefined,sink);
 }
 
-async function buildRawZip(files,zipComment){
+async function buildRawZip(files,zipComment,sink=blobSink('application/zip')){
   // Pure JS ZIP creator (STORE, no compression) — compatible with Fig
   // Build CRC32 table once
   if(!buildRawZip._t){const t=new Uint32Array(256);for(let n=0;n<256;n++){let v=n;for(let k=0;k<8;k++)v=v&1?(0xEDB88320^(v>>>1)):(v>>>1);t[n]=v}buildRawZip._t=t}
@@ -2032,8 +2226,6 @@ async function buildRawZip(files,zipComment){
   function u16(v){return[v&0xFF,(v>>8)&0xFF]}
   function u32(v){return[v&0xFF,(v>>8)&0xFF,(v>>16)&0xFF,(v>>24)&0xFF]}
   const enc=new TextEncoder();
-  const blobs=[];let parts=[];let partsSz=0;const FLUSH=50*1024*1024;
-  function flush(){if(parts.length){blobs.push(new Blob(parts));parts=[];partsSz=0}}
   const cdirs=[];let offset=0;
   for(let fi=0;fi<files.length;fi++){
     const f=files[fi];
@@ -2046,20 +2238,21 @@ async function buildRawZip(files,zipComment){
     const cData=useDeflate?compressed:raw;
     const csz=cData.length;
     const lh=new Uint8Array([0x50,0x4B,0x03,0x04,...u16(20),...u16(0),...u16(method),...u16(0),...u16(0),...u32(crc),...u32(csz),...u32(sz),...u16(nameBytes.length),...u16(0)]);
-    parts.push(lh,nameBytes,cData);partsSz+=lh.length+nameBytes.length+csz;
+    await sink.write(lh);await sink.write(nameBytes);await sink.write(cData);
     const cd=new Uint8Array([0x50,0x4B,0x01,0x02,...u16(20),...u16(20),...u16(0),...u16(method),...u16(0),...u16(0),...u32(crc),...u32(csz),...u32(sz),...u16(nameBytes.length),...u16(0),...u16(0),...u16(0),...u16(0),...u32(0),...u32(offset)]);
     cdirs.push(cd,nameBytes);
     offset+=lh.length+nameBytes.length+csz;
     f.data=null;
-    if(partsSz>FLUSH)flush();
     if(cancelled)throw{cancelled:true};if(fi%2===0){showProgress('Building ZIP… '+(fi+1)+'/'+files.length,60+Math.round(fi/files.length*35));await tick()}
   }
-  flush();
   const cdirOffset=offset;let cdirSize=0;
   for(const c of cdirs)cdirSize+=c.length;
   const commentBytes=zipComment?enc.encode(zipComment):new Uint8Array(0);
   const eocd=new Uint8Array([0x50,0x4B,0x05,0x06,...u16(0),...u16(0),...u16(files.length),...u16(files.length),...u32(cdirSize),...u32(cdirOffset),...u16(commentBytes.length)]);
-  return new Blob([...blobs,...cdirs,eocd,commentBytes],{type:'application/zip'});
+  for(const c of cdirs)await sink.write(c);
+  await sink.write(eocd);
+  if(commentBytes.length)await sink.write(commentBytes);
+  return await sink.close();
 }
 
 async function buildWonderZip(messages){
@@ -2233,6 +2426,7 @@ cancelBtn.addEventListener('click',()=>{
 async function build(target){
   _buildStart=Date.now();
   optionsEl.style.display='none';$('figTakNotice').style.display='none';
+  let streamed=false,job=null;
   try{
     const content=(document.querySelector('input[name="content"]:checked')||{}).value||'all';
     const pdfSel=document.querySelector('input[name="pdfmode"]:checked');
@@ -2243,28 +2437,24 @@ async function build(target){
     log('Building '+target+' from '+msgs.length+' messages (content='+content+', skipPdf='+skipPdf+', skipGroups='+skipGroups+')');
     if(parsedData.fmt==='smsbackup'&&content!=='text')await rehydrateSmsBackupStream(selectedFile,msgs);
     showProgress('Building…',20);await tick();
-    let blob,filename;
-    const baseName=selectedFile.name.replace(/\.(zip|xml)$/i,'');
-
-    if(target==='smsbackup'){
-      blob=await writeToSmsBackup(msgs);
-      filename='sms-'+baseName+'.xml';
-    }else if(target==='pom'&&BETA_MODE){
+    const pomNative=target==='pom'&&BETA_MODE;
+    const filename=outFilename(target);
+    const type=target==='smsbackup'?'text/xml;charset=utf-8':'application/zip';
+    const writeOne=(list,s,own)=>target==='smsbackup'?writeToSmsBackup(list,s,own):buildFigZip(list,s);
+    let out;
+    const est=estimateOutput(target,content);
+    if(needsParts(target,est)){
+      const ext=filename.match(/\.\w+$/)[0];
+      job={target,type,writeOne,est,own:detectOwnNumber(msgs),groups:splitParts(msgs,target),k:0,names:[],sizes:[],log:[],buildMs:[],auto:(()=>{try{return localStorage.getItem('ksc-auto-parts')!=='0'}catch(e){return true}})(),stem:filename.slice(0,-ext.length),ext,summary:''};
+      log('Big output — saving as '+job.groups.length+' parts of up to '+formatSize(_partSize),'ok');
+      await runParts(job);
+      out={size:job.sizes.reduce((a,b)=>a+b,0)};
+    }else if(pomNative){
       showProgress('Building Pom ZIP…',40);await tick();
-      blob=await buildPomZip(msgs);
-      const n=new Date(),p=x=>String(x).padStart(2,'0');
-      filename='MessagesBackup_'+n.getFullYear()+p(n.getMonth()+1)+p(n.getDate())+'_'+p(n.getHours())+p(n.getMinutes())+p(n.getSeconds())+'.zip';
-    }else if(target==='fig'||target==='pom'){
-      showProgress('Building '+(target==='pom'?'Pom':'Fig')+' ZIP…',40);await tick();
-      blob=await buildFigZip(msgs);
-      if(target==='pom'){
-        const n=new Date(),p=x=>String(x).padStart(2,'0');
-        filename='last_'+p(n.getHours())+p(n.getMinutes())+p(n.getSeconds())+'.zip';
-      }else filename='fig-'+baseName+'.zip';
-    }else if(target==='wonder'){
-      showProgress('Building Fig ZIP for Wonder…',40);await tick();
-      blob=await buildFigZip(msgs);
-      filename='fig-'+baseName+'.zip';
+      out=await buildPomZip(msgs);
+    }else{
+      if(target!=='smsbackup'){showProgress(target==='wonder'?'Building Fig ZIP for Wonder…':'Building '+(target==='pom'?'Pom':'Fig')+' ZIP…',40);await tick()}
+      out=await writeOne(msgs,blobSink(type));
     }
 
     cancelBtn.style.display='none';
@@ -2272,20 +2462,28 @@ async function build(target){
     const smsC=msgs.filter(m=>m.type==='sms').length,mmsC=msgs.length-smsC;
     const total=msgs.length.toLocaleString();
     const detail=mmsC&&smsC?' ('+smsC.toLocaleString()+' SMS + '+mmsC.toLocaleString()+' MMS)':'';
-    log('Export complete: '+msgs.length+' messages, '+formatSize(blob.size)+' → '+filename,'ok');
-    infoBox.textContent='Converted '+total+' messages'+detail+' ('+formatSize(blob.size)+') successfully!';
+    log('Export complete: '+msgs.length+' messages, '+formatSize(out.size)+' → '+(job?job.names.join(', '):filename),'ok');
+    if(job){
+      streamed=true;buildBtn.style.display='none';
+      job.summary=total+' messages'+detail;partsDone(job);
+    }else{
+      offerFile(out,filename);
+      infoBox.textContent='Converted '+total+' messages'+detail+' ('+formatSize(out.size)+') successfully!';
+    }
     if(parsedData.fmt==='merge'){infoBox.innerHTML+='<br><br><b>Now on the new phone:</b><br>1. SMS Backup &amp; Restore → menu → Tools → <b>Delete Messages</b> → All messages.<br>2. Restore this merged file.<br>3. Done — old chats correctly grouped, new messages kept, no duplicates.';}
     infoBox.style.display='block';
-    const dlBtn=$('downloadBtn');
-    if(dlBtn._blobUrl)URL.revokeObjectURL(dlBtn._blobUrl);
-    const url=URL.createObjectURL(blob);dlBtn._blobUrl=url;
-    dlBtn.href=url;dlBtn.download=filename;dlBtn.style.display='block';buildBtn.style.display='none';
-    sendAnalytics(Object.assign({event:'convert',source:parsedData.fmt,target:target,success:true,sms:smsC,mms:mmsC,groups:msgs.filter(m=>m.isGroup).length,skipGroups:skipGroups,content:content,merge:MERGE.on?1:0,mergeAdded:MERGE.added,mergeDropped:MERGE.dropped,size:blob.size,duration:((Date.now()-_buildStart)/1000).toFixed(1)},scanExtras));
+    sendAnalytics(Object.assign({event:'convert',source:parsedData.fmt,target:target,success:true,sms:smsC,mms:mmsC,groups:msgs.filter(m=>m.isGroup).length,skipGroups:skipGroups,content:content,merge:MERGE.on?1:0,mergeAdded:MERGE.added,mergeDropped:MERGE.dropped,size:out.size,duration:((Date.now()-_buildStart)/1000).toFixed(1)},scanExtras,partsInfo(job)));
   }catch(err){
-    if(err&&err.cancelled){log('Build cancelled by user','warn');progressEl.style.display='none';infoBox.textContent='Cancelled.';infoBox.style.display='block';}
-    else{log('Build failed: '+(err.message||err),'err');progressEl.style.display='none';errorBox.textContent=err.message||String(err);errorBox.style.display='block';sendAnalytics({event:'convert',source:parsedData?parsedData.fmt:'?',target:target,success:false,merge:MERGE.on?1:0,error:(err.message||String(err)).slice(0,100)});}
-  }
-  cancelBtn.style.display='none';if($('downloadBtn').style.display==='none'){buildBtn.disabled=false;buildBtn.style.display='';}
+    progressEl.style.display='none';infoBox.style.display='none';$('downloadBtn').style.display='none';
+    const fail=e=>sendAnalytics(Object.assign({event:'convert',source:parsedData?parsedData.fmt:'?',target:target,success:false,merge:MERGE.on?1:0,error:e},partsInfo(job)));
+    if(err&&err.cancelled){log('Build cancelled by user','warn');infoBox.textContent='Cancelled.';infoBox.style.display='block';if(job)fail('cancelled after '+job.names.length+' of '+job.groups.length+' parts');}
+    else if(err&&err.tooBig){
+      _forceParts=true;_partSize=Math.max(PART_MIN,_partSize/2);log('Browser ran out of room to hold the file','err');
+      errorBox.innerHTML='<b>This backup is too big for your browser to build in one piece.</b><br>Click <b>Convert</b> again — this time it is saved as several smaller files.';
+      errorBox.style.display='block';fail('too big for browser memory');
+    }else{log('Build failed: '+(err.message||err),'err');errorBox.textContent=err.message||String(err);errorBox.style.display='block';fail((err.message||String(err)).slice(0,100));}
+  }finally{_attCache=true}
+  cancelBtn.style.display='none';if($('downloadBtn').style.display==='none'&&!streamed){buildBtn.disabled=false;buildBtn.style.display='';optionsEl.style.display='block';}
 }
 
 })();
