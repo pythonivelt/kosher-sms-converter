@@ -479,7 +479,7 @@
 </section>
 
 <footer class="site-footer">
-  <p><span id="verSpan">v0.0.97</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
+  <p><span id="verSpan">v0.0.98</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
   <p style="margin-top:6px">Free and open source · Nothing gets uploaded</p>
 </footer>
 
@@ -1878,9 +1878,9 @@ function extFromCt(ct){return({'image/jpeg':'.jpg','image/jpg':'.jpg','image/png
 let _attCache=true,_forceParts=false;
 function estimateOutput(target,content){
   if(content==='text'||!selectedFile)return 0;
-  const s=selectedFile.size,xmlIn=parsedData.fmt==='smsbackup',ab=parsedData.attachBytes||0;
-  if(ab>0&&target==='smsbackup')return s*1.4+ab*1.37;
-  return target==='smsbackup'?(xmlIn?s:s*1.4):(xmlIn?s*0.8:s*1.05);
+  const s=selectedFile.size,xmlIn=parsedData.fmt==='smsbackup',ab=parsedData.attachBytes||0,xmlOut=target==='smsbackup'||target==='pom'&&BETA_MODE;
+  if(ab>0&&xmlOut)return s*1.4+ab*1.37;
+  return xmlOut?(xmlIn?s:s*1.4):(xmlIn?s*0.8:s*1.05);
 }
 function blobSink(type){
   const blobs=[];let parts=[],sz=0;
@@ -1891,7 +1891,7 @@ function blobSink(type){
     try{await b.slice(0,1).arrayBuffer()}catch(e){throw{tooBig:true}}
   };
   return{
-    async write(x){parts.push(x);sz+=typeof x==='string'?x.length:x.byteLength;if(sz>50*1024*1024)await flush()},
+    async write(x){parts.push(x);sz+=typeof x==='string'?x.length:x.byteLength??x.size;if(sz>50*1024*1024)await flush()},
     async close(){await flush();return new Blob(blobs,{type})},
     async abort(){}
   };
@@ -1901,7 +1901,7 @@ function smsBackupMmsAddr(m,own){const seen=new Set(),others=[];for(const a of(m
 // In testing, Chrome downloads of ~700 MB+ sometimes failed while ~500 MB never did; low-memory PCs get smaller parts still.
 const PART_MAX=512*1024*1024,PART_MIN=64*1024*1024;
 let _partSize=(m=>m>=8?PART_MAX:m>=4?PART_MAX/2:m>0?PART_MAX/4:PART_MAX/2)(navigator.deviceMemory);
-function needsParts(target,est){return(_forceParts||est>_partSize)&&!(target==='pom'&&BETA_MODE)}
+function needsParts(target,est){return _forceParts||est>_partSize}
 function partsCard(title,text,done,total,steps,actions){
   infoBox.textContent='';
   const add=(tag,cls,txt,parent)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;(parent||infoBox).appendChild(e);return e};
@@ -2028,7 +2028,7 @@ function msgBytes(m,target){
   let b=m.type==='sms'?400+(m.body||'').length*1.2:1500;
   for(const p of m.parts||[]){
     const raw=p._entry?p._entry.uncompressedSize||0:p._dataBlob?p._dataBlob.size:typeof p.data==='string'?p.data.length*0.75:p.data?p.data.byteLength||0:0;
-    b+=300+(p.text||'').length*1.2+raw*(target==='smsbackup'?1.34:1);
+    b+=300+(p.text||'').length*1.2+raw*(target==='smsbackup'||target==='pom'&&BETA_MODE?1.34:1);
   }
   return b;
 }
@@ -2205,13 +2205,14 @@ async function buildRawZip(files,zipComment,sink=blobSink('application/zip')){
   // Pure JS ZIP creator (STORE, no compression) — compatible with Fig
   // Build CRC32 table once
   if(!buildRawZip._t){const t=new Uint32Array(256);for(let n=0;n<256;n++){let v=n;for(let k=0;k<8;k++)v=v&1?(0xEDB88320^(v>>>1)):(v>>>1);t[n]=v}buildRawZip._t=t}
-  function crc32(data){
-    let c=0xFFFFFFFF;const t=buildRawZip._t;const len=data.length;
+  function crcUpdate(c,data){
+    const t=buildRawZip._t;const len=data.length;
     // Process 4 bytes at a time for speed
     let i=0;for(;i+3<len;i+=4){c=t[(c^data[i])&0xFF]^(c>>>8);c=t[(c^data[i+1])&0xFF]^(c>>>8);c=t[(c^data[i+2])&0xFF]^(c>>>8);c=t[(c^data[i+3])&0xFF]^(c>>>8)}
     for(;i<len;i++)c=t[(c^data[i])&0xFF]^(c>>>8);
-    return(c^0xFFFFFFFF)>>>0;
+    return c;
   }
+  function crc32(data){return(crcUpdate(0xFFFFFFFF,data)^0xFFFFFFFF)>>>0}
   async function deflate(data){
     try{
       const cs=new CompressionStream('deflate-raw');
@@ -2231,13 +2232,23 @@ async function buildRawZip(files,zipComment,sink=blobSink('application/zip')){
   for(let fi=0;fi<files.length;fi++){
     const f=files[fi];
     const nameBytes=enc.encode(f.name);
-    const raw=f.data instanceof Blob?new Uint8Array(await f.data.arrayBuffer()):f.data instanceof Uint8Array?f.data:new Uint8Array(f.data);
-    const crc=crc32(raw);const sz=raw.length;
-    const compressed=await deflate(raw);
-    const useDeflate=compressed&&compressed.length<sz;
-    const method=useDeflate?8:0;
-    const cData=useDeflate?compressed:raw;
-    const csz=cData.length;
+    let crc,sz,method,cData,csz;
+    if(BETA_MODE&&f.data instanceof Blob&&f.data.size>32*1024*1024){
+      // big files are checksummed and compressed as streams, so they never have to fit in memory at once
+      const CH=8*1024*1024;let c=0xFFFFFFFF;
+      for(let o=0;o<f.data.size;o+=CH){c=crcUpdate(c,new Uint8Array(await f.data.slice(o,o+CH).arrayBuffer()));if(cancelled)throw{cancelled:true}}
+      crc=(c^0xFFFFFFFF)>>>0;sz=f.data.size;
+      let z=null;try{z=await new Response(f.data.stream().pipeThrough(new CompressionStream('deflate-raw'))).blob()}catch(e){}
+      if(z&&z.size<sz){method=8;cData=z;csz=z.size}else{method=0;cData=f.data;csz=sz}
+    }else{
+      const raw=f.data instanceof Blob?new Uint8Array(await f.data.arrayBuffer()):f.data instanceof Uint8Array?f.data:new Uint8Array(f.data);
+      crc=crc32(raw);sz=raw.length;
+      const compressed=await deflate(raw);
+      const useDeflate=compressed&&compressed.length<sz;
+      method=useDeflate?8:0;
+      cData=useDeflate?compressed:raw;
+      csz=cData.length;
+    }
     const lh=new Uint8Array([0x50,0x4B,0x03,0x04,...u16(20),...u16(0),...u16(method),...u16(0),...u16(0),...u32(crc),...u32(csz),...u32(sz),...u16(nameBytes.length),...u16(0)]);
     await sink.write(lh);await sink.write(nameBytes);await sink.write(cData);
     const cd=new Uint8Array([0x50,0x4B,0x01,0x02,...u16(20),...u16(20),...u16(0),...u16(method),...u16(0),...u16(0),...u32(crc),...u32(csz),...u32(sz),...u16(nameBytes.length),...u16(0),...u16(0),...u16(0),...u16(0),...u32(0),...u32(offset)]);
@@ -2313,18 +2324,24 @@ async function buildWonderZip(messages){
   return await buildRawZip(zipFiles);
 }
 
-async function buildPomZip(messages){
-  const own=detectOwnNumber(messages);
+// XML is collected as Blob pieces: one JS string can't hold more than ~512 MB, and Pom's mms.xml carries every picture as base64.
+function xmlPieces(){
+  const blobs=[];let pend=[],n=0;
+  return{
+    add(s){pend.push(s);n+=s.length;if(n>16*1024*1024){blobs.push(new Blob(pend));pend=[];n=0}},
+    done(head,tail){blobs.push(new Blob(pend));return new Blob([head,...blobs,tail],{type:'text/xml'})}
+  };
+}
+async function buildPomZip(messages,own){
+  own=own||detectOwnNumber(messages);
   let smsCount=0,mmsCount=0;
-  const smsParts=[];const mmsParts=[];
-  smsParts.push("<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>\n<smses count=\"__COUNT__\">\n");
-  mmsParts.push("<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>\n<mmses count=\"__COUNT__\">\n");
+  const sms=xmlPieces(),mms=xmlPieces();
   for(let i=0;i<messages.length;i++){
     if(i%100===0){if(cancelled)throw{cancelled:true};showProgress('Building Pom… '+i+'/'+messages.length,Math.round(i/messages.length*80)+10);await tick()}
     const m=messages[i];
     if(m.type==='sms'){
       const t=m.direction==='in'?'1':'2';
-      smsParts.push(`  <sms protocol="${escXml(m.protocol??0)}" address="${escXml(m.address)}" date="${escXml(m.date)}" type="${t}" subject="null" body="${escXml(m.body)}" service_center="null" read="${escXml(m.read??0)}" status="${escXml(m.status??-1)}" locked="${escXml(m.locked??0)}" date_sent="${escXml(m.dateSent??0)}" toa="null" sc_toa="null" readable_date="null" contact_name="null" />\n`);
+      sms.add(`  <sms protocol="${escXml(m.protocol??0)}" address="${escXml(m.address)}" date="${escXml(m.date)}" type="${t}" subject="null" body="${escXml(m.body)}" service_center="null" read="${escXml(m.read??0)}" status="${escXml(m.status??-1)}" locked="${escXml(m.locked??0)}" date_sent="${escXml(m.dateSent??0)}" toa="null" sc_toa="null" readable_date="null" contact_name="null" />\n`);
       smsCount++;
     }else{
       const mb=m.direction==='in'?'1':'2';
@@ -2371,19 +2388,16 @@ async function buildPomZip(messages){
         xml+=`    </recipients>\n`;
       }
       xml+=`  </mms>\n`;
-      mmsParts.push(xml);
+      mms.add(xml);
       mmsCount++;
     }
   }
-  smsParts.push('</smses>\n');
-  mmsParts.push('</mmses>\n');
-  smsParts[0]=smsParts[0].replace('__COUNT__',String(smsCount));
-  mmsParts[0]=mmsParts[0].replace('__COUNT__',String(mmsCount));
+  const xmlHead=(tag,count)=>"<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>\n<"+tag+' count="'+count+'">\n';
   const manifest=JSON.stringify({magic:'POM_BACKUP_v1',createdAt:Date.now(),mode:'Full',counts:{sms:smsCount,mms:mmsCount},apps:['sms','mms']});
   const enc=new TextEncoder();
   const zipFiles=[
-    {name:'sms.xml',data:enc.encode(smsParts.join(''))},
-    {name:'mms.xml',data:enc.encode(mmsParts.join(''))},
+    {name:'sms.xml',data:sms.done(xmlHead('smses',smsCount),'</smses>\n')},
+    {name:'mms.xml',data:mms.done(xmlHead('mmses',mmsCount),'</mmses>\n')},
     {name:'_pom_backup_manifest.json',data:enc.encode(manifest)}
   ];
   log('Building Pom ZIP: '+smsCount+' SMS, '+mmsCount+' MMS','ok');
@@ -2441,7 +2455,7 @@ async function build(target){
     const pomNative=target==='pom'&&BETA_MODE;
     const filename=outFilename(target);
     const type=target==='smsbackup'?'text/xml;charset=utf-8':'application/zip';
-    const writeOne=(list,s,own)=>target==='smsbackup'?writeToSmsBackup(list,s,own):buildFigZip(list,s);
+    const writeOne=(list,s,own)=>pomNative?buildPomZip(list,own):target==='smsbackup'?writeToSmsBackup(list,s,own):buildFigZip(list,s);
     let out;
     const est=estimateOutput(target,content);
     if(needsParts(target,est)){
