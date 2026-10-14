@@ -1229,7 +1229,7 @@ const MERGE={on:false,old:null,added:0,dropped:0};
 const DEFAULT_DROP_TEXT=document.querySelector('.drop-text').textContent;
 $('mergeLink').addEventListener('click',e=>{
   e.preventDefault();
-  MERGE.on=!MERGE.on;MERGE.old=null;
+  MERGE.on=!MERGE.on;MERGE.old=MERGE.oldFile=MERGE.newAll=null;
   $('mergeLink').innerHTML=MERGE.on?'✖ Exit merge mode — back to normal convert':'🔧 Already imported with an old version? Fix &amp; merge →';
   $('mergeBanner').style.display=MERGE.on?'block':'none';
   selectedFile=null;parsedData=null;fileInput.value='';fileNameEl.style.display='none';scanBtn.style.display='none';
@@ -1250,7 +1250,7 @@ function updateUI(){
   buildBtn.disabled=!t;
   if(t&&parsedData){
     const c=(document.querySelector('input[name="content"]:checked')||{}).value||'all';
-    const est=estimateOutput(t.value,c);
+    const est=predictOutput(t.value,c);
     if(needsParts(t.value,est))buildBtn.textContent='Convert (about '+formatSize(est)+')';
     else buildBtn.textContent='Convert';
     phoneNote(IS_MOBILE&&needsParts(t.value,est)?est:0);
@@ -1287,7 +1287,7 @@ async function scan(){
     log('Scanning '+selectedFile.name+' ('+formatSize(selectedFile.size)+')');
     showProgress('Opening file…',10);await tick();
     const isZip=selectedFile.name.toLowerCase().endsWith('.zip');
-    let messages,attachMap,fmt,pdfCount=0,pdfSize=0,pomLegacy=false,attachBytes=0;
+    let messages,attachMap,fmt,pdfCount=0,pdfSize=0,pomLegacy=false;
 
     if(isZip){
       let entries;
@@ -1322,7 +1322,7 @@ async function scan(){
         if(hasNdjson){
           fmt='fig';log('Detected Fig format (NDJSON)','ok');
           try{
-            ({messages,attachMap,pdfCount,pdfSize,attachBytes}=await parseFigZip(entries));
+            ({messages,attachMap,pdfCount,pdfSize}=await parseFigZip(entries));
             if(messages.some(m=>m.creator&&m.creator.includes('.pom'))){fmt='pom';pomLegacy=true;log('Detected Pom legacy backup (creator: com.figmessenger.pom)','ok')}
           }catch(parseErr){
             log('zip.js read failed: '+parseErr.message+' — trying fallback…','warn');
@@ -1376,6 +1376,7 @@ async function scan(){
       // merge: keep ALL old-backup messages; from the new backup keep only what's newer than the old backup's last message
       const nd=d=>{const n=parseInt(d,10)||0;return n<1e12?n*1000:n};
       let cutoff=0;for(const m of MERGE.old.messages){const d=nd(m.date);if(d>cutoff)cutoff=d}
+      MERGE.newAll=messages;MERGE.newFmt=fmt;
       const fresh=messages.filter(m=>nd(m.date)>cutoff);
       MERGE.added=fresh.length;MERGE.dropped=messages.length-fresh.length;
       log('Merge: old backup ends '+new Date(cutoff).toLocaleString()+' — adding '+fresh.length+' newer messages from the new backup, skipping '+MERGE.dropped+' older ones (already in the old backup)','ok');
@@ -1385,7 +1386,7 @@ async function scan(){
       fmt='merge';
     }
     const grp=markGroups(messages);
-    parsedData={messages,attachMap,fmt,groupCount:grp.groupCount,attachBytes:attachBytes||0};
+    parsedData={messages,attachMap,fmt,groupCount:grp.groupCount};
     showProgress('Done!',100);await tick();progressEl.style.display='none';
 
     // Stats (also feeds anonymous analytics: counts only — no numbers, names or content)
@@ -1488,7 +1489,7 @@ async function scan(){
     updateUI();
     if(MERGE.on&&!MERGE.old){
       // merge step 1 complete — stash and ask for the new-phone backup
-      MERGE.old=parsedData;
+      MERGE.old=parsedData;MERGE.oldFile=selectedFile;
       scanResults.style.display='none';optionsEl.style.display='none';
       infoBox.innerHTML='✅ Step 1 done — old backup scanned: <b>'+messages.length.toLocaleString()+'</b> messages.<br>Now upload the fresh backup from the <b>NEW</b> phone (SMS Backup &amp; Restore) and scan again.';
       infoBox.style.display='block';
@@ -1574,7 +1575,7 @@ async function parseFigZip(entries){
   if(buf.trim()){let obj;try{obj=JSON.parse(buf.trim());const t=obj.type;if(t==='1'||t===1||t==='2'||t===2)messages.push({type:'sms',address:(obj.address||'').replace(/\s/g,''),body:obj.body||'',date:obj.date,dateSent:obj.date_sent||'0',direction:(t==='1'||t===1)?'in':'out',read:obj.read||'0',contactName:obj.__display_name||'(Unknown)'})}catch{}}
   let attachBytes=0;for(const m of messages)if(m.parts)for(const p of m.parts)if(p._entry)attachBytes+=p._entry.uncompressedSize||0;
   log('Streamed '+formatSize(totalSize)+' → '+messages.length+' messages, '+formatSize(attachBytes)+' attachments','ok');
-  return{messages,attachMap:{},pdfCount,pdfSize,attachBytes};
+  return{messages,attachMap:{},pdfCount,pdfSize};
 }
 
 async function parseWonderZip(entries){
@@ -1876,11 +1877,12 @@ function filterMessages(messages,content,skipPdf,skipGroups){
 function extFromCt(ct){return({'image/jpeg':'.jpg','image/jpg':'.jpg','image/png':'.png','image/gif':'.gif','image/bmp':'.bmp','image/webp':'.webp','audio/amr':'.amr','audio/mpeg':'.mp3','audio/mp4':'.m4a','video/mp4':'.mp4','video/3gpp':'.3gp','application/pdf':'.pdf','text/x-vcard':'.vcf'})[String(ct||'').toLowerCase()]||'.bin'}
 // ===== OUTPUT =====
 let _attCache=true,_forceParts=false;
-function estimateOutput(target,content){
-  if(content==='text'||!selectedFile)return 0;
-  const s=selectedFile.size,xmlIn=parsedData.fmt==='smsbackup',ab=parsedData.attachBytes||0,xmlOut=target==='smsbackup'||target==='pom'&&BETA_MODE;
-  if(ab>0&&xmlOut)return s*1.4+ab*1.37;
-  return xmlOut?(xmlIn?s:s*1.4):(xmlIn?s*0.8:s*1.05);
+function predictOutput(target,content){
+  if(!parsedData)return 0;
+  const pdfSel=document.querySelector('input[name="pdfmode"]:checked');
+  const skipPdf=needsPdfChoice()&&(!pdfSel||pdfSel.value==='skip'),skipGroups=parsedData.groupCount>0&&!$('groupsChk').checked;
+  let b=0;for(const m of filterMessages(parsedData.messages,content,skipPdf,skipGroups))b+=msgBytes(m,target);
+  return b;
 }
 function blobSink(type){
   const blobs=[];let parts=[],sz=0;
@@ -2027,7 +2029,7 @@ function outFilename(target){
 function msgBytes(m,target){
   let b=m.type==='sms'?400+(m.body||'').length*1.2:1500;
   for(const p of m.parts||[]){
-    const raw=p._entry?p._entry.uncompressedSize||0:p._dataBlob?p._dataBlob.size:typeof p.data==='string'?p.data.length*0.75:p.data?p.data.byteLength||0:0;
+    const raw=p._entry?p._entry.uncompressedSize||0:p._dataBlob?p._dataBlob.size:typeof p.data==='string'?p.data.length*0.75:p.data?p.data.byteLength||0:p._b64Len?p._b64Len*0.75:p._fallbackAttach?p._fallbackAttach.compSize||0:0;
     b+=300+(p.text||'').length*1.2+raw*(target==='smsbackup'||target==='pom'&&BETA_MODE?1.34:1);
   }
   return b;
@@ -2450,14 +2452,21 @@ async function build(target){
     const msgs=filterMessages(parsedData.messages,content,skipPdf,skipGroups);
 
     log('Building '+target+' from '+msgs.length+' messages (content='+content+', skipPdf='+skipPdf+', skipGroups='+skipGroups+')');
-    if(parsedData.fmt==='smsbackup'&&content!=='text')await rehydrateSmsBackupStream(selectedFile,msgs);
+    // photos are matched to messages by their order in the file, so always hand over the file's full, unfiltered message list
+    if(content!=='text'){
+      if(parsedData.fmt==='smsbackup')await rehydrateSmsBackupStream(selectedFile,parsedData.messages);
+      else if(parsedData.fmt==='merge'){
+        if(MERGE.old&&MERGE.old.fmt==='smsbackup'&&MERGE.oldFile)await rehydrateSmsBackupStream(MERGE.oldFile,MERGE.old.messages);
+        if(MERGE.newFmt==='smsbackup'&&MERGE.newAll)await rehydrateSmsBackupStream(selectedFile,MERGE.newAll);
+      }
+    }
     showProgress('Building…',20);await tick();
     const pomNative=target==='pom'&&BETA_MODE;
     const filename=outFilename(target);
     const type=target==='smsbackup'?'text/xml;charset=utf-8':'application/zip';
     const writeOne=(list,s,own)=>pomNative?buildPomZip(list,own):target==='smsbackup'?writeToSmsBackup(list,s,own):buildFigZip(list,s);
     let out;
-    const est=estimateOutput(target,content);
+    let est=0;for(const m of msgs)est+=msgBytes(m,target);
     if(needsParts(target,est)){
       const ext=filename.match(/\.\w+$/)[0];
       job={target,type,writeOne,est,own:detectOwnNumber(msgs),groups:splitParts(msgs,target),k:0,names:[],sizes:[],log:[],buildMs:[],auto:(()=>{try{return localStorage.getItem('ksc-auto-parts')!=='0'}catch(e){return true}})(),stem:filename.slice(0,-ext.length),ext,summary:''};
