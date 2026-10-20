@@ -297,6 +297,7 @@
       <tr><td>SMS Backup &amp; Restore App *</td><td class="c-yes">SMS + MMS</td><td class="c-yes">SMS + MMS</td></tr>
       <tr><td>Buggy Backup App</td><td class="c-yes">SMS only</td><td class="c-no">Not in plan as of now</td></tr>
       <tr><td>Fig</td><td class="c-yes">SMS + MMS</td><td class="c-yes">SMS + MMS</td></tr>
+      <tr id="fig4Row" style="display:none"><td>Fig IV</td><td class="c-yes">SMS + MMS</td><td class="c-yes">SMS + MMS</td></tr>
       <tr><td>Wonder</td><td class="c-yes">SMS + MMS</td><td class="c-yes">SMS + MMS</td></tr>
       <tr id="pomRow"><td>Pom</td><td class="c-yes" id="pomOut">SMS only</td><td class="c-no" id="pomIn">Not yet</td></tr>
       <tr><td>TAK</td><td class="c-yes">SMS + MMS</td><td class="c-yes">SMS + MMS</td></tr>
@@ -367,6 +368,13 @@
       <div>
         <div class="option-label">Pom</div>
         <div class="option-desc">Import to Pom not yet supported</div>
+      </div>
+    </label>
+    <label class="option" data-value="fig4" id="optFig4" style="display:none">
+      <input type="radio" name="target" value="fig4" />
+      <div>
+        <div class="option-label">Fig IV</div>
+        <div class="option-desc" id="fig4Desc">ZIP file — for the Fig IV</div>
       </div>
     </label>
     <div class="section-label" id="cleanupLabel" style="display:none">Clean up your backup</div>
@@ -479,7 +487,7 @@
 </section>
 
 <footer class="site-footer">
-  <p><span id="verSpan">v0.0.98</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
+  <p><span id="verSpan">v0.0.99</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
   <p style="margin-top:6px">Free and open source · Nothing gets uploaded</p>
 </footer>
 
@@ -512,7 +520,7 @@ const SUPPORT_MATRIX={
 };
 const TEST_MODE=new URLSearchParams(location.search).has('test');
 const BETA_MODE=new URLSearchParams(location.search).has('beta');
-if(BETA_MODE){SUPPORT_MATRIX.pom={out:true,in:true};document.querySelector('.nav-logo').insertAdjacentHTML('beforeend',' <span style="background:#f59e0b;color:#fff;font-size:.6rem;padding:2px 6px;border-radius:4px;vertical-align:middle;font-weight:700;letter-spacing:.04em">BETA</span>');var pe=document.getElementById('pomOut');if(pe){pe.textContent='SMS + MMS';pe.className='c-yes'};var pi=document.getElementById('pomIn');if(pi){pi.textContent='SMS + MMS';pi.className='c-yes'};var pd=document.getElementById('optPom');if(pd){var dd=pd.querySelector('.option-desc');if(dd)dd.textContent='ZIP file — for Pom phones'}}
+if(BETA_MODE){SUPPORT_MATRIX.pom={out:true,in:true};SUPPORT_MATRIX.fig4={out:true,in:true};var f4=document.getElementById('fig4Row');if(f4)f4.style.display='';document.querySelector('.nav-logo').insertAdjacentHTML('beforeend',' <span style="background:#f59e0b;color:#fff;font-size:.6rem;padding:2px 6px;border-radius:4px;vertical-align:middle;font-weight:700;letter-spacing:.04em">BETA</span>');var pe=document.getElementById('pomOut');if(pe){pe.textContent='SMS + MMS';pe.className='c-yes'};var pi=document.getElementById('pomIn');if(pi){pi.textContent='SMS + MMS';pi.className='c-yes'};var pd=document.getElementById('optPom');if(pd){var dd=pd.querySelector('.option-desc');if(dd)dd.textContent='ZIP file — for Pom phones'}}
 
 const $=id=>document.getElementById(id);
 const dropZone=$('dropZone'),fileInput=$('fileInput'),scanBtn=$('scanBtn'),buildBtn=$('buildBtn'),
@@ -1219,7 +1227,7 @@ function bindRadioGroup(selector){
     });
   });
 }
-bindRadioGroup('.option[data-value="smsbackup"],.option[data-value="fig"],.option[data-value="pom"],.option[data-value="wonder"]');
+bindRadioGroup('.option[data-value="smsbackup"],.option[data-value="fig"],.option[data-value="fig4"],.option[data-value="pom"],.option[data-value="wonder"]');
 bindRadioGroup('.option[data-value="all"],.option[data-value="text"],.option[data-value="mms"]');
 bindRadioGroup('.option[data-value="pdf-include"],.option[data-value="pdf-skip"]');
 $('groupsChk').addEventListener('change',()=>{$('optGroups').classList.toggle('selected',$('groupsChk').checked)});
@@ -1287,7 +1295,7 @@ async function scan(){
     log('Scanning '+selectedFile.name+' ('+formatSize(selectedFile.size)+')');
     showProgress('Opening file…',10);await tick();
     const isZip=selectedFile.name.toLowerCase().endsWith('.zip');
-    let messages,attachMap,fmt,pdfCount=0,pdfSize=0,pomLegacy=false;
+    let messages,attachMap,fmt,pdfCount=0,pdfSize=0,pomLegacy=false,figIV=false;
 
     if(isZip){
       let entries;
@@ -1311,6 +1319,12 @@ async function scan(){
           return;
         }
       }
+      if(BETA_MODE&&entries&&!entries.some(e=>e.filename.endsWith('.ndjson'))&&entries.some(e=>e.filename==='messages.zip')){
+        // Fig IV: the usual Fig messages ZIP sits inside this one as messages.zip
+        log('Detected Fig IV backup — opening messages.zip inside','ok');
+        const inner=await entries.find(e=>e.filename==='messages.zip').getData(new zip.BlobWriter('application/zip'));
+        entries=await new zip.ZipReader(new zip.BlobReader(inner)).getEntries();figIV=true;
+      }
       if(entries){
         // Detect format
         const hasNdjson=entries.some(e=>e.filename.endsWith('.ndjson'));
@@ -1324,6 +1338,7 @@ async function scan(){
           try{
             ({messages,attachMap,pdfCount,pdfSize}=await parseFigZip(entries));
             if(messages.some(m=>m.creator&&m.creator.includes('.pom'))){fmt='pom';pomLegacy=true;log('Detected Pom legacy backup (creator: com.figmessenger.pom)','ok')}
+            if(figIV&&fmt==='fig')fmt='fig4';
           }catch(parseErr){
             log('zip.js read failed: '+parseErr.message+' — trying fallback…','warn');
             const fallback=await fallbackZipScan(selectedFile);
@@ -1405,7 +1420,7 @@ async function scan(){
     {const _fp=(cIn+cOut)+'|'+cMms+'|'+cAttach+'|'+(_dMin<Infinity?_dMin:0)+'|'+(_dMax||0);let _h=2166136261;for(let _i=0;_i<_fp.length;_i++){_h^=_fp.charCodeAt(_i);_h=Math.imul(_h,16777619)}scanExtras.bkp=('0000000'+(_h>>>0).toString(16)).slice(-8)}
 
     log('Parsed '+messages.length+' messages ('+cIn+' in, '+cOut+' out, '+cMms+' MMS, '+cAttach+' attachments)'+(pdfCount?' + '+pdfCount+' PDFs':''),'ok');
-    $('detectedBadge').textContent=fmt==='merge'?'Merged':fmt==='fig'?'Fig / TAK':fmt==='pom'?(pomLegacy?'Pom (old system)':'Pom'):fmt==='wonder'?'Wonder':fmt==='buggy'?'Buggy Backup App':'SMS Backup & Restore';
+    $('detectedBadge').textContent=fmt==='merge'?'Merged':fmt==='fig'?'Fig / TAK':fmt==='fig4'?'Fig IV':fmt==='pom'?(pomLegacy?'Pom (old system)':'Pom'):fmt==='wonder'?'Wonder':fmt==='buggy'?'Buggy Backup App':'SMS Backup & Restore';
     $('statIn').textContent=cIn.toLocaleString();
     $('statOut').textContent=cOut.toLocaleString();
     $('statMms').textContent=cMms.toLocaleString();
@@ -1432,11 +1447,11 @@ async function scan(){
     }
 
     // Hide source format from targets; disable unsupported targets unless ?test mode
-    const targets={smsbackup:'optSms',fig:'optFig',pom:'optPom',wonder:'optWonder'};
+    const targets={smsbackup:'optSms',fig:'optFig',...(BETA_MODE?{fig4:'optFig4'}:{}),pom:'optPom',wonder:'optWonder'};
     for(const[k,elId]of Object.entries(targets)){
       const el=$(elId), sup=SUPPORT_MATRIX[k];
-      const descIds={smsbackup:'smsDesc',fig:'figDesc',wonder:'wonderDesc'};
-      const defaultDescs={smsbackup:'XML file — import on any Android phone',fig:'NDJSON ZIP — for Fig & TAK phones',wonder:'ZIP file — for Wonder phones'};
+      const descIds={smsbackup:'smsDesc',fig:'figDesc',fig4:'fig4Desc',wonder:'wonderDesc'};
+      const defaultDescs={smsbackup:'XML file — import on any Android phone',fig:'NDJSON ZIP — for Fig & TAK phones',fig4:'ZIP file — for the Fig IV',wonder:'ZIP file — for Wonder phones'};
       const cleanupDesc='Remove MMS or filter content — stays in same format';
       const cl=$('cleanupLabel');
       if(k===fmt&&descIds[k]){
@@ -1459,7 +1474,7 @@ async function scan(){
     // Reset target selection
     document.querySelectorAll('input[name="target"]').forEach(r=>r.checked=false);
     if(fmt==='merge'){
-      $('optFig').style.display='none';$('optPom').style.display='none';$('optWonder').style.display='none';
+      $('optFig').style.display='none';$('optFig4').style.display='none';$('optPom').style.display='none';$('optWonder').style.display='none';
       const si=$('optSms').querySelector('input');si.disabled=false;si.checked=true;
       $('optSms').classList.remove('disabled');$('optSms').style.display='';$('optSms').classList.add('selected');
     }
@@ -1482,7 +1497,8 @@ async function scan(){
     sendAnalytics(Object.assign({event:'scan',source:fmt,sms:cIn+cOut,mms:cMms,attachments:cAttach,groups:grp.groupCount,merge:MERGE.on?1:0,duration:((Date.now()-_scanStart)/1000).toFixed(1)},scanExtras));
     scanBtn.disabled=false;cancelBtn.style.display='none';
     sourceFormat=fmt;
-    if(fmt==='fig'){$('figTakNotice').innerHTML='<b>Switching to another Fig or TAK?</b> No conversion needed — just import your backup directly. To remove pictures or keep only certain messages, select Fig / TAK below and choose what to keep.';$('figTakNotice').style.display='block';}
+    if(fmt==='fig'){$('figTakNotice').innerHTML='<b>Switching to another Fig or TAK?</b> No conversion needed — just import your backup directly.'+(BETA_MODE?' <b>Moving to a Fig IV?</b> Select Fig IV below.':'')+' To remove pictures or keep only certain messages, select Fig / TAK below and choose what to keep.';$('figTakNotice').style.display='block';}
+    else if(fmt==='fig4'){$('figTakNotice').innerHTML='<b>Moving from the Fig IV to an older Fig, TAK or Wonder?</b> Select it below. To remove pictures or keep only certain messages, select Fig IV below.';$('figTakNotice').style.display='block';}
     else if(fmt==='wonder'){$('figTakNotice').innerHTML='<b>Want to clean up your Wonder backup?</b> Select Wonder below to remove pictures or keep only certain messages.';$('figTakNotice').style.display='block';}
     else if(fmt==='smsbackup'){$('figTakNotice').innerHTML='<b>Want to clean up your backup?</b> Select SMS Backup &amp; Restore below to remove MMS or keep only certain messages.';$('figTakNotice').style.display='block';}
     else{$('figTakNotice').style.display='none';}
@@ -1989,7 +2005,7 @@ async function runParts(job){
 }
 function partsInfo(job){return job?{parts:job.names.length,partsPlanned:job.groups.length,partFails:job.log.filter(s=>!s.startsWith('memory')).length,partMemRetries:job.log.filter(s=>s.startsWith('memory')).length,partLog:job.log.join(',')}:{}}
 function partsDone(job){
-  const N=job.names.length,app={smsbackup:'SMS Backup & Restore',fig:'Fig',wonder:'Wonder',pom:'Pom'}[job.target]||'the app';
+  const N=job.names.length,app={smsbackup:'SMS Backup & Restore',fig:'Fig',fig4:'Fig IV',wonder:'Wonder',pom:'Pom'}[job.target]||'the app';
   partsCard('All '+N+' parts are saved',job.summary+', '+formatSize(job.sizes.reduce((a,b)=>a+b,0))+' in total. Find them in your Downloads folder, named '+job.names[0]+' to '+job.names[N-1]+'. The last one may need a few more seconds to finish saving.',0,0,
     ['Copy all '+N+' files to your phone.','In '+app+', restore part 1.','When it finishes, restore part 2, then the rest in order, up to part '+N+'.'],
     [{text:'Part '+N+' didn\'t download? Download it again',onClick:()=>againLast(job)}]);
@@ -2024,6 +2040,7 @@ function outFilename(target){
   return target==='smsbackup'?'sms-'+baseName+'.xml'
     :target==='pom'&&BETA_MODE?'MessagesBackup_'+n.getFullYear()+p(n.getMonth()+1)+p(n.getDate())+'_'+p(n.getHours())+p(n.getMinutes())+p(n.getSeconds())+'.zip'
     :target==='pom'?'last_'+p(n.getHours())+p(n.getMinutes())+p(n.getSeconds())+'.zip'
+    :target==='fig4'?'export_all-'+n.getFullYear()+'-'+p(n.getMonth()+1)+'-'+p(n.getDate())+'.zip'
     :'fig-'+baseName+'.zip';
 }
 function msgBytes(m,target){
@@ -2203,6 +2220,11 @@ async function buildFigZip(messages,sink){
   return await buildRawZip(zipFiles,undefined,sink);
 }
 
+// The Fig IV's backup app wants the usual Fig messages ZIP packed inside an outer ZIP as messages.zip
+async function buildFig4Zip(messages,sink){
+  const inner=await buildFigZip(messages,blobSink('application/zip'));
+  return await buildRawZip([{name:'messages.zip',data:inner,stream:true}],undefined,sink);
+}
 async function buildRawZip(files,zipComment,sink=blobSink('application/zip')){
   // Pure JS ZIP creator (STORE, no compression) — compatible with Fig
   // Build CRC32 table once
@@ -2235,7 +2257,7 @@ async function buildRawZip(files,zipComment,sink=blobSink('application/zip')){
     const f=files[fi];
     const nameBytes=enc.encode(f.name);
     let crc,sz,method,cData,csz;
-    if(BETA_MODE&&f.data instanceof Blob&&f.data.size>32*1024*1024){
+    if(f.data instanceof Blob&&(f.stream||BETA_MODE&&f.data.size>32*1024*1024)){
       // big files are checksummed and compressed as streams, so they never have to fit in memory at once
       const CH=8*1024*1024;let c=0xFFFFFFFF;
       for(let o=0;o<f.data.size;o+=CH){c=crcUpdate(c,new Uint8Array(await f.data.slice(o,o+CH).arrayBuffer()));if(cancelled)throw{cancelled:true}}
@@ -2464,7 +2486,7 @@ async function build(target){
     const pomNative=target==='pom'&&BETA_MODE;
     const filename=outFilename(target);
     const type=target==='smsbackup'?'text/xml;charset=utf-8':'application/zip';
-    const writeOne=(list,s,own)=>pomNative?buildPomZip(list,own):target==='smsbackup'?writeToSmsBackup(list,s,own):buildFigZip(list,s);
+    const writeOne=(list,s,own)=>pomNative?buildPomZip(list,own):target==='smsbackup'?writeToSmsBackup(list,s,own):target==='fig4'?buildFig4Zip(list,s):buildFigZip(list,s);
     let out;
     let est=0;for(const m of msgs)est+=msgBytes(m,target);
     if(needsParts(target,est)){
