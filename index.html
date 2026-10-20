@@ -1447,7 +1447,7 @@ async function scan(){
     }
 
     // Hide source format from targets; disable unsupported targets unless ?test mode
-    const targets={smsbackup:'optSms',fig:'optFig',...(BETA_MODE?{fig4:'optFig4'}:{}),pom:'optPom',wonder:'optWonder'};
+    const targets={smsbackup:'optSms',wonder:'optWonder',pom:'optPom',...(BETA_MODE?{fig4:'optFig4'}:{}),fig:'optFig'};
     for(const[k,elId]of Object.entries(targets)){
       const el=$(elId), sup=SUPPORT_MATRIX[k];
       const descIds={smsbackup:'smsDesc',fig:'figDesc',fig4:'fig4Desc',wonder:'wonderDesc'};
@@ -1462,6 +1462,7 @@ async function scan(){
       }else{
         if(descIds[k]&&k!==fmt)$(descIds[k]).textContent=defaultDescs[k];
         if(k===fmt)cl.style.display='none';
+        else cl.parentNode.insertBefore(el,cl);
         el.style.display=k===fmt?'none':'';
         el.classList.remove('selected','disabled');
         el.querySelector('input').disabled=false;
