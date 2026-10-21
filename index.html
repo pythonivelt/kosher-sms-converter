@@ -182,6 +182,84 @@
   .log-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}
   .log-send{padding:7px 16px;border-radius:8px;border:none;background:var(--accent-grad);color:#fff;font-weight:600;font-size:.74rem;cursor:pointer}
   .log-send.is-off,.log-send:disabled{background:var(--surface-2);color:var(--text-3);cursor:not-allowed}
+  .preview-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:14px;padding:11px;border-radius:12px;border:1px solid var(--surface-border);background:var(--card);color:var(--text);font-weight:600;font-size:.86rem;cursor:pointer;font-family:inherit;transition:border-color .2s}
+  .preview-btn:hover{border-color:var(--accent-border)}
+  .preview-btn svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .pv{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:16px}
+  .pv.open{display:flex}
+  .pv-box{background:var(--card);border:1px solid var(--card-border);border-radius:18px;width:100%;max-width:1000px;height:min(88vh,780px);display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+  .pv-head{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--surface-border)}
+  .pv-head h3{flex:1;margin:0;font-size:1rem;color:var(--text)}
+  .pv-head h3 span{font-weight:400;font-size:.78rem;color:var(--text-3);margin-left:6px}
+  .pv-x{width:34px;height:34px;border-radius:10px;border:1px solid var(--surface-border);background:var(--surface);color:var(--text-2);font-size:1.2rem;line-height:1;cursor:pointer}
+  .pv-body{flex:1;display:flex;min-height:0}
+  .pv-list{width:310px;flex:0 0 310px;border-right:1px solid var(--surface-border);display:flex;flex-direction:column;min-height:0}
+  .pv-search{margin:10px;padding:9px 12px;border-radius:10px;border:1px solid var(--field-border);background:var(--field);color:var(--text);font-size:.84rem;font-family:inherit}
+  .pv-threads{flex:1;overflow-y:auto}
+  .pv-th{display:block;width:100%;text-align:left;padding:10px 14px;border:0;border-bottom:1px solid var(--surface-border);background:none;color:var(--text);cursor:pointer;font-family:inherit}
+  .pv-th:hover,.pv-th.sel{background:var(--accent-soft)}
+  .pv-th b{display:flex;justify-content:space-between;gap:8px;font-size:.84rem;font-weight:600}
+  .pv-th b em{font-style:normal;font-weight:400;font-size:.7rem;color:var(--text-3);white-space:nowrap}
+  .pv-th small{display:block;font-size:.76rem;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:3px}
+  .pv-chat{flex:1;display:flex;flex-direction:column;min-width:0}
+  .pv-chat-head{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--surface-border);min-height:52px}
+  .pv-chat-head div{min-width:0}
+  .pv-chat-head b{display:block;font-size:.9rem;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pv-chat-head small{display:block;font-size:.72rem;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pv-back{display:none;border:0;background:none;color:var(--text);font-size:1.3rem;cursor:pointer;padding:0 4px}
+  .pv-msgs{flex:1;overflow-y:auto;padding:12px 16px 16px;display:flex;flex-direction:column;gap:6px;background:var(--surface)}
+  .pv-day{align-self:center;font-size:.7rem;color:var(--text-3);margin:12px 0 4px}
+  .pv-m{max-width:76%;padding:8px 11px;border-radius:14px;font-size:.86rem;line-height:1.45;white-space:pre-wrap;overflow-wrap:anywhere;align-self:flex-start;background:var(--card);border:1px solid var(--surface-border);color:var(--text)}
+  .pv-m.out{align-self:flex-end;background:var(--accent-soft)}
+  .pv-from{display:block;font-size:.72rem;font-weight:600;color:var(--accent);margin-bottom:2px;white-space:normal}
+  .pv-time{display:block;font-size:.66rem;color:var(--text-3);margin-top:3px;text-align:right;white-space:normal}
+  .pv-m img,.pv-m video{display:block;max-width:100%;max-height:320px;min-width:120px;min-height:90px;border-radius:10px;margin:2px 0 5px;background:var(--surface-2);object-fit:contain}
+  .pv-m audio{display:block;width:250px;max-width:100%;margin:2px 0 5px}
+  .pv-file{display:inline-block;font-size:.78rem;padding:5px 9px;border-radius:8px;background:var(--surface-2);color:var(--text);text-decoration:none;margin:2px 0 5px;white-space:normal}
+  .pv-more{align-self:center;margin:4px 0 8px;padding:7px 14px;border-radius:99px;border:1px solid var(--surface-border);background:var(--card);color:var(--text-2);font-size:.78rem;cursor:pointer;font-family:inherit}
+  .pv-empty{margin:auto;padding:24px;text-align:center;color:var(--text-3);font-size:.86rem}
+  .pv-note{padding:7px 16px;border-top:1px solid var(--surface-border);font-size:.72rem;color:var(--text-3)}
+  .pv-m.pv-hit{box-shadow:0 0 0 2px var(--warn-border)}
+  .pv-m.pv-cur{box-shadow:0 0 0 2px var(--accent)}
+  .pv-m mark{background:#fde047;color:#111;border-radius:3px;padding:0 1px}
+  .pv-find{display:flex;align-items:center;gap:6px;margin-left:auto;flex:0 0 auto;font-size:.74rem;color:var(--text-2);white-space:nowrap}
+  .pv-find[hidden]{display:none}
+  .pv-find button{width:30px;height:30px;border-radius:8px;border:1px solid var(--surface-border);background:var(--surface);color:var(--text);cursor:pointer;font-size:.7rem}
+  .pv-find button:disabled{opacity:.35;cursor:default}
+  .pv-cap{padding:10px 14px;font-size:.74rem;color:var(--text-3)}
+  .pv-ct{flex:1;min-width:0}
+  .pv-mb{flex:0 0 auto;height:30px;padding:0 10px;border-radius:8px;border:1px solid var(--surface-border);background:var(--surface);color:var(--text);font-size:.74rem;cursor:pointer;font-family:inherit;white-space:nowrap}
+  .pv-mb[hidden]{display:none}
+  .pv-m img{cursor:zoom-in}
+  .pv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:4px;align-content:start}
+  .pv-cell{position:relative;aspect-ratio:1;border:0;padding:0;border-radius:6px;overflow:hidden;background:var(--surface-2);cursor:pointer}
+  .pv-cell img,.pv-cell video{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
+  .pv-cell b{position:absolute;right:6px;bottom:6px;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;font-size:.62rem;display:flex;align-items:center;justify-content:center}
+  .pv-lb{position:fixed;inset:0;z-index:210;background:#000;display:flex;flex-direction:column;color:#fff}
+  .pv-lb[hidden]{display:none}
+  .pv-lb-top{display:flex;align-items:center;gap:10px;padding:12px 16px}
+  .pv-lb-top div{flex:1;min-width:0}
+  .pv-lb-top b{display:block;font-size:.92rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pv-lb-top small{display:block;font-size:.74rem;color:#bbb}
+  .pv-lb-top span{font-size:.8rem;color:#bbb;white-space:nowrap}
+  .pv-lb-top a,.pv-lb-top button{flex:0 0 auto;height:36px;min-width:36px;padding:0 12px;border-radius:10px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:#fff;font-size:.82rem;text-decoration:none;display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:inherit}
+  .pv-lb-top button{font-size:1.2rem}
+  .pv-lb-stage{flex:1;min-height:0;position:relative;display:flex;align-items:center;justify-content:center;padding:0 60px;touch-action:pan-y}
+  .pv-lb-stage img,.pv-lb-stage video{max-width:100%;max-height:100%;object-fit:contain;border-radius:4px}
+  .pv-lb-nav{position:absolute;top:50%;transform:translateY(-50%);width:46px;height:46px;border-radius:50%;border:0;background:rgba(255,255,255,.15);color:#fff;font-size:1.7rem;line-height:1;cursor:pointer;z-index:1}
+  .pv-lb-nav.prev{left:8px}.pv-lb-nav.next{right:8px}
+  .pv-lb-nav[hidden]{display:none}
+  .pv-lb-cap{padding:10px 16px 18px;text-align:center;font-size:.88rem;color:#ddd;white-space:pre-wrap;max-height:22vh;overflow-y:auto}
+  .pv-lb-cap:empty{display:none}
+  .pv-th{display:flex;align-items:center;gap:10px}
+  .pv-th-main{flex:1;min-width:0}
+  .pv-av{flex:0 0 38px;height:38px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.95rem}
+  .pv-hitrow .pv-av{flex-basis:30px;height:30px;margin:0 4px;background:none;border:1px solid var(--surface-border);font-size:.85rem}
+  .pv-hitrow small{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;color:var(--text)}
+  .pv-hitrow b{font-size:.78rem;font-weight:600;color:var(--text-2)}
+  .pv-th mark{background:#fde047;color:#111;border-radius:3px;padding:0 1px}
+  .pv-sec{padding:14px 14px 6px;font-size:.68rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text-3);border-bottom:1px solid var(--surface-border)}
+  @media(max-width:720px){.pv{padding:0}.pv-lb-stage{padding:0 4px}.pv-lb-nav{width:38px;height:38px;background:rgba(0,0,0,.45)}.pv-grid{grid-template-columns:repeat(3,1fr)}.pv-box{max-width:none;height:100%;border-radius:0;border:0}.pv-list{width:100%;flex:1;border-right:0}.pv-chat{display:none}.pv.chat .pv-list{display:none}.pv.chat .pv-chat{display:flex}.pv-back{display:inline-block}.pv-m{max-width:86%}}
   .log-btn{padding:6px 12px;border-radius:8px;border:1px solid var(--field-border);background:var(--surface);color:var(--text-2);font-size:.68rem;cursor:pointer;white-space:nowrap;transition:border-color .2s,color .2s}
   .log-btn:hover{border-color:var(--accent-border);color:var(--accent)}
   html{scroll-behavior:smooth}
@@ -429,6 +507,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')setMenu(fals
       <div class="stat" id="statGroupRow" style="display:none"><span class="stat-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>Group chats: <strong id="statGroup">0</strong></div>
       <div class="stat" id="statPdfRow" style="display:none"><span class="stat-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>PDFs: <strong id="statPdf">0</strong></div>
     </div>
+    <button type="button" class="preview-btn" id="previewBtn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Preview messages</button>
   </div>
 
   <div class="info" id="figTakNotice" style="display:none"></div>
@@ -585,7 +664,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')setMenu(fals
 </section>
 
 <footer class="site-footer">
-  <p><span id="verSpan">v1.1.4</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
+  <p><span id="verSpan">v1.1.5</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
   <p style="margin-top:6px">Free and open source · Nothing gets uploaded</p>
 </footer>
 
@@ -1417,7 +1496,7 @@ function pickFile(f){
   fileNameEl.textContent=f.name+' ('+formatSize(f.size)+')';
   fileNameEl.style.display='block';
   scanBtn.style.display='';scanBtn.disabled=false;cancelBtn.style.display='none';
-  scanResults.style.display='none';optionsEl.style.display='none';infoBox.style.display='none';errorBox.style.display='none';progressEl.style.display='none';$('downloadBtn').style.display='none';
+  scanResults.style.display='none';optionsEl.style.display='none';infoBox.style.display='none';errorBox.style.display='none';progressEl.style.display='none';$('downloadBtn').style.display='none';$('figTakNotice').style.display='none';
   dropZone.classList.remove('done');dropZone.style.display='';parsedData=null;
   if(zipReader){try{zipReader.close()}catch{}zipReader=null}
 }
@@ -1631,7 +1710,7 @@ async function scan(){
     }
 
     scanBtn.style.display='none';
-    scanResults.style.display='block';
+    scanResults.style.display='block';$('previewBtn').style.display=MERGE.on?'none':'';
     dropZone.classList.add('done');dropZone.style.display='none';$('mergeLink').parentElement.style.display='none';
     optionsEl.style.display='block';
     $('convertNotice').style.display='block';
@@ -2569,6 +2648,226 @@ async function buildPomZip(messages,own){
   return await buildRawZip(zipFiles,'POM_BACKUP_v1');
 }
 
+// ===== PREVIEW =====
+// Read-only look at the scanned backup: conversations on the left, the chat on the right. Media loads only when scrolled into view and is freed on close.
+const PV={src:null,threads:[],cur:null,urls:[],obs:null,rehydrating:null,q:null,res:null,hits:null,hitPos:-1,lo:0,hi:0};
+document.body.insertAdjacentHTML('beforeend','<div class="pv" id="pv" role="dialog" aria-modal="true" aria-labelledby="pvTitle"><div class="pv-box"><div class="pv-head"><h3 id="pvTitle">Preview <span id="pvCount"></span></h3><button type="button" class="pv-x" id="pvClose" aria-label="Close preview">×</button></div><div class="pv-body"><div class="pv-list"><input type="search" class="pv-search" id="pvSearch" placeholder="Search names, numbers or messages" aria-label="Search"><div class="pv-threads" id="pvThreads"></div></div><div class="pv-chat"><div class="pv-chat-head"><button type="button" class="pv-back" id="pvBack" aria-label="Back to conversations">←</button><div class="pv-ct"><b id="pvChatTitle" dir="auto">Pick a conversation</b><small id="pvChatSub"></small></div><div class="pv-find" id="pvFind" hidden><span id="pvFindPos"></span><button type="button" id="pvPrev" aria-label="Older match">▲</button><button type="button" id="pvNext" aria-label="Newer match">▼</button></div><button type="button" class="pv-mb" id="pvMediaBtn" hidden></button></div><div class="pv-msgs" id="pvMsgs"><p class="pv-empty">Pick a conversation on the left to read it here.</p></div></div></div><div class="pv-note" id="pvNote">Only on this device, nothing is uploaded. This is a preview; nothing changes until you convert.</div></div><div class="pv-lb" id="pvLb" hidden><div class="pv-lb-top"><div><b id="pvLbWho" dir="auto"></b><small id="pvLbWhen"></small></div><span id="pvLbPos"></span><a id="pvLbSave">Save</a><button type="button" id="pvLbClose" aria-label="Close">×</button></div><div class="pv-lb-stage" id="pvLbStage"><button type="button" class="pv-lb-nav prev" id="pvLbPrev" aria-label="Older">‹</button><div id="pvLbMedia" style="display:contents"></div><button type="button" class="pv-lb-nav next" id="pvLbNext" aria-label="Newer">›</button></div><div class="pv-lb-cap" id="pvLbCap" dir="auto"></div></div></div>');
+function pvDate(m){const n=Number(m.date);return n>0?(n<1e12?n*1000:n):0}
+function pvText(m){return m.type==='sms'?(m.body||''):(m.parts||[]).filter(p=>!hasAttach(p)&&p.ct!=='application/smil').map(p=>p.text||'').filter(Boolean).join('\n')}
+function pvKind(m){if(m.type!=='mms')return'';const a=(m.parts||[]).filter(hasAttach);if(!a.length)return'';const c=(a[0].ct||'').toLowerCase();return c.startsWith('image/')?'📷 Picture':c.startsWith('audio/')?'🎤 Voice note':c.startsWith('video/')?'🎬 Video':'📎 Attachment'}
+function pvDay(ts){if(!ts)return'';const d=new Date(ts),now=new Date();return d.toDateString()===now.toDateString()?d.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'}):d.toLocaleDateString(undefined,d.getFullYear()===now.getFullYear()?{month:'short',day:'numeric'}:{month:'short',day:'numeric',year:'numeric'})}
+// search text: lower case, accents and Hebrew vowel points removed, spaces collapsed
+function pvNorm(s){return String(s||'').normalize('NFKD').replace(/[\u0300-\u036f\u0591-\u05c7]/g,'').toLowerCase().replace(/\s+/g,' ').trim()}
+// one key per phone number however it was saved: +972 55…, 972 55…, 00972 55… and 055… are the same; so are +1 845… and 845…
+function pvPhoneKey(a){
+  let d=String(a||'').replace(/\D/g,'');
+  if(d.length<7)return d||String(a||'').toLowerCase().trim();
+  d=d.replace(/^(00|011)/,'');
+  if(d.startsWith('972'))return'972:'+d.slice(3).replace(/^0/,'');
+  if(/^0[1-9]/.test(d)&&d.length<=10)return'972:'+d.slice(1);
+  if(d.length===11&&d[0]==='1')return'1:'+d.slice(1);
+  if(d.length===10)return'1:'+d;
+  return d;
+}
+function pvBuild(){
+  const msgs=parsedData.messages,own=detectOwnNumber(msgs),names=new Map(),th=new Map();
+  const keyOf=pvPhoneKey;
+  for(let i=0;i<msgs.length;i++){
+    const m=msgs[i];m._pvi=i;m._pvn=null;
+    const nm=m.contactName;if(nm&&!m.isGroup&&m.address&&!/^\(?unknown\)?$|^null$/i.test(nm))names.set(keyOf(m.address),nm);
+    const people=m.isGroup&&m.addrs&&m.addrs.length>1?[...new Map(m.addrs.map(a=>a.address).filter(a=>a&&!/insert-address-token/i.test(a)&&normNum(a)!==own).map(a=>[keyOf(a),a])).values()]:[m.address||''];
+    const key=people.map(keyOf).sort().join('~')||'?';
+    let t=th.get(key);if(!t){t={people,msgs:[],last:0,seen:new Set()};th.set(key,t)}
+    for(const a of m.isGroup&&m.addrs?m.addrs.map(x=>x.address):[m.address])if(a)t.seen.add(a);
+    t.msgs.push(m);const d=pvDate(m);if(d>t.last)t.last=d;
+  }
+  PV.label=a=>names.get(keyOf(a))||a||'Unknown';
+  PV.threads=[...th.values()].sort((a,b)=>b.last-a.last);
+  for(const t of PV.threads){
+    // same time (MMS only keep whole seconds): keep the order they have in the backup
+    t.msgs.sort((a,b)=>pvDate(a)-pvDate(b)||a._pvi-b._pvi);
+    t.title=t.people.map(PV.label).join(', ');
+    t.sub=t.people.length>1?t.people.length+' people · '+t.msgs.length.toLocaleString()+' messages':(names.has(keyOf(t.people[0]))?t.people[0]+' · ':'')+t.msgs.length.toLocaleString()+' messages';
+    t.find=pvNorm(t.title+' '+[...t.seen].join(' '));t.digits=[...t.seen].map(a=>String(a).replace(/\D/g,'')).join(' ');delete t.seen;
+  }
+  PV.src=parsedData;
+}
+function pvQuery(){const raw=$('pvSearch').value.trim();if(!raw)return null;const words=pvNorm(raw).split(' ').filter(Boolean);const d=raw.replace(/\D/g,'');return words.length?{words,digits:/^[\d\s+().-]+$/.test(raw)&&d.length>=3?(d.length>9?d.slice(-9):d):''}:null}
+function pvHit(m,q){if(m._pvn==null)m._pvn=pvNorm(pvText(m));return q.words.every(w=>m._pvn.includes(w))}
+// every conversation whose name or number matches, or with messages containing all the words (any order)
+function pvSearch(q){
+  const res=[];
+  for(const t of PV.threads){
+    const nameHit=q.words.every(w=>t.find.includes(w))||!!(q.digits&&t.digits.includes(q.digits));
+    const hits=[];for(let i=0;i<t.msgs.length;i++)if(pvHit(t.msgs[i],q))hits.push(i);
+    if(nameHit||hits.length)res.push({t,nameHit,hits,when:hits.length?pvDate(t.msgs[hits[hits.length-1]]):t.last});
+  }
+  return res.sort((a,b)=>(b.nameHit-a.nameHit)||(b.when-a.when));
+}
+function pvSnip(text,q){const n=text.toLowerCase();let at=-1;for(const w of q.words){at=n.indexOf(w);if(at>=0)break}if(at<30)return text;return'…'+text.slice(at-25)}
+function pvMarkText(el,text,q){
+  if(!q){el.appendChild(document.createTextNode(text));return}
+  const re=new RegExp(q.words.map(w=>[...w].map(c=>c.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('[\\u0591-\\u05c7]*')).join('|'),'gi');let last=0,mt;
+  while((mt=re.exec(text))){if(!mt[0].length){re.lastIndex++;continue}if(mt.index>last)el.appendChild(document.createTextNode(text.slice(last,mt.index)));const mk=document.createElement('mark');mk.textContent=mt[0];el.appendChild(mk);last=mt.index+mt[0].length}
+  if(last<text.length)el.appendChild(document.createTextNode(text.slice(last)));
+}
+function pvAvatar(t){const s=document.createElement('span');s.className='pv-av';s.setAttribute('aria-hidden','true');const c=[...(t.title||'').trim()][0]||'';s.textContent=t.people.length>1?'👥':/[\p{L}]/u.test(c)?c.toUpperCase():'#';return s}
+function pvRow(t,title,when,snippet,q,cls,onclick){
+  const b=document.createElement('button');b.type='button';b.className='pv-th'+(cls?' '+cls:'');b._t=t;
+  const main=document.createElement('span');main.className='pv-th-main';
+  const h=document.createElement('b'),name=document.createElement('span'),d=document.createElement('em');name.dir='auto';name.textContent=title;d.textContent=pvDay(when);h.append(name,d);
+  const s=document.createElement('small');s.dir='auto';pvMarkText(s,snippet||' ',q);main.append(h,s);
+  if(cls==='pv-hitrow'){const ic=document.createElement('span');ic.className='pv-av';ic.setAttribute('aria-hidden','true');ic.textContent='💬';b.append(ic,main)}else b.append(pvAvatar(t),main);
+  b.onclick=onclick;return b;
+}
+function pvSection(box,label,n){const h=document.createElement('div');h.className='pv-sec';h.textContent=label+' ('+n.toLocaleString()+')';box.appendChild(h)}
+// no search: every chat. Search: CHATS whose name or number match, then every matching MESSAGE, newest first
+function pvList(){
+  const q=pvQuery(),box=$('pvThreads');box.textContent='';PV.q=q;PV.res=q?pvSearch(q):null;const MAX=500;
+  const cap=(cls,text)=>{const p=document.createElement('p');p.className=cls;p.textContent=text;box.appendChild(p)};
+  const last=t=>t.msgs[t.msgs.length-1];
+  if(!q){
+    for(const t of PV.threads.slice(0,MAX))box.appendChild(pvRow(t,t.title,t.last,pvText(last(t))||pvKind(last(t)),null,'',()=>pvOpen(t)));
+    if(!PV.threads.length)cap('pv-empty','No messages in this backup.');
+    else if(PV.threads.length>MAX)cap('pv-cap','Showing '+MAX+' of '+PV.threads.length.toLocaleString()+' conversations. Search to find the rest.');
+    pvMarkSel();return;
+  }
+  const chats=PV.res.filter(r=>r.nameHit),msgs=[];
+  for(const r of PV.res)for(const i of r.hits)msgs.push({r,i,when:pvDate(r.t.msgs[i])});
+  msgs.sort((a,b)=>b.when-a.when||b.i-a.i);
+  if(!chats.length&&!msgs.length){cap('pv-empty','Nothing found for “'+$('pvSearch').value.trim()+'”.');return}
+  if(chats.length){pvSection(box,'Chats',chats.length);for(const r of chats.slice(0,MAX))box.appendChild(pvRow(r.t,r.t.title,r.t.last,pvText(last(r.t))||pvKind(last(r.t)),null,'',()=>pvOpen(r.t,r.hits)))}
+  if(msgs.length){pvSection(box,'Messages',msgs.length);
+    for(const x of msgs.slice(0,MAX)){const m=x.r.t.msgs[x.i],who=m.direction==='out'?'You → '+x.r.t.title:x.r.t.title;box.appendChild(pvRow(x.r.t,who,x.when,pvSnip(pvText(m),q),q,'pv-hitrow',()=>pvOpen(x.r.t,x.r.hits,x.i)))}
+    if(msgs.length>MAX)cap('pv-cap','Showing the newest '+MAX+' of '+msgs.length.toLocaleString()+' messages. Add more words to narrow it down.');
+  }
+  pvMarkSel();
+}
+function pvMarkSel(){document.querySelectorAll('.pv-th').forEach(b=>b.classList.toggle('sel',b._t===PV.cur&&!b.classList.contains('pv-hitrow')))}
+function pvFree(){if(PV.obs)PV.obs.disconnect();PV.urls.forEach(u=>URL.revokeObjectURL(u));PV.urls=[];
+  PV.obs=new IntersectionObserver(es=>{for(const e of es)if(e.isIntersecting){PV.obs.unobserve(e.target);pvLoad(e.target)}},{root:$('pvMsgs'),rootMargin:'400px 0px'})}
+function pvRehydrate(){
+  if(!PV.rehydrating)PV.rehydrating=(async()=>{const note=$('pvNote'),was=note.textContent;note.textContent='Loading pictures and voice notes from your backup…';try{await rehydrateSmsBackupStream(selectedFile,parsedData.messages)}catch(e){}note.textContent=was})();
+  return PV.rehydrating;
+}
+async function pvBlob(p){
+  try{
+    if(p._hasData)await pvRehydrate();
+    if(p._entry)return await p._entry.getData(new zip.BlobWriter(p.ct||''));
+    const d=p._dataBlob||await resolveData(p);if(d)return d instanceof Blob?d:new Blob([d],{type:p.ct||''});
+  }catch(e){}
+  return null;
+}
+async function pvLoad(el){
+  const blob=await pvBlob(el._part);
+  if(!blob||!el.isConnected||!$('pv').classList.contains('open'))return;
+  const u=URL.createObjectURL(blob);PV.urls.push(u);if(el.tagName==='A')el.href=u;else el.src=u;
+}
+function pvMedia(p){
+  const c=(p.ct||'').toLowerCase();let el;
+  if(c.startsWith('image/')){el=document.createElement('img');el.alt=p.cl||'Picture';el.onclick=()=>pvLbOpen(PV.cur,p)}
+  else if(c.startsWith('audio/')){el=document.createElement('audio');el.controls=true;el.preload='none'}
+  else if(c.startsWith('video/')){el=document.createElement('video');el.controls=true;el.preload='metadata'}
+  else{el=document.createElement('a');el.className='pv-file';el.target='_blank';el.rel='noopener';el.textContent='📎 '+(p.cl||p.name||c||'File')}
+  el._part=p;PV.obs.observe(el);return el;
+}
+// shows messages lo…hi-1 of the chat, oldest at the top, with buttons to show more on either side
+function pvWindow(t,lo,hi){
+  const box=$('pvMsgs');pvFree();box.textContent='';PV.lo=lo;PV.hi=hi;
+  const more=(label,fn)=>{const b=document.createElement('button');b.type='button';b.className='pv-more';b.textContent=label;b.onclick=fn;box.appendChild(b)};
+  if(lo>0)more('Show earlier messages ('+lo.toLocaleString()+' more)',()=>{const h=box.scrollHeight,top=box.scrollTop;pvWindow(t,Math.max(0,lo-200),hi);box.scrollTop=box.scrollHeight-h+top});
+  let lastDay='';
+  for(let i=lo;i<hi;i++){
+    const m=t.msgs[i],ts=pvDate(m),day=ts?new Date(ts).toDateString():'none';
+    if(day!==lastDay){lastDay=day;const dv=document.createElement('div');dv.className='pv-day';dv.textContent=ts?new Date(ts).toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric',year:'numeric'}):'No date';box.appendChild(dv)}
+    const hit=!!(PV.q&&pvHit(m,PV.q));
+    const el=document.createElement('div');el.className='pv-m'+(m.direction==='out'?' out':'')+(hit?' pv-hit':'');el.dataset.i=i;
+    if(t.people.length>1&&m.direction!=='out'){const f=(m.addrs||[]).find(a=>String(a.type)==='137');if(f){const s=document.createElement('span');s.className='pv-from';s.dir='auto';s.textContent=PV.label(f.address);el.appendChild(s)}}
+    if(m.type==='mms')for(const p of m.parts||[])if(hasAttach(p))el.appendChild(pvMedia(p));
+    const tx=pvText(m);if(tx){const sp=document.createElement('span');sp.dir='auto';pvMarkText(sp,tx,hit?PV.q:null);el.appendChild(sp)}
+    const tm=document.createElement('span');tm.className='pv-time';tm.textContent=ts?new Date(ts).toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'}):'';el.appendChild(tm);
+    box.appendChild(el);
+  }
+  if(hi<t.msgs.length)more('Show later messages ('+(t.msgs.length-hi).toLocaleString()+' more)',()=>{const top=box.scrollTop;pvWindow(t,lo,Math.min(t.msgs.length,hi+200));box.scrollTop=top});
+  pvMarkCur();
+}
+function pvMarkCur(){const cur=PV.hits?PV.hits[PV.hitPos]:-1;$('pvMsgs').querySelectorAll('.pv-m').forEach(e=>e.classList.toggle('pv-cur',+e.dataset.i===cur))}
+function pvGo(pos,redraw){
+  const t=PV.cur,i=PV.hits[pos];PV.hitPos=pos;
+  if(i<PV.lo||i>=PV.hi)pvWindow(t,Math.max(0,i-40),Math.min(t.msgs.length,i+110));else if(redraw)pvWindow(t,PV.lo,PV.hi);else pvMarkCur();
+  const el=$('pvMsgs').querySelector('.pv-m[data-i="'+i+'"]');if(el)el.scrollIntoView({block:'center'});
+  $('pvFindPos').textContent=(pos+1).toLocaleString()+' of '+PV.hits.length.toLocaleString();$('pvPrev').disabled=pos<=0;$('pvNext').disabled=pos>=PV.hits.length-1;
+}
+// fills the chat side; on phones the list stays in front unless asked (pvOpen)
+function pvShowChat(t,hits,at){
+  if(PV.cur!==t){PV.lo=PV.hi=0}
+  PV.cur=t;PV.hits=hits&&hits.length?hits:null;const ai=PV.hits&&at!=null?PV.hits.indexOf(at):-1;PV.hitPos=PV.hits?(ai>=0?ai:PV.hits.length-1):-1;
+  $('pvChatTitle').textContent=t.title;$('pvChatSub').textContent=t.sub;$('pvFind').hidden=!PV.hits;PV.gallery=false;const nm=pvMediaOf(t).length;$('pvMediaBtn').hidden=!nm;$('pvMediaBtn').textContent='🖼 Media ('+nm.toLocaleString()+')';
+  if(PV.hits)pvGo(PV.hitPos,true);else{pvWindow(t,Math.max(0,t.msgs.length-150),t.msgs.length);const box=$('pvMsgs');box.scrollTop=box.scrollHeight}
+  pvMarkSel();
+}
+function pvOpen(t,hits,at){pvShowChat(t,hits,at);$('pv').classList.add('chat')}
+// every picture and video in a chat, oldest first
+function pvMediaOf(t){if(!t.media){t.media=[];for(const m of t.msgs)for(const p of m.parts||[])if(hasAttach(p)&&/^(image|video)\//i.test(p.ct||''))t.media.push({m,p})}return t.media}
+function pvGallery(t){
+  const box=$('pvMsgs'),media=pvMediaOf(t);pvFree();box.textContent='';PV.gallery=true;$('pvFind').hidden=true;
+  const grid=document.createElement('div');grid.className='pv-grid';
+  for(let k=media.length-1;k>=0;k--){
+    const x=media[k],isV=/^video\//i.test(x.p.ct||''),c=document.createElement('button');c.type='button';c.className='pv-cell';c.setAttribute('aria-label',isV?'Video':'Picture');
+    const el=document.createElement(isV?'video':'img');if(isV){el.muted=true;el.preload='metadata'}else el.alt='';el._part=x.p;PV.obs.observe(el);c.appendChild(el);
+    if(isV){const b=document.createElement('b');b.textContent='▶';c.appendChild(b)}
+    c.onclick=()=>pvLbOpen(t,x.p);grid.appendChild(c);
+  }
+  box.appendChild(grid);box.scrollTop=0;$('pvMediaBtn').textContent='💬 Back to chat';
+}
+// full-screen picture/video viewer, like a messaging app
+const LB={t:null,k:0,url:null};
+async function pvLbShow(k){
+  const media=pvMediaOf(LB.t),x=media[k];if(!x)return;LB.k=k;
+  const holder=$('pvLbMedia');holder.textContent='';if(LB.url){URL.revokeObjectURL(LB.url);LB.url=null}
+  const m=x.m,ts=pvDate(m),isV=/^video\//i.test(x.p.ct||'');
+  $('pvLbWho').textContent=m.direction==='out'?'You':PV.label(((m.addrs||[]).find(a=>String(a.type)==='137')||{}).address||m.address);
+  $('pvLbWhen').textContent=ts?new Date(ts).toLocaleString(undefined,{dateStyle:'medium',timeStyle:'short'}):'';
+  $('pvLbPos').textContent=(k+1).toLocaleString()+' of '+media.length.toLocaleString();$('pvLbPrev').hidden=k<=0;$('pvLbNext').hidden=k>=media.length-1;
+  $('pvLbCap').textContent=pvText(m);
+  const el=document.createElement(isV?'video':'img');if(isV){el.controls=true;el.autoplay=true;el.playsInline=true}else el.alt=x.p.cl||'Picture';holder.appendChild(el);
+  const save=$('pvLbSave');save.removeAttribute('href');save.download=x.p.cl||x.p.name||(isV?'video.mp4':'picture.jpg');
+  const blob=await pvBlob(x.p);if(!blob||LB.k!==k||$('pvLb').hidden)return;
+  LB.url=URL.createObjectURL(blob);el.src=LB.url;save.href=LB.url;
+}
+function pvLbOpen(t,p){LB.t=t;const k=pvMediaOf(t).findIndex(x=>x.p===p);$('pvLb').hidden=false;pvLbShow(Math.max(0,k))}
+function pvLbClose(){$('pvLb').hidden=true;$('pvLbMedia').textContent='';if(LB.url){URL.revokeObjectURL(LB.url);LB.url=null}}
+function pvLbStep(d){const n=pvMediaOf(LB.t).length,k=LB.k+d;if(k>=0&&k<n)pvLbShow(k)}
+function pvShow(){
+  if(!parsedData)return;
+  if(PV.src!==parsedData){PV.cur=null;PV.rehydrating=null;pvBuild()}
+  $('pvSearch').value='';$('pvCount').textContent=PV.threads.length.toLocaleString()+' conversation'+(PV.threads.length===1?'':'s');
+  $('pv').classList.add('open');$('pv').classList.remove('chat');document.body.style.overflow='hidden';pvFree();pvList();
+  if(PV.cur)pvShowChat(PV.cur);else if(PV.threads.length&&innerWidth>720)pvShowChat(PV.threads[0]);
+}
+function pvHide(){pvLbClose();$('pv').classList.remove('open');document.body.style.overflow='';pvFree();$('pvMsgs').textContent=''}
+$('previewBtn').addEventListener('click',pvShow);
+$('pvClose').addEventListener('click',pvHide);
+$('pvBack').addEventListener('click',()=>$('pv').classList.remove('chat'));
+$('pvPrev').addEventListener('click',()=>{if(PV.hits&&PV.hitPos>0)pvGo(PV.hitPos-1)});
+$('pvNext').addEventListener('click',()=>{if(PV.hits&&PV.hitPos<PV.hits.length-1)pvGo(PV.hitPos+1)});
+$('pv').addEventListener('click',e=>{if(e.target===$('pv'))pvHide()});
+document.addEventListener('keydown',e=>{
+  if(!$('pv').classList.contains('open'))return;
+  if(!$('pvLb').hidden){if(e.key==='Escape')pvLbClose();else if(e.key==='ArrowLeft')pvLbStep(-1);else if(e.key==='ArrowRight')pvLbStep(1);return}
+  if(e.key==='Escape')pvHide();
+});
+$('pvMediaBtn').addEventListener('click',()=>{if(PV.gallery)pvShowChat(PV.cur,PV.res&&(PV.res.find(x=>x.t===PV.cur)||{}).hits);else pvGallery(PV.cur)});
+$('pvLbClose').addEventListener('click',pvLbClose);
+$('pvLbPrev').addEventListener('click',()=>pvLbStep(-1));
+$('pvLbNext').addEventListener('click',()=>pvLbStep(1));
+$('pvLbStage').addEventListener('click',e=>{if(e.target===$('pvLbStage'))pvLbClose()});
+let _lbX=null;$('pvLbStage').addEventListener('touchstart',e=>{_lbX=e.touches.length===1?e.touches[0].clientX:null},{passive:true});
+$('pvLbStage').addEventListener('touchend',e=>{if(_lbX==null)return;const dx=e.changedTouches[0].clientX-_lbX;_lbX=null;if(Math.abs(dx)>50)pvLbStep(dx>0?-1:1)});
+function pvSearchNow(){pvList();if(!PV.cur)return;const r=PV.res&&PV.res.find(x=>x.t===PV.cur);pvShowChat(PV.cur,r?r.hits:null)}
+let _pvT;$('pvSearch').addEventListener('input',()=>{clearTimeout(_pvT);_pvT=setTimeout(pvSearchNow,200)});
+$('pvSearch').addEventListener('keydown',e=>{if(e.key==='Enter'){clearTimeout(_pvT);pvSearchNow();const b=document.querySelector('#pvThreads .pv-th');if(b)b.click()}});
+
 // ===== BUILD =====
 buildBtn.addEventListener('click',()=>{
   if(!parsedData)return;
@@ -2617,7 +2916,7 @@ async function build(target){
     log('Building '+target+' from '+msgs.length+' messages (content='+content+', skipPdf='+skipPdf+', skipGroups='+skipGroups+')');
     // photos are matched to messages by their order in the file, so always hand over the file's full, unfiltered message list
     if(content!=='text'){
-      if(parsedData.fmt==='smsbackup')await rehydrateSmsBackupStream(selectedFile,parsedData.messages);
+      if(parsedData.fmt==='smsbackup'){if(PV.rehydrating)await PV.rehydrating;await rehydrateSmsBackupStream(selectedFile,parsedData.messages)}
       else if(parsedData.fmt==='merge'){
         if(MERGE.old&&MERGE.old.fmt==='smsbackup'&&MERGE.oldFile)await rehydrateSmsBackupStream(MERGE.oldFile,MERGE.old.messages);
         if(MERGE.newFmt==='smsbackup'&&MERGE.newAll)await rehydrateSmsBackupStream(selectedFile,MERGE.newAll);
