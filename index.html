@@ -172,6 +172,16 @@
   .log-panel .log-box .log-ok{color:#4ade80}
   .log-row{margin-top:6px;display:flex;gap:6px;align-items:center;justify-content:flex-end}
   .log-input{flex:1;padding:6px 10px;border-radius:8px;border:1px solid var(--field-border);background:var(--field);color:var(--text);font-size:.68rem}
+  .log-report{margin-top:8px;padding:12px;border:1px solid var(--surface-border);border-radius:12px;background:var(--surface)}
+  .log-report label{display:block;font-size:.76rem;font-weight:600;color:var(--text);margin-bottom:6px}
+  .log-report label span{font-weight:400;color:var(--text-3)}
+  .log-report textarea{display:block;width:100%;box-sizing:border-box;min-height:84px;resize:vertical;font-family:inherit;font-size:.76rem;line-height:1.5}
+  .log-report .log-row{align-items:stretch}
+  .log-note{font-size:.7rem;color:var(--text-3);margin-top:8px;line-height:1.5}
+  .log-note.err{color:var(--err-text)}
+  .log-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}
+  .log-send{padding:7px 16px;border-radius:8px;border:none;background:var(--accent-grad);color:#fff;font-weight:600;font-size:.74rem;cursor:pointer}
+  .log-send.is-off,.log-send:disabled{background:var(--surface-2);color:var(--text-3);cursor:not-allowed}
   .log-btn{padding:6px 12px;border-radius:8px;border:1px solid var(--field-border);background:var(--surface);color:var(--text-2);font-size:.68rem;cursor:pointer;white-space:nowrap;transition:border-color .2s,color .2s}
   .log-btn:hover{border-color:var(--accent-border);color:var(--accent)}
   .site-nav{position:relative;z-index:2;max-width:900px;margin:0 auto;padding:16px 24px;display:flex;align-items:center;justify-content:space-between}
@@ -236,6 +246,7 @@
   [data-theme="dark"] .btn-primary:not(:disabled),[data-theme="dark"] .hero-cta,[data-theme="dark"] .report-btn{color:#0a0a0a}
   [data-theme="dark"] .option.selected{box-shadow:none}
   [data-theme="dark"] .option:not(.selected):hover{border-color:#555}
+  [data-theme="dark"] .log-send:not(.is-off):not(:disabled){color:#0a0a0a}
   [data-theme="dark"] .step-num{background:none;color:var(--accent);opacity:1}
   [data-theme="dark"] .hero-badge{background:transparent;border:1px solid #333;color:#d4d4d4;backdrop-filter:none}
   [data-theme="dark"] .drop-zone{background:#0a0a0a;border:1px dashed #444;box-shadow:none}
@@ -469,9 +480,20 @@
     <summary>Show log</summary>
     <div class="log-box" id="logBox"></div>
     <div class="log-row">
-      <input id="logPhoneInput" type="text" class="log-input" placeholder="Phone model (e.g. Fig S7, Wonder XL)">
-      <input id="logUserInput" type="text" class="log-input" placeholder="Your email (optional, for follow-up)">
       <button id="sendLogBtn" class="log-btn">Send log</button>
+    </div>
+    <div class="log-report" id="logReport" style="display:none">
+      <label for="logComment">What went wrong? <span>(required)</span></label>
+      <textarea id="logComment" class="log-input" rows="4" placeholder="Example: I converted my Fig backup to SMS Backup &amp; Restore, but the pictures didn't show up on my new phone."></textarea>
+      <div class="log-row">
+        <input id="logPhoneInput" type="text" class="log-input" placeholder="Phone model (e.g. Fig S7, Wonder XL)">
+        <input id="logUserInput" type="text" class="log-input" placeholder="Your email (optional, for follow-up)">
+      </div>
+      <div class="log-note" id="logNote">Your log is sent only after you explain the problem and tap <b>Send report</b>.</div>
+      <div class="log-actions">
+        <button id="logCancelBtn" class="log-btn" type="button">Cancel</button>
+        <button id="logSubmitBtn" class="log-send is-off" type="button">Send report</button>
+      </div>
     </div>
   </details>
 
@@ -508,7 +530,7 @@
 </section>
 
 <footer class="site-footer">
-  <p><span id="verSpan">v1.1.1</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
+  <p><span id="verSpan">v1.1.2</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
   <p style="margin-top:6px">Free and open source · Nothing gets uploaded</p>
 </footer>
 
@@ -549,8 +571,32 @@ const dropZone=$('dropZone'),fileInput=$('fileInput'),scanBtn=$('scanBtn'),build
   scanResults=$('scanResults'),optionsEl=$('options'),infoBox=$('infoBox'),errorBox=$('errorBox'),fileNameEl=$('fileName');
 
 const logPanel=$('logPanel'),logBox=$('logBox');
-function log(msg,type){logPanel.style.display='block';const s=document.createElement('span');if(type)s.className='log-'+type;s.textContent=(new Date().toLocaleTimeString('en-US',{hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'}))+' '+msg+'\n';logBox.appendChild(s);logBox.scrollTop=logBox.scrollHeight}
-function clearLog(){logBox.innerHTML='';logPanel.style.display='none';logPanel.removeAttribute('open')}
+const OS_NAME=(u=>/Android/i.test(u)?'Android':/iPhone|iPad|iPod/i.test(u)?'iPhone/iPad':/Windows/i.test(u)?'Windows':/CrOS/i.test(u)?'ChromeOS':/Mac OS X/i.test(u)?'Mac':/Linux/i.test(u)?'Linux':'other')(navigator.userAgent);
+const BROWSER_VER=(navigator.userAgent.match(/(?:Edg|OPR|Firefox|Chrome|Version)\/(\d+)/)||[])[1]||'';
+let _logLast=null;
+function logTime(){return new Date().toLocaleTimeString('en-US',{hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'})}
+function log(msg,type){
+  logPanel.style.display='block';msg=String(msg);
+  // first line says which version, browser and device the log came from
+  if(!logBox.firstChild){const h=document.createElement('span');h.textContent='Converter '+(($('verSpan')||{}).textContent||'?')+(BETA_MODE?' (beta)':'')+' · '+BROWSER+(BROWSER_VER?' '+BROWSER_VER:'')+' on '+OS_NAME+' · '+(IS_MOBILE?'phone':'computer')+' · '+new Date().toDateString()+'\n';logBox.appendChild(h)}
+  // the same kind of line many times in a row (e.g. a missing picture) becomes one line with a count
+  const cut=msg.indexOf(': '),key=cut>0?(type||'')+'|'+msg.slice(0,cut):null;
+  if(key&&_logLast&&_logLast.key===key&&_logLast.span.parentNode===logBox){_logLast.n++;_logLast.span.textContent=_logLast.text+' (+'+_logLast.n.toLocaleString()+' more like this)\n'}
+  else{const s=document.createElement('span');if(type)s.className='log-'+type;s.textContent=logTime()+' '+msg+'\n';logBox.appendChild(s);_logLast={key:key,span:s,text:logTime()+' '+msg,n:0}}
+  logBox.scrollTop=logBox.scrollHeight;saveLogSoon(type==='err');
+}
+function clearLog(){logBox.innerHTML='';_logLast=null;logPanel.style.display='none';logPanel.removeAttribute('open')}
+// where in the page's code an error came from, e.g. " [at buildFigZip, line 2290]"
+function errWhere(e){const s=String(e&&e.stack||'').split('\n').map(x=>x.trim()).find(x=>/:\d+:\d+\)?$/.test(x));if(!s)return '';const fn=(s.match(/^at ([\w$.<>]+) \(/)||s.match(/^([\w$.<>]+)@/)||[])[1],ln=(s.match(/:(\d+):\d+\)?$/)||[])[1];return ' [at '+(fn?fn+', ':'')+'line '+ln+']'}
+// the log is kept in the browser while working, so if the tab crashes (often: out of memory on phones) the next visit still has it
+const LOG_KEY='convLog';let PREV_LOG='',_logSaveT=0;
+function saveLog(){clearTimeout(_logSaveT);_logSaveT=0;try{localStorage.setItem(LOG_KEY,JSON.stringify({busy:processing,t:Date.now(),text:logBox.textContent.slice(-100000)}))}catch(e){}}
+function saveLogSoon(now){if(now)saveLog();else if(!_logSaveT)_logSaveT=setTimeout(saveLog,800)}
+try{const p=JSON.parse(localStorage.getItem(LOG_KEY)||'null');if(p&&Date.now()-p.t<864e5)PREV_LOG=p.busy&&p.text?p.text:''}catch(e){}
+if(PREV_LOG){log('Your last try did not finish (the browser may have run out of memory, or the page was closed). Its log is kept and will be included if you send a log.','warn');const s=document.createElement('span');s.className='log-prev';s.style.opacity='.6';s.textContent=PREV_LOG.slice(-4000);logBox.appendChild(s);_logLast=null}
+let _inErrLog=false;
+window.addEventListener('error',e=>{if(_inErrLog||/ResizeObserver/.test(e.message||''))return;_inErrLog=true;try{log('Unexpected error: '+(e.message||e.error)+(e.error?errWhere(e.error):e.lineno?' [line '+e.lineno+']':''),'err')}catch(x){}_inErrLog=false});
+window.addEventListener('unhandledrejection',e=>{const r=e.reason;if(_inErrLog||(r&&r.cancelled))return;_inErrLog=true;try{log('Unexpected error: '+((r&&r.message)||r)+errWhere(r),'err')}catch(x){}_inErrLog=false});
 
 function hasAttach(p){return!!(p.data||p._dataBlob||p._hasData||p._entry||p._fallbackAttach)}
 // Shared index: built once during export, caches all entry positions
@@ -811,11 +857,23 @@ async function generateRawStructureReport(file){
   downloadReport(report,file.name);
 }
 
+// A log only goes out with the user's own words about what went wrong
+const LOG_NOTE_MIN=15;
+const logNoteText=()=>($('logComment').value||'').trim();
+function logNoteState(){
+  const n=logNoteText().length,note=$('logNote');
+  $('logSubmitBtn').classList.toggle('is-off',n<LOG_NOTE_MIN);
+  if(note.classList.contains('err')&&n>=LOG_NOTE_MIN){note.classList.remove('err');note.innerHTML='Your log is sent only after you explain the problem and tap <b>Send report</b>.'}
+}
 async function sendLog(){
+  const btn=$('logSubmitBtn'),note=$('logNote'),comment=logNoteText();
+  if(btn.disabled)return;
+  if(comment.length<LOG_NOTE_MIN){
+    note.classList.add('err');note.textContent='Please tell us what happened first — a sentence or two is enough.';$('logComment').focus();return;
+  }
   try{
-    const btn=$('sendLogBtn');
-    const logText=(logBox||$('logBox')).textContent||'';
-    if(!logText.trim()){btn.textContent='No log';return}
+    const logText=[...logBox.childNodes].filter(n=>!(n.classList&&n.classList.contains('log-prev'))).map(n=>n.textContent).join('');
+    if(!logText.trim()){note.textContent='There is no log to send yet.';return}
     btn.textContent='Sending…';btn.disabled=true;
     const fn=(fileNameEl?fileNameEl.textContent:'')||'unknown';
     const ver=(document.getElementById('verSpan')&&document.getElementById('verSpan').textContent)||'?';
@@ -823,14 +881,19 @@ async function sendLog(){
     const phone=($('logPhoneInput')||{}).value||'';
     const src=parsedData?parsedData.fmt:'?';
     const tgt=(document.querySelector('input[name="target"]:checked')||{}).value||'?';
-    const payload={type:'log',logText:logText,fileName:fn,version:ver,user:user,phone:phone,source:src,target:tgt,timestamp:new Date().toISOString()};
+    const payload={type:'log',comment:comment,logText:'WHAT HAPPENED (from the user):\n'+comment+'\n\n----- LOG -----\n'+logText+(PREV_LOG?'\n\n----- PREVIOUS TRY (did not finish) -----\n'+PREV_LOG:''),fileName:fn,version:ver,user:user,phone:phone,source:src,target:tgt,timestamp:new Date().toISOString()};
     await fetch(GAS_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(payload)});
-    btn.textContent='Sent ✓';btn.style.color='#4ade80';
+    btn.textContent='Sent ✓';$('logCancelBtn').style.display='none';
+    ['logComment','logPhoneInput','logUserInput'].forEach(id=>{$(id).disabled=true});
+    note.classList.remove('err');note.textContent='Thank you! Your report and log were sent.';PREV_LOG='';saveLog();
   }catch(e){
-    var b=$('sendLogBtn');if(b){b.textContent='Failed';b.style.color='#f87171'}
+    btn.textContent='Send report';btn.disabled=false;note.classList.add('err');note.textContent='Sending failed. Check your internet connection and try again.';
   }
 }
-$('sendLogBtn').addEventListener('click',sendLog);
+$('sendLogBtn').addEventListener('click',()=>{$('sendLogBtn').style.display='none';$('logReport').style.display='block';$('logComment').focus()});
+$('logCancelBtn').addEventListener('click',()=>{$('logReport').style.display='none';$('sendLogBtn').style.display=''});
+$('logComment').addEventListener('input',logNoteState);
+$('logSubmitBtn').addEventListener('click',sendLog);
 
 const FAKE_NAMES=['Alex Johnson','Sam Rivera','Jordan Lee','Morgan Chen','Casey Kim','Riley Patel','Taylor Brooks','Quinn Adams','Avery Cooper','Dakota Hayes','Jamie Torres','Blake Murphy','Drew Collins','Sage Martin','Phoenix Wright'];
 const FAKE_WORDS=['lorem','ipsum','dolor','sit','amet','hello','thanks','sure','okay','sounds','good','great','later','tomorrow','meeting','check','update','running','late','dinner','lunch','store','pick','home','work','school','call','text','soon','morning'];
@@ -1026,7 +1089,7 @@ function downloadReport(report,origName){
       log('Anonymized file downloaded + structure report sent — thank you!','ok');
     }catch(e){
       this.textContent='Failed';this.style.background='#dc2626';
-      log('Error: '+e.message,'err');
+      log('Error: '+e.message+errWhere(e),'err');
     }
   };
 }
@@ -1307,7 +1370,7 @@ function pickFile(f){
 scanBtn.addEventListener('click',()=>{
   if(!selectedFile)return;
   scanBtn.disabled=true;cancelled=false;processing=true;$('themeToggle').style.pointerEvents='none';$('themeToggle').style.opacity='.4';cancelBtn.style.display='block';cancelBtn.innerHTML='Cancel';delete cancelBtn.dataset.confirm;errorBox.style.display='none';infoBox.style.display='none';scanResults.style.display='none';optionsEl.style.display='none';$('downloadBtn').style.display='none';
-  scan().finally(()=>{processing=false;$('themeToggle').style.pointerEvents='';$('themeToggle').style.opacity=''});
+  scan().finally(()=>{processing=false;saveLog();$('themeToggle').style.pointerEvents='';$('themeToggle').style.opacity=''});
 });
 
 async function scan(){
@@ -1539,7 +1602,7 @@ async function scan(){
   }catch(err){
     if(err&&err.cancelled){log('Scan cancelled by user','warn');progressEl.style.display='none';infoBox.textContent='Cancelled.';infoBox.style.display='block';scanBtn.style.display='';scanBtn.disabled=false;cancelBtn.style.display='none';return}
     const msg=err.message||String(err);
-    log('Scan failed: '+msg,'err');
+    log('Scan failed: '+msg+errWhere(err),'err');
     progressEl.style.display='none';
     if(msg.includes('central directory')||msg.includes('not a valid')){
       // Not a ZIP — try reading as raw file for structure report
@@ -1577,7 +1640,7 @@ async function parseFigZip(entries){
     while((nl=buf.indexOf('\n'))!==-1){
       const line=buf.substring(0,nl).trim();buf=buf.substring(nl+1);
       if(!line)continue;
-      let obj;try{obj=JSON.parse(line)}catch(e){log('Skipped unparseable line: '+line.slice(0,60)+'…','warn');continue}
+      let obj;try{obj=JSON.parse(line)}catch(e){log('Skipped an unreadable line: '+line.length+' characters','warn');continue}
       const t=obj.type;
       if(t==='1'||t===1||t==='2'||t===2){
         messages.push({type:'sms',address:(obj.address||'').replace(/\s/g,''),body:obj.body||'',date:obj.date,dateSent:obj.date_sent||'0',direction:(t==='1'||t===1)?'in':'out',read:obj.read||'0',contactName:obj.__display_name||'(Unknown)',protocol:obj.protocol,status:obj.status,locked:obj.locked,subId:obj.sub_id,creator:obj.creator});
@@ -2047,7 +2110,7 @@ async function retryLast(job){
   shrinkParts(job,job.groups.length-1,'download','Part '+job.groups.length+' did not download');
   try{await runParts(job);partsDone(job)}
   catch(err){$('downloadBtn').style.display='none';progressEl.style.display='none';cancelBtn.style.display='none';infoBox.textContent=err&&err.cancelled?'Cancelled.':'Something went wrong: '+((err&&err.message)||err);infoBox.style.display='block'}
-  finally{processing=false;_attCache=true}
+  finally{processing=false;_attCache=true;saveLog()}
 }
 function phoneNote(est){
   let n=$('phoneNote');
@@ -2475,7 +2538,7 @@ buildBtn.addEventListener('click',()=>{
     return;
   }
   buildBtn.disabled=true;buildBtn.style.display='';cancelled=false;processing=true;$('themeToggle').style.pointerEvents='none';$('themeToggle').style.opacity='.4';cancelBtn.style.display='block';cancelBtn.innerHTML='Cancel';delete cancelBtn.dataset.confirm;errorBox.style.display='none';infoBox.style.display='none';$('downloadBtn').style.display='none';
-  build(t.value).finally(()=>{processing=false;$('themeToggle').style.pointerEvents='';$('themeToggle').style.opacity=''});
+  build(t.value).finally(()=>{processing=false;saveLog();$('themeToggle').style.pointerEvents='';$('themeToggle').style.opacity=''});
 });
 
 cancelBtn.addEventListener('click',()=>{
@@ -2549,7 +2612,7 @@ async function build(target){
       _forceParts=true;_partSize=Math.max(PART_MIN,_partSize/2);log('Browser ran out of room to hold the file','err');
       errorBox.innerHTML='<b>This backup is too big for your browser to build in one piece.</b><br>Click <b>Convert</b> again — this time it is saved as several smaller files.';
       errorBox.style.display='block';fail('too big for browser memory');
-    }else{log('Build failed: '+(err.message||err),'err');errorBox.textContent=err.message||String(err);errorBox.style.display='block';fail((err.message||String(err)).slice(0,100));}
+    }else{log('Build failed: '+(err.message||err)+errWhere(err),'err');errorBox.textContent=err.message||String(err);errorBox.style.display='block';fail((err.message||String(err)).slice(0,100));}
   }finally{_attCache=true}
   cancelBtn.style.display='none';if($('downloadBtn').style.display==='none'&&!streamed){buildBtn.disabled=false;buildBtn.style.display='';optionsEl.style.display='block';}
 }
