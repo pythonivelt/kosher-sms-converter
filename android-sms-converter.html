@@ -336,6 +336,7 @@
   .compat-table tr:hover td{background:var(--accent-soft);transition:background .2s}
   td.c-yes{color:var(--ok);font-weight:600}
   td.c-no{color:var(--danger);font-weight:500}
+  td.c-soon{color:var(--warn-text-2);font-weight:600}
   td.c-warn{color:#d97706;font-weight:500}
   td.c-unk{color:var(--text-3);font-weight:500}
   .features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;max-width:680px;margin:0 auto}
@@ -464,7 +465,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')setMenu(fals
       <tr><td>Fig</td><td class="c-yes">SMS + MMS</td><td class="c-yes">SMS + MMS</td></tr>
       <tr id="fig4Row" style="display:none"><td>Fig IV</td><td class="c-yes">SMS + MMS</td><td class="c-yes">SMS + MMS</td></tr>
       <tr><td>Wonder</td><td class="c-yes">SMS + MMS</td><td class="c-yes">SMS + MMS</td></tr>
-      <tr id="pomRow"><td>Pom</td><td class="c-yes" id="pomOut">SMS only</td><td class="c-no" id="pomIn">Not yet</td></tr>
+      <tr id="pomRow"><td>Pom</td><td class="c-yes" id="pomOut">SMS only</td><td class="c-soon" id="pomIn">Coming soon</td></tr>
       <tr><td>TAK</td><td class="c-yes">SMS + MMS</td><td class="c-yes">SMS + MMS</td></tr>
     </tbody>
   </table>
@@ -533,7 +534,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')setMenu(fals
       <input type="radio" name="target" value="pom" />
       <div>
         <div class="option-label">Pom</div>
-        <div class="option-desc">Import to Pom not yet supported</div>
+        <div class="option-desc">Import to Pom coming soon</div>
       </div>
     </label>
     <label class="option" data-value="fig4" id="optFig4" style="display:none">

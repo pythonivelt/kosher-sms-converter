@@ -42,7 +42,7 @@
   <rect x="10" y="222" width="540" height="36" rx="0" fill="#f8fafc"/>
   <text x="110" y="245" text-anchor="middle" class="phone">Pom</text>
   <text x="300" y="245" text-anchor="middle" class="yes">SMS only</text>
-  <text x="470" y="245" text-anchor="middle" class="no">Not yet</text>
+  <text x="470" y="245" text-anchor="middle" class="warn">Coming soon</text>
 
   <rect x="10" y="258" width="540" height="36" rx="0" fill="#f1f5f9"/>
   <text x="110" y="281" text-anchor="middle" class="phone">TAK</text>
