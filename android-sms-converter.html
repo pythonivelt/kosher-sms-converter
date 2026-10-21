@@ -14,7 +14,7 @@
 <meta property="og:url" content="https://pythonivelt.github.io/kosher-sms-converter/" />
 <meta name="color-scheme" content="light dark" />
 <meta name="theme-color" content="#f3f4fb" media="(prefers-color-scheme: light)" />
-<meta name="theme-color" content="#141418" media="(prefers-color-scheme: dark)" />
+<meta name="theme-color" content="#0e1621" media="(prefers-color-scheme: dark)" />
 <script>(function(){var t='light';try{t=localStorage.getItem('theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light')}catch(e){}document.documentElement.setAttribute('data-theme',t)})();</script>
 <script src="https://cdn.jsdelivr.net/npm/@zip.js/zip.js@2.7.52/dist/zip.min.js"></script>
 <style>
@@ -34,18 +34,18 @@
     --field:#ffffff;--field-border:rgba(15,23,42,.16)
   }
   [data-theme="dark"]{
-    --bg:#141418;--glow-1:rgba(59,130,246,.08);--glow-2:rgba(16,185,129,.05);
-    --card:#1c1c22;--card-border:rgba(255,255,255,.07);
-    --surface:rgba(255,255,255,.04);--surface-2:rgba(255,255,255,.07);--surface-border:rgba(255,255,255,.09);
-    --text:#dcdde1;--text-2:#8b8d98;--text-3:#56585f;
-    --accent:#3b82f6;--accent-2:#2563eb;--accent-grad:linear-gradient(135deg,#3b82f6,#2563eb);
-    --accent-soft:rgba(59,130,246,.15);--accent-border:rgba(96,165,250,.5);
-    --shadow:0 1px 2px rgba(0,0,0,.5),0 16px 48px -8px rgba(0,0,0,.7);
-    --btn-glow:0 8px 24px -6px rgba(59,130,246,.3);
-    --ok-soft:rgba(16,185,129,.1);--ok-border:rgba(16,185,129,.3);--ok-text:#6ee7b7;
-    --warn-soft:rgba(245,158,11,.09);--warn-border:rgba(245,158,11,.3);--warn-text:#fcd34d;--warn-text-2:#fbbf24;
-    --err-soft:rgba(239,68,68,.1);--err-border:rgba(239,68,68,.32);--err-text:#fca5a5;
-    --field:rgba(148,163,184,.07);--field-border:rgba(148,163,184,.22)
+    --bg:#0e1621;--glow-1:transparent;--glow-2:transparent;
+    --card:#17212b;--card-border:rgba(255,255,255,.04);
+    --surface:#1e2a36;--surface-2:#242f3d;--surface-border:rgba(127,145,164,.14);
+    --text:#f5f5f5;--text-2:#8fa1b3;--text-3:#6d8196;
+    --accent:#6ab3f3;--accent-2:#5288c1;--accent-grad:linear-gradient(135deg,#5288c1,#5288c1);
+    --accent-soft:rgba(106,179,243,.12);--accent-border:rgba(106,179,243,.45);
+    --shadow:0 1px 2px rgba(0,0,0,.25);
+    --btn-glow:none;
+    --ok-soft:rgba(111,211,141,.1);--ok-border:rgba(111,211,141,.25);--ok-text:#8fe0a8;
+    --warn-soft:rgba(240,190,90,.09);--warn-border:rgba(240,190,90,.28);--warn-text:#f2c879;--warn-text-2:#e9b65a;
+    --err-soft:rgba(239,123,123,.1);--err-border:rgba(239,123,123,.3);--err-text:#f4a3a3;
+    --field:#242f3d;--field-border:rgba(127,145,164,.25)
   }
   html{color-scheme:light}
   [data-theme="dark"]{color-scheme:dark}
@@ -94,8 +94,8 @@
   .scan-results div.stat{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--surface-border);border-radius:12px;padding:10px 14px;margin:0;font-size:.85rem;color:var(--text-2)}
   .stat-icon{width:30px;height:30px;border-radius:8px;background:rgba(79,70,229,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0}
   .stat-icon svg{width:15px;height:15px;stroke:#4f46e5;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-  [data-theme="dark"] .stat-icon{background:rgba(59,130,246,.15)}
-  [data-theme="dark"] .stat-icon svg{stroke:#93c5fd}
+  [data-theme="dark"] .stat-icon{background:rgba(106,179,243,.12)}
+  [data-theme="dark"] .stat-icon svg{stroke:#6ab3f3}
   .scan-results div.stat strong{color:var(--text);font-weight:700}
   .scan-results strong{color:var(--text)}
   .detected-badge{display:inline-block;padding:3px 10px;border-radius:7px;font-size:.75rem;font-weight:600;background:var(--accent-soft);color:var(--accent);border:1px solid var(--accent-border)}
@@ -150,7 +150,7 @@
   .modal label{display:block;font-size:.76rem;font-weight:600;margin:10px 0 4px}
   .modal input,.modal select,.modal textarea{width:100%;padding:10px 12px;border:1px solid var(--field-border,#d1d5db);border-radius:8px;font-size:.9rem;font-family:inherit;background:var(--field,#fff);color:inherit;box-sizing:border-box}
   [data-theme="dark"] .modal select{color-scheme:dark}
-  [data-theme="dark"] .modal select option{background:#1e293b;color:#e2e8f0}
+  [data-theme="dark"] .modal select option{background:#242f3d;color:#f5f5f5}
   .modal textarea{min-height:110px;resize:vertical}
   .modal .send-btn{margin-top:14px;width:100%;padding:12px;border:none;border-radius:10px;background:#4f46e5;color:#fff;font-weight:600;font-size:.92rem;cursor:pointer}
   .modal .send-btn:hover{filter:brightness(1.08)}
@@ -222,11 +222,24 @@
   .feature-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.06)}
   .feature-icon{width:34px;height:34px;border-radius:9px;background:rgba(79,70,229,.1);color:#4f46e5;display:flex;align-items:center;justify-content:center;margin-bottom:10px}
   .feature-icon svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-  [data-theme="dark"] .feature-icon{background:rgba(59,130,246,.15);color:#93c5fd}
+  [data-theme="dark"] .feature-icon{background:rgba(106,179,243,.12);color:#6ab3f3}
   #convertNotice{margin-bottom:12px;padding:10px 14px;border-radius:8px;background:#fef2f2;border:1px solid #fca5a5;color:#991b1b;font-size:.78rem;line-height:1.45}
   #convertNotice a{color:#dc2626;text-decoration:underline}
-  [data-theme="dark"] #convertNotice{background:#450a0a;border-color:#991b1b;color:#fca5a5}
+  [data-theme="dark"] #convertNotice{background:rgba(239,123,123,.1);border-color:rgba(239,123,123,.3);color:#f4a3a3}
   [data-theme="dark"] #convertNotice a{color:#f87171}
+  [data-theme="dark"] .nav-logo{background:none;color:var(--text)}
+  [data-theme="dark"] .logo-icon,[data-theme="dark"] .nav-logo-icon{box-shadow:none}
+  [data-theme="dark"] .step-num{background:none;color:var(--accent);opacity:1}
+  [data-theme="dark"] .hero-badge{background:#242f3d;border-color:transparent;color:#c9d6e3;backdrop-filter:none}
+  [data-theme="dark"] .drop-zone{background:#17212b;border-color:rgba(106,179,243,.25);box-shadow:none}
+  [data-theme="dark"] .drop-zone::before{display:none}
+  [data-theme="dark"] .drop-zone:hover,[data-theme="dark"] .drop-zone.active{border-color:rgba(106,179,243,.6);box-shadow:none}
+  [data-theme="dark"] .drop-zone.done{background:rgba(111,211,141,.06);border-color:rgba(111,211,141,.3)}
+  [data-theme="dark"] td.c-yes{color:#6fd38d}
+  [data-theme="dark"] td.c-no{color:#ef7b7b}
+  [data-theme="dark"] .modal .send-btn,[data-theme="dark"] .contact-cta-btn,[data-theme="dark"] #anonBtn{background:#5288c1!important;box-shadow:none}
+  [data-theme="dark"] #mergeBanner{background:rgba(106,179,243,.08)!important;border-color:rgba(106,179,243,.25)!important}
+  [data-theme="dark"] .modal-alt a{color:#6ab3f3!important}
   .feature-title{font-weight:600;font-size:.86rem;color:var(--text);margin-bottom:5px}
   .feature-desc{font-size:.76rem;color:var(--text-2);line-height:1.5}
   .site-footer{position:relative;z-index:1;max-width:900px;margin:0 auto;padding:32px 24px;text-align:center;font-size:.74rem;color:var(--text-3);border-top:1px solid var(--surface-border)}
@@ -487,7 +500,7 @@
 </section>
 
 <footer class="site-footer">
-  <p><span id="verSpan">v0.0.99</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
+  <p><span id="verSpan">v1.0.0</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
   <p style="margin-top:6px">Free and open source · Nothing gets uploaded</p>
 </footer>
 
