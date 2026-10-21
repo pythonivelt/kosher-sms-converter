@@ -184,9 +184,38 @@
   .log-send.is-off,.log-send:disabled{background:var(--surface-2);color:var(--text-3);cursor:not-allowed}
   .log-btn{padding:6px 12px;border-radius:8px;border:1px solid var(--field-border);background:var(--surface);color:var(--text-2);font-size:.68rem;cursor:pointer;white-space:nowrap;transition:border-color .2s,color .2s}
   .log-btn:hover{border-color:var(--accent-border);color:var(--accent)}
-  .site-nav{position:relative;z-index:2;max-width:900px;margin:0 auto;padding:16px 24px;display:flex;align-items:center;justify-content:space-between}
-  .nav-logo{font-size:1.05rem;font-weight:700;color:transparent;background:var(--accent-grad);-webkit-background-clip:text;background-clip:text;text-decoration:none;display:flex;align-items:center;gap:10px;letter-spacing:-.03em}
-  .nav-logo-icon{width:32px;height:32px;border-radius:9px;background:var(--accent-grad);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px -2px rgba(99,102,241,.4);flex-shrink:0}
+  html{scroll-behavior:smooth}
+  .site-header{position:sticky;top:0;z-index:50;background:transparent;border-bottom:1px solid transparent;transition:background-color .2s,border-color .2s,box-shadow .2s}
+  .site-header.scrolled{background:var(--bg);background:color-mix(in srgb,var(--bg) 85%,transparent);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-bottom-color:var(--surface-border);box-shadow:0 1px 14px rgba(0,0,0,.06)}
+  .site-header .site-nav{height:4.25rem;padding-top:0;padding-bottom:0}
+  .site-nav{position:relative;z-index:2;max-width:900px;margin:0 auto;padding:8px 24px;display:flex;align-items:center;justify-content:space-between}
+  .nav-links{display:flex;align-items:center;gap:2px;margin:0 12px 0 auto}
+  .site-nav .theme-toggle{width:34px;height:34px;border-radius:10px}
+  .nav-links a{font-size:.84rem;font-weight:500;color:var(--text-2);text-decoration:none;padding:6px 10px;border-radius:9px;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;transition:color .2s,background .2s}
+  .nav-links a:hover{color:var(--text);background:var(--surface)}
+  .nav-gh svg{width:16px;height:16px;fill:currentColor}
+  .nav-links a.nav-btn{font-weight:600;padding:6px 13px;border-radius:9px;margin-left:6px}
+  .nav-links a.nav-btn-ghost{color:var(--text);border:1px solid var(--surface-border);background:var(--surface)}
+  .nav-links a.nav-btn-ghost:hover{border-color:var(--accent-border);background:var(--surface)}
+  .nav-links a.nav-btn-primary{color:#fff;background:var(--accent-grad)}
+  .nav-links a.nav-btn-primary:hover{color:#fff;background:var(--accent-grad);filter:brightness(1.1)}
+  [data-theme="dark"] .nav-links a.nav-btn-primary,[data-theme="dark"] .nav-links a.nav-btn-primary:hover{color:#0a0a0a}
+  .nav-right{display:flex;align-items:center;gap:8px}
+  .nav-menu-btn{display:none}
+  .nav-menu-btn .icon-close,.nav-menu-btn[aria-expanded="true"] .icon-open{display:none}
+  .nav-menu-btn[aria-expanded="true"] .icon-close{display:block}
+  #supported,#how,#faq,#convert{scroll-margin-top:84px}
+  @media(max-width:980px){
+    .site-header .site-nav{position:static}
+    .nav-menu-btn{display:flex}
+    .nav-links{display:none;position:absolute;top:100%;left:0;right:0;flex-direction:column;align-items:stretch;gap:2px;margin:0;padding:8px 16px 14px;background:var(--bg);border-bottom:1px solid var(--surface-border);box-shadow:0 14px 24px -14px rgba(0,0,0,.3)}
+    .nav-links.open{display:flex}
+    .nav-links a{padding:12px;font-size:.95rem}
+    .nav-links a.nav-btn{justify-content:center;margin:8px 0 0;padding:11px}
+  }
+  @media(max-width:420px){.site-nav{padding:8px 14px}.nav-logo{font-size:.86rem;gap:8px;white-space:nowrap}.nav-logo-icon{width:28px;height:28px}.nav-right{gap:6px}.nav-right .theme-toggle{width:34px;height:34px;border-radius:10px}}
+  .nav-logo{font-size:.98rem;font-weight:700;color:transparent;background:var(--accent-grad);-webkit-background-clip:text;background-clip:text;text-decoration:none;display:flex;align-items:center;gap:10px;letter-spacing:-.03em}
+  .nav-logo-icon{width:28px;height:28px;border-radius:8px;background:var(--accent-grad);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px -2px rgba(99,102,241,.4);flex-shrink:0}
   .nav-logo-icon svg{width:18px;height:18px;display:block}
   .nav-right{display:flex;align-items:center;gap:12px}
   .faq-section{position:relative;z-index:1;max-width:640px;margin:0 auto;padding:40px 24px}
@@ -281,7 +310,7 @@
     .compat-section{max-width:680px}
   }
   @media (min-width:1080px){
-    .site-nav{max-width:1100px;padding:18px 32px}
+    .site-nav{max-width:1100px;padding:9px 32px}
     .hero h1{font-size:2.65rem}
     .hero{padding:44px 24px 28px;max-width:760px}
     .hero-sub{font-size:1.06rem;max-width:640px}
@@ -298,15 +327,41 @@
 </style>
 </head>
 <body>
+<header class="site-header" id="siteHeader">
 <nav class="site-nav">
   <a href="#" class="nav-logo"><span class="nav-logo-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>Kosher Phone SMS Converter</a>
+  <div class="nav-links" id="navLinks">
+    <a href="#supported">Supported phones</a>
+    <a href="#how">How it works</a>
+    <a href="#faq">FAQ</a>
+    <a href="#" id="navContact">Contact</a>
+    <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" class="nav-btn nav-btn-ghost nav-gh"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.56v-2c-3.2.7-3.87-1.37-3.87-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.03 1.76 2.69 1.25 3.35.96.1-.75.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.18-3.1-.12-.29-.51-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.18 1.84 1.18 3.1 0 4.42-2.69 5.39-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5z"/></svg>GitHub</a>
+    <a href="#convert" class="nav-btn nav-btn-primary">Convert</a>
+  </div>
   <div class="nav-right">
     <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch between dark and light mode">
       <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
       <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
     </button>
+    <button class="theme-toggle nav-menu-btn" id="navMenuBtn" type="button" aria-label="Menu" aria-expanded="false" aria-controls="navLinks">
+      <svg class="icon-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      <svg class="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
   </div>
 </nav>
+</header>
+<script>
+(function(){
+var h=document.getElementById('siteHeader'),nl=document.getElementById('navLinks'),mb=document.getElementById('navMenuBtn');
+function onScroll(){h.classList.toggle('scrolled',window.scrollY>4)}
+window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+function setMenu(o){nl.classList.toggle('open',o);mb.setAttribute('aria-expanded',o?'true':'false')}
+mb.addEventListener('click',function(){setMenu(!nl.classList.contains('open'))});
+nl.addEventListener('click',function(e){if(e.target.closest('a'))setMenu(false)});
+document.addEventListener('click',function(e){if(nl.classList.contains('open')&&!h.contains(e.target))setMenu(false)});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')setMenu(false)});
+})();
+</script>
 
 <section class="hero">
   <h1>Switching phones? Take your messages with you.</h1>
@@ -320,7 +375,7 @@
 
 </section>
 
-<section class="compat-section">
+<section class="compat-section" id="supported">
   <h2 class="site-section-title">What's supported</h2>
   <div class="compat-card">
   <table class="compat-table">
@@ -339,7 +394,7 @@
   <p style="font-size:.72rem;color:var(--text-3);margin-top:14px;text-align:center">* <a href="https://play.google.com/store/apps/details?id=com.riteshsahu.SMSBackupRestore" target="_blank" rel="noopener" style="color:var(--accent)">SMS Backup &amp; Restore</a> works on any open Android phone and some kosher phones<br></p>
 </section>
 
-<section class="site-section">
+<section class="site-section" id="how">
   <h2 class="site-section-title">How it works</h2>
   <div class="steps-grid">
     <div class="step"><div class="step-num">1</div><div class="step-title">Export your messages</div><div class="step-desc">Back up your messages on your old phone</div></div>
@@ -349,7 +404,7 @@
 </section>
 
 <div class="converter-section" id="converter">
-<div class="card">
+<div id="convert" class="card">
 
   <div id="mergeBanner" style="display:none;margin-bottom:14px;padding:10px 14px;border-radius:10px;background:rgba(99,102,241,.07);border:1px solid rgba(99,102,241,.25);font-size:.78rem;line-height:1.55"><b>Fix a previous import (merge)</b><br>Step 1: upload the backup from your <b>OLD</b> phone — those messages are kept as the correct ones.<br>Step 2: upload a fresh backup from your <b>NEW</b> phone — only messages newer than the old backup are added.<br>Then delete all messages on the new phone and restore the merged file.</div>
 
@@ -510,7 +565,7 @@
   </div>
 </section>
 
-<section class="faq-section">
+<section class="faq-section" id="faq">
   <h2>FAQ</h2>
   <p class="faq-sub">Common questions about the converter.</p>
   <div class="faq-item"><button class="faq-q" onclick="var p=this.parentElement,all=p.parentElement.querySelectorAll('.faq-item');all.forEach(function(i){if(i!==p){i.classList.remove('open');i.querySelector('.faq-a').style.maxHeight=''}});p.classList.toggle('open');var a=this.nextElementSibling;a.style.maxHeight=a.style.maxHeight?'':a.scrollHeight+'px'">Does it work with the MindPhone?<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></button><div class="faq-a"><div class="faq-a-inner">Yes. The MindPhone uses the SMS Backup &amp; Restore app, which is fully supported. Select "SMS Backup &amp; Restore" as your target in the converter and the output file will work directly on your MindPhone.</div></div></div>
@@ -530,7 +585,7 @@
 </section>
 
 <footer class="site-footer">
-  <p><span id="verSpan">v1.1.2</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
+  <p><span id="verSpan">v1.1.3</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
   <p style="margin-top:6px">Free and open source · Nothing gets uploaded</p>
 </footer>
 
@@ -2660,6 +2715,7 @@ function openM(e){if(e)e.preventDefault();g('contactFormWrap').style.display='';
 function closeM(){cm.classList.remove('open')}
 var cl=g('contactLink');if(cl)cl.addEventListener('click',openM);
 var cta=g('contactCta');if(cta)cta.addEventListener('click',openM);
+var nc=g('navContact');if(nc)nc.addEventListener('click',openM);
 var ccb=g('contactClose');ccb.addEventListener('click',closeM);ccb.addEventListener('touchend',function(e){e.preventDefault();closeM()});
 cm.addEventListener('click',function(e){if(e.target===cm)closeM()});cm.addEventListener('touchend',function(e){if(e.target===cm){e.preventDefault();closeM()}});
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&cm.classList.contains('open'))closeM()});
