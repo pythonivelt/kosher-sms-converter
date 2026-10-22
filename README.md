@@ -14,7 +14,7 @@ Free, nothing to install, and your messages never leave your device.
 | Buggy Backup App | ✅ SMS only | ❌ Not in plan as of now |
 | Fig | ✅ SMS + MMS | ✅ SMS + MMS |
 | Wonder | ✅ SMS + MMS | ✅ SMS + MMS |
-| Pom | ✅ SMS only | 🔜 Coming soon |
+| Pom | ✅ SMS + MMS | ✅ SMS + MMS |
 | TAK | ✅ SMS + MMS | ✅ SMS + MMS |
 
 \* SMS Backup & Restore is an app that works on any regular Android phone and on some kosher phones.

@@ -465,7 +465,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')setMenu(fals
       <tr><td>Fig</td><td class="c-yes">SMS + MMS</td><td class="c-yes">SMS + MMS</td></tr>
       <tr id="fig4Row" style="display:none"><td>Fig IV</td><td class="c-yes">SMS + MMS</td><td class="c-yes">SMS + MMS</td></tr>
       <tr><td>Wonder</td><td class="c-yes">SMS + MMS</td><td class="c-yes">SMS + MMS</td></tr>
-      <tr id="pomRow"><td>Pom</td><td class="c-yes" id="pomOut">SMS only</td><td class="c-soon" id="pomIn">Coming soon</td></tr>
+      <tr id="pomRow"><td>Pom</td><td class="c-yes" id="pomOut">SMS + MMS</td><td class="c-yes" id="pomIn">SMS + MMS</td></tr>
       <tr><td>TAK</td><td class="c-yes">SMS + MMS</td><td class="c-yes">SMS + MMS</td></tr>
     </tbody>
   </table>
@@ -534,7 +534,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')setMenu(fals
       <input type="radio" name="target" value="pom" />
       <div>
         <div class="option-label">Pom</div>
-        <div class="option-desc">Import to Pom coming soon</div>
+        <div class="option-desc">ZIP file — for Pom phones</div>
       </div>
     </label>
     <label class="option" data-value="fig4" id="optFig4" style="display:none">
@@ -665,7 +665,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')setMenu(fals
 </section>
 
 <footer class="site-footer">
-  <p><span id="verSpan">v1.1.5</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
+  <p><span id="verSpan">v1.1.6</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
   <p style="margin-top:6px">Free and open source · Nothing gets uploaded</p>
 </footer>
 
@@ -693,12 +693,12 @@ const SUPPORT_MATRIX={
   smsbackup:{out:true, in:true},
   fig:      {out:true, in:true},
   wonder:   {out:true, in:true},
-  pom:      {out:'sms', in:false},
+  pom:      {out:true, in:true},
   buggy:    {out:'sms', in:false}
 };
 const TEST_MODE=new URLSearchParams(location.search).has('test');
 const BETA_MODE=new URLSearchParams(location.search).has('beta');
-if(BETA_MODE){SUPPORT_MATRIX.pom={out:true,in:true};SUPPORT_MATRIX.fig4={out:true,in:true};var f4=document.getElementById('fig4Row');if(f4)f4.style.display='';document.querySelector('.nav-logo').insertAdjacentHTML('beforeend',' <span style="background:#f59e0b;color:#fff;font-size:.6rem;padding:2px 6px;border-radius:4px;vertical-align:middle;font-weight:700;letter-spacing:.04em">BETA</span>');var pe=document.getElementById('pomOut');if(pe){pe.textContent='SMS + MMS';pe.className='c-yes'};var pi=document.getElementById('pomIn');if(pi){pi.textContent='SMS + MMS';pi.className='c-yes'};var pd=document.getElementById('optPom');if(pd){var dd=pd.querySelector('.option-desc');if(dd)dd.textContent='ZIP file — for Pom phones'}}
+if(BETA_MODE){SUPPORT_MATRIX.fig4={out:true,in:true};var f4=document.getElementById('fig4Row');if(f4)f4.style.display='';document.querySelector('.nav-logo').insertAdjacentHTML('beforeend',' <span style="background:#f59e0b;color:#fff;font-size:.6rem;padding:2px 6px;border-radius:4px;vertical-align:middle;font-weight:700;letter-spacing:.04em">BETA</span>');}
 
 const $=id=>document.getElementById(id);
 const dropZone=$('dropZone'),fileInput=$('fileInput'),scanBtn=$('scanBtn'),buildBtn=$('buildBtn'),
@@ -1531,7 +1531,7 @@ async function scan(){
         if(fallback){
           fmt=fallback.fmt;
           messages=fallback.messages;attachMap=fallback.attachMap;
-          pdfCount=fallback.pdfCount||0;pdfSize=fallback.pdfSize||0;
+          pdfCount=fallback.pdfCount||0;pdfSize=fallback.pdfSize||0;if(fallback.pomLegacy)pomLegacy=true;
           entries=null; // skip normal flow
         }else{
           log('Fallback failed — generating structure report…','warn');
@@ -1565,7 +1565,7 @@ async function scan(){
             if(fallback){fmt=fallback.fmt;messages=fallback.messages;attachMap=fallback.attachMap;pdfCount=fallback.pdfCount||0;pdfSize=fallback.pdfSize||0;if(fallback.pomLegacy)pomLegacy=true}
             else{log('Fallback also failed','err');return}
           }
-        }else if(BETA_MODE&&(entries.some(e=>e.filename==='_pom_backup_manifest.json')||entries.some(e=>e.filename==='sms.xml'&&entries.some(e2=>e2.filename==='mms.xml')))){
+        }else if((entries.some(e=>e.filename==='_pom_backup_manifest.json')||entries.some(e=>e.filename==='sms.xml'&&entries.some(e2=>e2.filename==='mms.xml')))){
           fmt='pom';log('Detected Pom native backup (XML)','ok');
           ({messages,attachMap,pdfCount,pdfSize}=await parsePomZip(entries));
         }else if(hasWonderXml){
@@ -1621,7 +1621,7 @@ async function scan(){
       fmt='merge';
     }
     const grp=markGroups(messages);
-    parsedData={messages,attachMap,fmt,groupCount:grp.groupCount};
+    parsedData={messages,attachMap,fmt,groupCount:grp.groupCount,pomLegacy};
     showProgress('Done!',100);await tick();progressEl.style.display='none';
 
     // Stats (also feeds anonymous analytics: counts only — no numbers, names or content)
@@ -1640,7 +1640,7 @@ async function scan(){
     {const _fp=(cIn+cOut)+'|'+cMms+'|'+cAttach+'|'+(_dMin<Infinity?_dMin:0)+'|'+(_dMax||0);let _h=2166136261;for(let _i=0;_i<_fp.length;_i++){_h^=_fp.charCodeAt(_i);_h=Math.imul(_h,16777619)}scanExtras.bkp=('0000000'+(_h>>>0).toString(16)).slice(-8)}
 
     log('Parsed '+messages.length+' messages ('+cIn+' in, '+cOut+' out, '+cMms+' MMS, '+cAttach+' attachments)'+(pdfCount?' + '+pdfCount+' PDFs':''),'ok');
-    $('detectedBadge').textContent=fmt==='merge'?'Merged':fmt==='fig'?'Fig / TAK':fmt==='fig4'?'Fig IV':fmt==='pom'?(pomLegacy?'Pom (old system)':'Pom'):fmt==='wonder'?'Wonder':fmt==='buggy'?'Buggy Backup App':'SMS Backup & Restore';
+    $('detectedBadge').textContent=fmt==='merge'?'Merged':fmt==='fig'?'Fig / TAK':fmt==='fig4'?'Fig IV':fmt==='pom'?(pomLegacy?'Old Pom':'Pom'):fmt==='wonder'?'Wonder':fmt==='buggy'?'Buggy Backup App':'SMS Backup & Restore';
     $('statIn').textContent=cIn.toLocaleString();
     $('statOut').textContent=cOut.toLocaleString();
     $('statMms').textContent=cMms.toLocaleString();
@@ -1652,7 +1652,7 @@ async function scan(){
     $('optGroups').style.display=grp.groupCount>0?'':'none';
     $('groupsChk').checked=true;$('optGroups').classList.add('selected');
     $('groupsDesc').textContent=grp.groupCount.toLocaleString()+' messages in group chats — uncheck to leave them out (group threading fixed in v0.0.71, feedback welcome)';
-    const pmw=$('pomMmsWarn');if(pmw)pmw.style.display=(fmt==='pom'&&cMms>0&&!BETA_MODE)?'block':'none';
+    const pmw=$('pomMmsWarn');if(pmw)pmw.style.display='none';
 
     if(pdfCount>0){
       const pdfXmlSize=Math.round(pdfSize*1.37);
@@ -1674,24 +1674,28 @@ async function scan(){
       const defaultDescs={smsbackup:'XML file — import on any Android phone',fig:'NDJSON ZIP — for Fig & TAK phones',fig4:'ZIP file — for the Fig IV',wonder:'ZIP file — for Wonder phones'};
       const cleanupDesc='Remove MMS or filter content — stays in same format';
       const cl=$('cleanupLabel');
-      if(k===fmt&&descIds[k]){
+      // an Old Pom backup can still be turned into a (new) Pom file, so Pom stays a choice
+      const same=k===fmt&&!(k==='pom'&&pomLegacy);
+      if(same&&descIds[k]){
         el.style.display='';cl.style.display='';
         cl.parentNode.insertBefore(el,cl.nextSibling);
         $(descIds[k]).textContent=cleanupDesc;
         el.classList.remove('selected','disabled');el.querySelector('input').disabled=false;
       }else{
-        if(descIds[k]&&k!==fmt)$(descIds[k]).textContent=defaultDescs[k];
-        if(k===fmt)cl.style.display='none';
+        if(descIds[k]&&!same)$(descIds[k]).textContent=defaultDescs[k];
+        if(same)cl.style.display='none';
         else cl.parentNode.insertBefore(el,cl);
-        el.style.display=k===fmt?'none':'';
+        el.style.display=same?'none':'';
         el.classList.remove('selected','disabled');
         el.querySelector('input').disabled=false;
-        if(k!==fmt&&sup.in!==true&&!TEST_MODE){
+        if(!same&&sup.in!==true&&!TEST_MODE){
           el.classList.add('disabled');
           el.querySelector('input').disabled=true;
         }
       }
     }
+    // from an Old Pom backup, the Pom choice is the new system, so say so
+    {const oldPom=fmt==='pom'&&pomLegacy,o=$('optPom');o.querySelector('.option-label').textContent=oldPom?'New Pom':'Pom';o.querySelector('.option-desc').textContent=oldPom?'The current Pom backup system — this is what works on Pom phones today':'ZIP file — for Pom phones'}
     // Reset target selection
     document.querySelectorAll('input[name="target"]').forEach(r=>r.checked=false);
     if(fmt==='merge'){
@@ -1722,6 +1726,7 @@ async function scan(){
     else if(fmt==='fig4'){$('figTakNotice').innerHTML='<b>Moving from the Fig IV to an older Fig, TAK or Wonder?</b> Select it below. To remove pictures or keep only certain messages, select Fig IV below.';$('figTakNotice').style.display='block';}
     else if(fmt==='wonder'){$('figTakNotice').innerHTML='<b>Want to clean up your Wonder backup?</b> Select Wonder below to remove pictures or keep only certain messages.';$('figTakNotice').style.display='block';}
     else if(fmt==='smsbackup'){$('figTakNotice').innerHTML='<b>Want to clean up your backup?</b> Select SMS Backup &amp; Restore below to remove MMS or keep only certain messages.';$('figTakNotice').style.display='block';}
+    else if(fmt==='pom'&&pomLegacy){$('figTakNotice').innerHTML='<b>This backup is from the old Pom system.</b> It has your texts, but not your pictures or voice notes. <b>Moving these texts to a Pom?</b> Pick <b>New Pom</b> below, the backup system Pom phones use today. <b>Still have your Pom phone?</b> Update its software to get the new Pom backup system, then make a new backup. The new backup includes your pictures and voice notes too.';$('figTakNotice').style.display='block';}
     else{$('figTakNotice').style.display='none';}
     updateUI();
     if(MERGE.on&&!MERGE.old){
@@ -2259,7 +2264,7 @@ function outFilename(target){
   const baseName=selectedFile.name.replace(/\.(zip|xml)$/i,'');
   const n=new Date(),p=x=>String(x).padStart(2,'0');
   return target==='smsbackup'?'sms-'+baseName+'.xml'
-    :target==='pom'&&BETA_MODE?'MessagesBackup_'+n.getFullYear()+p(n.getMonth()+1)+p(n.getDate())+'_'+p(n.getHours())+p(n.getMinutes())+p(n.getSeconds())+'.zip'
+    :target==='pom'?'MessagesBackup_'+n.getFullYear()+p(n.getMonth()+1)+p(n.getDate())+'_'+p(n.getHours())+p(n.getMinutes())+p(n.getSeconds())+'.zip'
     :target==='pom'?'last_'+p(n.getHours())+p(n.getMinutes())+p(n.getSeconds())+'.zip'
     :target==='fig4'?'export_all-'+n.getFullYear()+'-'+p(n.getMonth()+1)+'-'+p(n.getDate())+'.zip'
     :'fig-'+baseName+'.zip';
@@ -2268,7 +2273,7 @@ function msgBytes(m,target){
   let b=m.type==='sms'?400+(m.body||'').length*1.2:1500;
   for(const p of m.parts||[]){
     const raw=p._entry?p._entry.uncompressedSize||0:p._dataBlob?p._dataBlob.size:typeof p.data==='string'?p.data.length*0.75:p.data?p.data.byteLength||0:p._b64Len?p._b64Len*0.75:p._fallbackAttach?p._fallbackAttach.compSize||0:0;
-    b+=300+(p.text||'').length*1.2+raw*(target==='smsbackup'||target==='pom'&&BETA_MODE?1.34:1);
+    b+=300+(p.text||'').length*1.2+raw*(target==='smsbackup'||target==='pom'?1.34:1);
   }
   return b;
 }
@@ -2577,6 +2582,23 @@ function xmlPieces(){
     done(head,tail){blobs.push(new Blob(pend));return new Blob([head,...blobs,tail],{type:'text/xml'})}
   };
 }
+// Pom threads each MMS by its <recipients>, so the phone owner's number must never be in it, in any format (+972 55… / 055…)
+function pomOwnKey(messages){
+  const out=new Map(),inc=new Map();
+  for(const m of messages){if(m.type!=='mms')continue;for(const a of m.addrs||[]){if(String(a.address||'').replace(/\D/g,'').length<7)continue;const k=pvPhoneKey(a.address),t=parseInt(a.type,10);
+    if(m.direction==='out'&&t===137)out.set(k,(out.get(k)||0)+1);else if(m.direction==='in'&&t===151)inc.set(k,(inc.get(k)||0)+1)}}
+  const top=map=>{let b=null,c=0;for(const[k,v]of map)if(v>c){b=k;c=v}return b};
+  return top(out)||top(inc);
+}
+// Pom's restore treats two MMS with the same second + box + type as one and skips the second (several pictures sent at once).
+// Nudge such MMS a second apart, the same way every time, so nothing is dropped and a second restore still skips real duplicates.
+function pomUniqueDates(messages){
+  const used=new Set();
+  for(const m of messages){if(m.type==='sms')continue;
+    const mb=m.direction==='in'?'1':'2',mt=String(m.mType||(mb==='1'?'132':'128'));let d=parseInt(m.date,10);d=d>1e12?Math.floor(d/1000):(d||0);
+    while(used.has(d+'|'+mb+'|'+mt))d++;used.add(d+'|'+mb+'|'+mt);m._pomDate=d}
+}
+let _pomOwnKey=null;
 async function buildPomZip(messages,own){
   own=own||detectOwnNumber(messages);
   let smsCount=0,mmsCount=0;
@@ -2590,7 +2612,7 @@ async function buildPomZip(messages,own){
       smsCount++;
     }else{
       const mb=m.direction==='in'?'1':'2';
-      const dateS=parseInt(m.date,10)>1e12?Math.floor(parseInt(m.date,10)/1000):parseInt(m.date,10)||0;
+      const dateS=m._pomDate!=null?m._pomDate:parseInt(m.date,10)>1e12?Math.floor(parseInt(m.date,10)/1000):parseInt(m.date,10)||0;
       const dateSentS=parseInt(m.dateSent,10)>1e12?Math.floor(parseInt(m.dateSent,10)/1000):parseInt(m.dateSent,10)||0;
       let xml=`  <mms date="${dateS}" date_sent="${dateSentS}" msg_box="${mb}" read="${escXml(m.read??0)}" m_type="${escXml(m.mType||(mb==='1'?'132':'128'))}" ct_t="${escXml(m.ctT||'application/vnd.wap.multipart.related')}" m_size="${escXml(m.mSize??0)}" sub="null" sub_cs="106" locked="${escXml(m.locked??0)}" m_id="${escXml(m.mId||'')}" tr_id="${escXml(m.trId||'')}">\n    <parts>\n`;
       const attachNames=[];
@@ -2624,8 +2646,8 @@ async function buildPomZip(messages,own){
       const recipSet=new Set();
       if(m._pomRecipients){for(const r of m._pomRecipients)recipSet.add(r)}
       else{
-        const seen=new Set();
-        for(const a of(m.addrs||[])){const n=normNum(a.address);if(n&&n!==own&&!seen.has(n)){seen.add(n);recipSet.add(a.address)}}
+        const seen=new Set(),ownKey=_pomOwnKey||pomOwnKey(messages);
+        for(const a of(m.addrs||[])){if(!String(a.address||'').replace(/\D/g,''))continue;const k=pvPhoneKey(a.address);if(k!==ownKey&&!seen.has(k)){seen.add(k);recipSet.add(a.address)}}
       }
       if(recipSet.size){
         xml+=`    <recipients>\n`;
@@ -2641,8 +2663,8 @@ async function buildPomZip(messages,own){
   const manifest=JSON.stringify({magic:'POM_BACKUP_v1',createdAt:Date.now(),mode:'Full',counts:{sms:smsCount,mms:mmsCount},apps:['sms','mms']});
   const enc=new TextEncoder();
   const zipFiles=[
-    {name:'sms.xml',data:sms.done(xmlHead('smses',smsCount),'</smses>\n')},
-    {name:'mms.xml',data:mms.done(xmlHead('mmses',mmsCount),'</mmses>\n')},
+    {name:'sms.xml',data:sms.done(xmlHead('smses',smsCount),'</smses>\n'),stream:true},
+    {name:'mms.xml',data:mms.done(xmlHead('mmses',mmsCount),'</mmses>\n'),stream:true},
     {name:'_pom_backup_manifest.json',data:enc.encode(manifest)}
   ];
   log('Building Pom ZIP: '+smsCount+' SMS, '+mmsCount+' MMS','ok');
@@ -2878,7 +2900,7 @@ buildBtn.addEventListener('click',()=>{
     infoBox.innerHTML='<b>No conversion needed!</b><br>Wonder accepts Fig backups directly. Just take your Fig backup file and import it into Wonder — no conversion required.';
     infoBox.style.display='block';infoBox.scrollIntoView({behavior:'smooth',block:'center'});return;
   }
-  if(parsedData.fmt===t.value){
+  if(parsedData.fmt===t.value&&!(t.value==='pom'&&parsedData.pomLegacy)){
     const content=(document.querySelector('input[name="content"]:checked')||{}).value||'all';
     if(content==='all'){
       infoBox.innerHTML='<b>No changes selected.</b><br>Choose "Messages only" or "MMS only" under Content to filter your backup.';
@@ -2924,7 +2946,7 @@ async function build(target){
       }
     }
     showProgress('Building…',20);await tick();
-    const pomNative=target==='pom'&&BETA_MODE;
+    const pomNative=target==='pom';if(pomNative){_pomOwnKey=pomOwnKey(msgs);pomUniqueDates(msgs)}
     const filename=outFilename(target);
     const type=target==='smsbackup'?'text/xml;charset=utf-8':'application/zip';
     const writeOne=(list,s,own)=>pomNative?buildPomZip(list,own):target==='smsbackup'?writeToSmsBackup(list,s,own):target==='fig4'?buildFig4Zip(list,s):buildFigZip(list,s);
