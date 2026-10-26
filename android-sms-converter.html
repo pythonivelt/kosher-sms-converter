@@ -133,6 +133,12 @@
   .parts-link:hover{opacity:1}
   .parts-auto{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:.82rem;font-weight:600;cursor:pointer}
   .parts-auto input{width:16px;height:16px;accent-color:var(--ok);cursor:pointer}
+  .fig-warn{display:none;margin-top:12px;padding:14px 16px;border-radius:14px;background:var(--err-soft);border:1px solid var(--err-border);border-left:4px solid var(--danger);color:var(--err-text);font-size:.84rem;line-height:1.55}
+  .fig-warn-head{display:flex;align-items:center;gap:8px;font-weight:700;font-size:.92rem;margin-bottom:6px}
+  .fig-warn-head svg{flex:none;width:20px;height:20px;color:var(--danger)}
+  .fig-warn ol{margin:4px 0 8px;padding-left:20px}
+  .fig-warn li{margin:3px 0}
+  .fig-warn-foot{font-size:.8rem;opacity:.9}
   #phoneNote{font-size:.85rem;margin-top:14px;padding:10px 12px}
   .error{background:var(--err-soft);border:1px solid var(--err-border);border-radius:12px;padding:12px 14px;font-size:.82rem;color:var(--err-text);margin-top:14px;display:none;line-height:1.5}
   .report-input{width:100%;padding:9px 12px;border-radius:10px;border:1px solid var(--field-border);background:var(--field);color:var(--text);margin-bottom:8px;font-size:1rem}
@@ -608,6 +614,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')setMenu(fals
   </div>
   <div class="info" id="infoBox"></div>
   <a class="btn btn-success" id="downloadBtn" style="display:none;text-decoration:none;text-align:center;margin-top:8px" download="">Download</a>
+  <div class="fig-warn" id="figWarn"></div>
   <button class="btn btn-cancel" id="cancelBtn" style="display:none">Cancel</button>
   <div class="error" id="errorBox"></div>
 
@@ -649,6 +656,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')setMenu(fals
   <h2>FAQ</h2>
   <p class="faq-sub">Common questions about the converter.</p>
   <div class="faq-item"><button class="faq-q" onclick="var p=this.parentElement,all=p.parentElement.querySelectorAll('.faq-item');all.forEach(function(i){if(i!==p){i.classList.remove('open');i.querySelector('.faq-a').style.maxHeight=''}});p.classList.toggle('open');var a=this.nextElementSibling;a.style.maxHeight=a.style.maxHeight?'':a.scrollHeight+'px'">Does it work with the MindPhone?<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></button><div class="faq-a"><div class="faq-a-inner">Yes. The MindPhone uses the SMS Backup &amp; Restore app, which is fully supported. Select "SMS Backup &amp; Restore" as your target in the converter and the output file will work directly on your MindPhone.</div></div></div>
+  <div class="faq-item"><button class="faq-q" onclick="var p=this.parentElement,all=p.parentElement.querySelectorAll('.faq-item');all.forEach(function(i){if(i!==p){i.classList.remove('open');i.querySelector('.faq-a').style.maxHeight=''}});p.classList.toggle('open');var a=this.nextElementSibling;a.style.maxHeight=a.style.maxHeight?'':a.scrollHeight+'px'">I converted my messages for a Fig, but restoring doesn’t work. What did I do wrong?<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></button><div class="faq-a"><div class="faq-a-inner">You probably tapped “Choose a file”. That button only takes the Fig’s own full-phone backup, so it says the file isn’t a Fig Backup file and nothing gets restored. Use the Messages button instead: open Settings and tap “Backup and restore”, go to the Restore tab, and tap “Messages” (under “Or restore one thing”). Then pick your file. If your backup was saved in parts, do the same for each part, in order.</div></div></div>
   <div class="faq-item"><button class="faq-q" onclick="var p=this.parentElement,all=p.parentElement.querySelectorAll('.faq-item');all.forEach(function(i){if(i!==p){i.classList.remove('open');i.querySelector('.faq-a').style.maxHeight=''}});p.classList.toggle('open');var a=this.nextElementSibling;a.style.maxHeight=a.style.maxHeight?'':a.scrollHeight+'px'">My new phone already has messages. Will restoring an old backup mess them up?<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></button><div class="faq-a"><div class="faq-a-inner">No — nothing gets erased. Restoring adds the old messages to what is already on your phone, and messages with the same person end up together in one chat, in date order. Restore apps like SMS Backup &amp; Restore (used by the MindPhone), Fig and Pom also skip any message that is already on the phone, so nothing shows up twice.</div></div></div>
   <div class="faq-item"><button class="faq-q" onclick="var p=this.parentElement,all=p.parentElement.querySelectorAll('.faq-item');all.forEach(function(i){if(i!==p){i.classList.remove('open');i.querySelector('.faq-a').style.maxHeight=''}});p.classList.toggle('open');var a=this.nextElementSibling;a.style.maxHeight=a.style.maxHeight?'':a.scrollHeight+'px'">Do pictures and voice notes lose quality?<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></button><div class="faq-a"><div class="faq-a-inner">No — your pictures, voice notes, and videos come through exactly the same. Nothing changes or gets lower quality.</div></div></div>
   <div class="faq-item"><button class="faq-q" onclick="var p=this.parentElement,all=p.parentElement.querySelectorAll('.faq-item');all.forEach(function(i){if(i!==p){i.classList.remove('open');i.querySelector('.faq-a').style.maxHeight=''}});p.classList.toggle('open');var a=this.nextElementSibling;a.style.maxHeight=a.style.maxHeight?'':a.scrollHeight+'px'">Can I transfer between a Fig and a TAK?<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></button><div class="faq-a"><div class="faq-a-inner">You don't even need the converter for that! Fig and TAK save messages the same way, so just take your backup file and put it on the other phone — it'll work as is.</div></div></div>
@@ -665,7 +673,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')setMenu(fals
 </section>
 
 <footer class="site-footer">
-  <p><span id="verSpan">v1.1.6</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
+  <p><span id="verSpan">v1.1.7</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
   <p style="margin-top:6px">Free and open source · Nothing gets uploaded</p>
 </footer>
 
@@ -1461,7 +1469,7 @@ $('mergeLink').addEventListener('click',e=>{
   $('mergeLink').innerHTML=MERGE.on?'✖ Exit merge mode — back to normal convert':'🔧 Already imported with an old version? Fix &amp; merge →';
   $('mergeBanner').style.display=MERGE.on?'block':'none';
   selectedFile=null;parsedData=null;fileInput.value='';fileNameEl.style.display='none';scanBtn.style.display='none';
-  scanResults.style.display='none';optionsEl.style.display='none';infoBox.style.display='none';errorBox.style.display='none';$('downloadBtn').style.display='none';$('convertNotice').style.display='none';$('figTakNotice').style.display='none';buildBtn.disabled=true;dropZone.classList.remove('done');dropZone.style.display='';$('mergeLink').parentElement.style.display='';
+  scanResults.style.display='none';optionsEl.style.display='none';infoBox.style.display='none';errorBox.style.display='none';$('downloadBtn').style.display='none';$('figWarn').style.display='none';$('convertNotice').style.display='none';$('figTakNotice').style.display='none';buildBtn.disabled=true;dropZone.classList.remove('done');dropZone.style.display='';$('mergeLink').parentElement.style.display='';
   document.querySelector('.drop-text').textContent=MERGE.on?'Upload the OLD phone backup (step 1)':DEFAULT_DROP_TEXT;
   if(zipReader){try{zipReader.close()}catch{}zipReader=null}
 });
@@ -1497,7 +1505,7 @@ function pickFile(f){
   fileNameEl.textContent=f.name+' ('+formatSize(f.size)+')';
   fileNameEl.style.display='block';
   scanBtn.style.display='';scanBtn.disabled=false;cancelBtn.style.display='none';
-  scanResults.style.display='none';optionsEl.style.display='none';infoBox.style.display='none';errorBox.style.display='none';progressEl.style.display='none';$('downloadBtn').style.display='none';$('figTakNotice').style.display='none';
+  scanResults.style.display='none';optionsEl.style.display='none';infoBox.style.display='none';errorBox.style.display='none';progressEl.style.display='none';$('downloadBtn').style.display='none';$('figWarn').style.display='none';$('figTakNotice').style.display='none';
   dropZone.classList.remove('done');dropZone.style.display='';parsedData=null;
   if(zipReader){try{zipReader.close()}catch{}zipReader=null}
 }
@@ -1505,7 +1513,7 @@ function pickFile(f){
 // ===== SCAN =====
 scanBtn.addEventListener('click',()=>{
   if(!selectedFile)return;
-  scanBtn.disabled=true;cancelled=false;processing=true;$('themeToggle').style.pointerEvents='none';$('themeToggle').style.opacity='.4';cancelBtn.style.display='block';cancelBtn.innerHTML='Cancel';delete cancelBtn.dataset.confirm;errorBox.style.display='none';infoBox.style.display='none';scanResults.style.display='none';optionsEl.style.display='none';$('downloadBtn').style.display='none';
+  scanBtn.disabled=true;cancelled=false;processing=true;$('themeToggle').style.pointerEvents='none';$('themeToggle').style.opacity='.4';cancelBtn.style.display='block';cancelBtn.innerHTML='Cancel';delete cancelBtn.dataset.confirm;errorBox.style.display='none';infoBox.style.display='none';scanResults.style.display='none';optionsEl.style.display='none';$('downloadBtn').style.display='none';$('figWarn').style.display='none';
   scan().finally(()=>{processing=false;saveLog();$('themeToggle').style.pointerEvents='';$('themeToggle').style.opacity=''});
 });
 
@@ -2146,6 +2154,7 @@ function smsBackupMmsAddr(m,own){const seen=new Set(),others=[];for(const a of(m
 const PART_MAX=512*1024*1024,PART_MIN=64*1024*1024;
 let _partSize=(m=>m>=8?PART_MAX:m>=4?PART_MAX/2:m>0?PART_MAX/4:PART_MAX/2)(navigator.deviceMemory);
 function needsParts(target,est){return _forceParts||est>_partSize}
+function showFigWarn(parts){const w=$('figWarn');w.innerHTML='<div class="fig-warn-head"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>Restoring on a Fig? Use the Messages button</div><ol><li>Open <b>Settings</b> and tap <b>Backup and restore</b>.</li><li>Go to the <b>Restore</b> tab and tap <b>Messages</b>, under “Or restore one thing”.</li><li>'+(parts?'Pick part 1, then do the same for each part in order.':'Pick this file.')+'</li></ol><div class="fig-warn-foot">Don’t use <b>“Choose a file”</b>. It will say this isn’t a Fig Backup file, and nothing gets restored.</div>';w.style.display='block'}
 function partsCard(title,text,done,total,steps,actions){
   infoBox.textContent='';
   const add=(tag,cls,txt,parent)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;(parent||infoBox).appendChild(e);return e};
@@ -2181,6 +2190,7 @@ async function runParts(job){
     const lab=document.createElement('label'),cb=document.createElement('input');lab.className='parts-auto';cb.type='checkbox';cb.checked=job.auto;
     cb.onchange=()=>{job.auto=cb.checked;try{localStorage.setItem('ksc-auto-parts',cb.checked?'1':'0')}catch(_){}eta();if(job.auto&&dlBtn.onclick&&dlBtn.style.display==='block')dlBtn.click()};
     lab.append(cb,' Save the next parts automatically');infoBox.appendChild(lab);eta();
+    if(job.target==='fig')showFigWarn(true);
   };
   const etaTimer=setInterval(eta,1000);
   try{
@@ -2250,7 +2260,7 @@ async function retryLast(job){
   const dlBtn=$('downloadBtn');dlBtn.onclick=null;dlBtn.style.display='none';job.last=null;
   shrinkParts(job,job.groups.length-1,'download','Part '+job.groups.length+' did not download');
   try{await runParts(job);partsDone(job)}
-  catch(err){$('downloadBtn').style.display='none';progressEl.style.display='none';cancelBtn.style.display='none';infoBox.textContent=err&&err.cancelled?'Cancelled.':'Something went wrong: '+((err&&err.message)||err);infoBox.style.display='block'}
+  catch(err){$('downloadBtn').style.display='none';$('figWarn').style.display='none';progressEl.style.display='none';cancelBtn.style.display='none';infoBox.textContent=err&&err.cancelled?'Cancelled.':'Something went wrong: '+((err&&err.message)||err);infoBox.style.display='block'}
   finally{processing=false;_attCache=true;saveLog()}
 }
 function phoneNote(est){
@@ -2915,7 +2925,7 @@ buildBtn.addEventListener('click',()=>{
     pc.scrollIntoView({behavior:'smooth',block:'center'});
     return;
   }
-  buildBtn.disabled=true;buildBtn.style.display='';cancelled=false;processing=true;$('themeToggle').style.pointerEvents='none';$('themeToggle').style.opacity='.4';cancelBtn.style.display='block';cancelBtn.innerHTML='Cancel';delete cancelBtn.dataset.confirm;errorBox.style.display='none';infoBox.style.display='none';$('downloadBtn').style.display='none';
+  buildBtn.disabled=true;buildBtn.style.display='';cancelled=false;processing=true;$('themeToggle').style.pointerEvents='none';$('themeToggle').style.opacity='.4';cancelBtn.style.display='block';cancelBtn.innerHTML='Cancel';delete cancelBtn.dataset.confirm;errorBox.style.display='none';infoBox.style.display='none';$('downloadBtn').style.display='none';$('figWarn').style.display='none';
   build(t.value).finally(()=>{processing=false;saveLog();$('themeToggle').style.pointerEvents='';$('themeToggle').style.opacity=''});
 });
 
@@ -2978,12 +2988,13 @@ async function build(target){
     }else{
       offerFile(out,filename);
       infoBox.textContent='Converted '+total+' messages'+detail+' ('+formatSize(out.size)+') successfully!';
+      if(target==='fig')showFigWarn(false);
     }
     if(parsedData.fmt==='merge'){infoBox.innerHTML+='<br><br><b>Now on the new phone:</b><br>1. SMS Backup &amp; Restore → menu → Tools → <b>Delete Messages</b> → All messages.<br>2. Restore this merged file.<br>3. Done — old chats correctly grouped, new messages kept, no duplicates.';}
     infoBox.style.display='block';
     sendAnalytics(Object.assign({event:'convert',source:parsedData.fmt,target:target,success:true,sms:smsC,mms:mmsC,groups:msgs.filter(m=>m.isGroup).length,skipGroups:skipGroups,content:content,merge:MERGE.on?1:0,mergeAdded:MERGE.added,mergeDropped:MERGE.dropped,size:out.size,duration:((Date.now()-_buildStart)/1000).toFixed(1)},scanExtras,partsInfo(job)));
   }catch(err){
-    progressEl.style.display='none';infoBox.style.display='none';$('downloadBtn').style.display='none';
+    progressEl.style.display='none';infoBox.style.display='none';$('downloadBtn').style.display='none';$('figWarn').style.display='none';
     const fail=e=>sendAnalytics(Object.assign({event:'convert',source:parsedData?parsedData.fmt:'?',target:target,success:false,merge:MERGE.on?1:0,error:e},partsInfo(job)));
     if(err&&err.cancelled){log('Build cancelled by user','warn');infoBox.textContent='Cancelled.';infoBox.style.display='block';if(job)fail('cancelled after '+job.names.length+' of '+job.groups.length+' parts');}
     else if(err&&err.tooBig){

@@ -27,6 +27,8 @@ Free, nothing to install, and your messages never leave your device.
 4. **Pick the phone or app you're moving to**, and what you want to keep.
 5. **Click Convert**, save the new file, and restore it on your new phone.
 
+> **Restoring on a Fig?** Open **Settings** and tap **Backup and restore**, go to the **Restore** tab and tap **Messages** (under "Or restore one thing"). Don't use "Choose a file" — it only takes the Fig's own full-phone backup, so nothing gets restored.
+
 ## What it can do
 
 - **Pictures and voice notes come along** — photos, voice notes, videos and other MMS attachments are converted together with the texts.
