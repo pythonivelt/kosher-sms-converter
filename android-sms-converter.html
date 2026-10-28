@@ -5,11 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Kosher Phone SMS Converter</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%236366f1'/%3E%3Cstop offset='100%25' stop-color='%234f46e5'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='8' fill='url(%23g)'/%3E%3Cpath d='M22 17a1.5 1.5 0 0 1-1.5 1.5H13l-3 3V11a1.5 1.5 0 0 1 1.5-1.5h9A1.5 1.5 0 0 1 22 11z' fill='none' stroke='white' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
-<meta name="description" content="Convert SMS/MMS backups between Fig, Wonder, Pom and SMS Backup &amp; Restore — 100% in your browser, everything stays on your device." />
+<meta name="description" content="Convert SMS/MMS backups between Fig, Wonder, Pom and SMS Backup &amp; Restore. Runs 100% in your browser, so everything stays on your device." />
 <meta name="keywords" content="kosher phone, SMS converter, kosher SMS, Fig phone, Wonder phone, Pom phone, MMS transfer, SMS Backup Restore, message transfer, kosher phone backup" />
 <link rel="canonical" href="https://pythonivelt.github.io/kosher-sms-converter/" />
 <meta property="og:title" content="Kosher Phone SMS Converter" />
-<meta property="og:description" content="Move your text messages between kosher phones — including the pictures and voice notes in your chats. Works with Fig, Wonder, Pom, and SMS Backup &amp; Restore. Free, private, runs in your browser." />
+<meta property="og:description" content="Move your text messages between kosher phones, including the pictures and voice notes in your chats. Works with Fig, Wonder, Pom, and SMS Backup &amp; Restore. Free, private, runs in your browser." />
 <meta property="og:type" content="website" />
 <meta property="og:url" content="https://pythonivelt.github.io/kosher-sms-converter/" />
 <meta name="color-scheme" content="light dark" />
@@ -450,7 +450,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')setMenu(fals
 
 <section class="hero">
   <h1>Switching phones? Take your messages with you.</h1>
-  <p class="hero-sub">Move your text messages between kosher phones — including the pictures and voice notes in your chats. Works with Fig, Wonder, Pom, and SMS Backup &amp; Restore. Runs in your browser — everything stays on your device.</p>
+  <p class="hero-sub">Move your text messages between kosher phones, including the pictures and voice notes in your chats. Works with Fig, Wonder, Pom and SMS Backup &amp; Restore. It all runs in your browser, so your messages stay on your device.</p>
   <div class="hero-badges">
     <span class="hero-badge">SMS &amp; MMS</span>
     <span class="hero-badge">Picture &amp; voice messages</span>
@@ -491,7 +491,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')setMenu(fals
 <div class="converter-section" id="converter">
 <div id="convert" class="card">
 
-  <div id="mergeBanner" style="display:none;margin-bottom:14px;padding:10px 14px;border-radius:10px;background:rgba(99,102,241,.07);border:1px solid rgba(99,102,241,.25);font-size:.78rem;line-height:1.55"><b>Fix a previous import (merge)</b><br>Step 1: upload the backup from your <b>OLD</b> phone — those messages are kept as the correct ones.<br>Step 2: upload a fresh backup from your <b>NEW</b> phone — only messages newer than the old backup are added.<br>Then delete all messages on the new phone and restore the merged file.</div>
+  <div id="mergeBanner" style="display:none;margin-bottom:14px;padding:10px 14px;border-radius:10px;background:rgba(99,102,241,.07);border:1px solid rgba(99,102,241,.25);font-size:.78rem;line-height:1.55"><b>Fix a previous import (merge)</b><br>Step 1: upload the backup from your <b>OLD</b> phone. Those messages are kept as the correct ones.<br>Step 2: upload a fresh backup from your <b>NEW</b> phone. Only messages newer than the old backup are added.<br>Then delete all messages on the new phone and restore the merged file.</div>
 
   <div class="drop-zone" id="dropZone">
     <input type="file" id="fileInput" accept=".zip,.xml" />
@@ -525,29 +525,29 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')setMenu(fals
       <input type="radio" name="target" value="smsbackup" />
       <div>
         <div class="option-label">SMS Backup &amp; Restore</div>
-        <div class="option-desc" id="smsDesc">XML file — import on any Android phone</div>
+        <div class="option-desc" id="smsDesc">XML file for any Android phone</div>
       </div>
     </label>
     <label class="option" data-value="wonder" id="optWonder">
       <input type="radio" name="target" value="wonder" />
       <div>
         <div class="option-label">Wonder</div>
-        <div class="option-desc" id="wonderDesc">ZIP file — for Wonder phones</div>
-        <div class="option-note" id="wonderNote">Wonder may only show the last few messages per conversation after the first import. If that happens, just import the same file again and everything will come through — messages, pictures, and voice notes.</div>
+        <div class="option-desc" id="wonderDesc">ZIP file for Wonder phones</div>
+        <div class="option-note" id="wonderNote">Wonder may only show the last few messages per conversation after the first import. If that happens, just import the same file again and everything will come through: messages, pictures and voice notes.</div>
       </div>
     </label>
     <label class="option" data-value="pom" id="optPom">
       <input type="radio" name="target" value="pom" />
       <div>
         <div class="option-label">Pom</div>
-        <div class="option-desc">ZIP file — for Pom phones</div>
+        <div class="option-desc">ZIP file for Pom phones</div>
       </div>
     </label>
     <label class="option" data-value="fig4" id="optFig4" style="display:none">
       <input type="radio" name="target" value="fig4" />
       <div>
         <div class="option-label">Fig IV</div>
-        <div class="option-desc" id="fig4Desc">ZIP file — for the Fig IV</div>
+        <div class="option-desc" id="fig4Desc">ZIP file for the Fig IV</div>
       </div>
     </label>
     <div class="section-label" id="cleanupLabel" style="display:none">Clean up your backup</div>
@@ -555,7 +555,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')setMenu(fals
       <input type="radio" name="target" value="fig" />
       <div>
         <div class="option-label">Fig / TAK</div>
-        <div class="option-desc" id="figDesc">NDJSON ZIP — for Fig &amp; TAK phones</div>
+        <div class="option-desc" id="figDesc">NDJSON ZIP for Fig &amp; TAK phones</div>
       </div>
     </label>
 
@@ -571,7 +571,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')setMenu(fals
       <input type="radio" name="content" value="text" />
       <div>
         <div class="option-label">Messages only</div>
-        <div class="option-desc">Text only — no images/audio (smaller file)</div>
+        <div class="option-desc">Text only, no images or audio (smaller file)</div>
       </div>
     </label>
     <label class="option" data-value="mms" id="optMmsOnly">
@@ -604,7 +604,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')setMenu(fals
       </label>
     </div>
 
-    <div id="convertNotice" style="display:none"><strong>⚠ Please note:</strong> This tool is tested but some messages may end up in a different chat — for example, group messages might land in a private chat. This can't be undone by re-converting. If you run into any issues, <a href="#" onclick="document.getElementById('contactModal').classList.add('open');return false">let us know</a> and we'll work on a fix.</div>
+    <div id="convertNotice" style="display:none"><strong>⚠ Please note:</strong> This tool is tested but some messages may end up in a different chat. For example, group messages might land in a private chat. This can't be undone by re-converting. If you run into any issues, <a href="#" onclick="document.getElementById('contactModal').classList.add('open');return false">let us know</a> and we'll work on a fix.</div>
     <button class="btn btn-success" id="buildBtn" disabled>Convert</button>
   </div>
 
@@ -646,8 +646,8 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')setMenu(fals
 <section class="site-section">
   <h2 class="site-section-title">Why this tool</h2>
   <div class="features-grid">
-    <div class="feature-card"><div class="feature-icon"><svg viewBox="0 0 24 24"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg></div><div class="feature-title">Full MMS support</div><div class="feature-desc">Pictures, voice notes, group chats, and attachments all transfer — not just texts.</div></div>
-    <div class="feature-card"><div class="feature-icon"><svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></div><div class="feature-title">Works on any device</div><div class="feature-desc">No downloads, no installs — runs entirely in your browser on any device.</div></div>
+    <div class="feature-card"><div class="feature-icon"><svg viewBox="0 0 24 24"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg></div><div class="feature-title">Full MMS support</div><div class="feature-desc">Pictures, voice notes, group chats, and attachments all transfer, not just texts.</div></div>
+    <div class="feature-card"><div class="feature-icon"><svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></div><div class="feature-title">Works on any device</div><div class="feature-desc">No downloads, no installs. It runs entirely in your browser on any device.</div></div>
     <div class="feature-card"><div class="feature-icon"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div><div class="feature-title">Completely offline &amp; secure</div><div class="feature-desc">Everything runs in your browser, so your messages stay on your device.</div></div>
   </div>
 </section>
@@ -657,18 +657,18 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')setMenu(fals
   <p class="faq-sub">Common questions about the converter.</p>
   <div class="faq-item"><button class="faq-q" onclick="var p=this.parentElement,all=p.parentElement.querySelectorAll('.faq-item');all.forEach(function(i){if(i!==p){i.classList.remove('open');i.querySelector('.faq-a').style.maxHeight=''}});p.classList.toggle('open');var a=this.nextElementSibling;a.style.maxHeight=a.style.maxHeight?'':a.scrollHeight+'px'">Does it work with the MindPhone?<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></button><div class="faq-a"><div class="faq-a-inner">Yes. The MindPhone uses the SMS Backup &amp; Restore app, which is fully supported. Select "SMS Backup &amp; Restore" as your target in the converter and the output file will work directly on your MindPhone.</div></div></div>
   <div class="faq-item"><button class="faq-q" onclick="var p=this.parentElement,all=p.parentElement.querySelectorAll('.faq-item');all.forEach(function(i){if(i!==p){i.classList.remove('open');i.querySelector('.faq-a').style.maxHeight=''}});p.classList.toggle('open');var a=this.nextElementSibling;a.style.maxHeight=a.style.maxHeight?'':a.scrollHeight+'px'">I converted my messages for a Fig, but restoring doesn’t work. What did I do wrong?<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></button><div class="faq-a"><div class="faq-a-inner">You probably tapped “Choose a file”. That button only takes the Fig’s own full-phone backup, so it says the file isn’t a Fig Backup file and nothing gets restored. Use the Messages button instead: open Settings and tap “Backup and restore”, go to the Restore tab, and tap “Messages” (under “Or restore one thing”). Then pick your file. If your backup was saved in parts, do the same for each part, in order.</div></div></div>
-  <div class="faq-item"><button class="faq-q" onclick="var p=this.parentElement,all=p.parentElement.querySelectorAll('.faq-item');all.forEach(function(i){if(i!==p){i.classList.remove('open');i.querySelector('.faq-a').style.maxHeight=''}});p.classList.toggle('open');var a=this.nextElementSibling;a.style.maxHeight=a.style.maxHeight?'':a.scrollHeight+'px'">My new phone already has messages. Will restoring an old backup mess them up?<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></button><div class="faq-a"><div class="faq-a-inner">No — nothing gets erased. Restoring adds the old messages to what is already on your phone, and messages with the same person end up together in one chat, in date order. Restore apps like SMS Backup &amp; Restore (used by the MindPhone), Fig and Pom also skip any message that is already on the phone, so nothing shows up twice.</div></div></div>
-  <div class="faq-item"><button class="faq-q" onclick="var p=this.parentElement,all=p.parentElement.querySelectorAll('.faq-item');all.forEach(function(i){if(i!==p){i.classList.remove('open');i.querySelector('.faq-a').style.maxHeight=''}});p.classList.toggle('open');var a=this.nextElementSibling;a.style.maxHeight=a.style.maxHeight?'':a.scrollHeight+'px'">Do pictures and voice notes lose quality?<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></button><div class="faq-a"><div class="faq-a-inner">No — your pictures, voice notes, and videos come through exactly the same. Nothing changes or gets lower quality.</div></div></div>
-  <div class="faq-item"><button class="faq-q" onclick="var p=this.parentElement,all=p.parentElement.querySelectorAll('.faq-item');all.forEach(function(i){if(i!==p){i.classList.remove('open');i.querySelector('.faq-a').style.maxHeight=''}});p.classList.toggle('open');var a=this.nextElementSibling;a.style.maxHeight=a.style.maxHeight?'':a.scrollHeight+'px'">Can I transfer between a Fig and a TAK?<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></button><div class="faq-a"><div class="faq-a-inner">You don't even need the converter for that! Fig and TAK save messages the same way, so just take your backup file and put it on the other phone — it'll work as is.</div></div></div>
-  <div class="faq-item"><button class="faq-q" onclick="var p=this.parentElement,all=p.parentElement.querySelectorAll('.faq-item');all.forEach(function(i){if(i!==p){i.classList.remove('open');i.querySelector('.faq-a').style.maxHeight=''}});p.classList.toggle('open');var a=this.nextElementSibling;a.style.maxHeight=a.style.maxHeight?'':a.scrollHeight+'px'">Is it safe? Are my messages uploaded anywhere?<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></button><div class="faq-a"><div class="faq-a-inner">Completely safe. Everything happens right on your phone or computer — your messages are never sent anywhere. No one can see them.</div></div></div>
-  <div class="faq-item"><button class="faq-q" onclick="var p=this.parentElement,all=p.parentElement.querySelectorAll('.faq-item');all.forEach(function(i){if(i!==p){i.classList.remove('open');i.querySelector('.faq-a').style.maxHeight=''}});p.classList.toggle('open');var a=this.nextElementSibling;a.style.maxHeight=a.style.maxHeight?'':a.scrollHeight+'px'">What if my backup file is very large?<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></button><div class="faq-a"><div class="faq-a-inner">No problem — it opens even very large backups (2 GB and up). If the converted file is bigger than about 500 MB, it is saved as several smaller files that download one after another. Restore them in order, starting with part 1. For big backups, use a computer — phones usually can't save files that big.</div></div></div>
+  <div class="faq-item"><button class="faq-q" onclick="var p=this.parentElement,all=p.parentElement.querySelectorAll('.faq-item');all.forEach(function(i){if(i!==p){i.classList.remove('open');i.querySelector('.faq-a').style.maxHeight=''}});p.classList.toggle('open');var a=this.nextElementSibling;a.style.maxHeight=a.style.maxHeight?'':a.scrollHeight+'px'">My new phone already has messages. Will restoring an old backup mess them up?<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></button><div class="faq-a"><div class="faq-a-inner">No, nothing gets erased. Restoring adds the old messages to what is already on your phone, and messages with the same person end up together in one chat, in date order. Restore apps like SMS Backup &amp; Restore (used by the MindPhone), Fig and Pom also skip any message that is already on the phone, so nothing shows up twice.</div></div></div>
+  <div class="faq-item"><button class="faq-q" onclick="var p=this.parentElement,all=p.parentElement.querySelectorAll('.faq-item');all.forEach(function(i){if(i!==p){i.classList.remove('open');i.querySelector('.faq-a').style.maxHeight=''}});p.classList.toggle('open');var a=this.nextElementSibling;a.style.maxHeight=a.style.maxHeight?'':a.scrollHeight+'px'">Do pictures and voice notes lose quality?<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></button><div class="faq-a"><div class="faq-a-inner">No, your pictures, voice notes, and videos come through exactly the same. Nothing changes or gets lower quality.</div></div></div>
+  <div class="faq-item"><button class="faq-q" onclick="var p=this.parentElement,all=p.parentElement.querySelectorAll('.faq-item');all.forEach(function(i){if(i!==p){i.classList.remove('open');i.querySelector('.faq-a').style.maxHeight=''}});p.classList.toggle('open');var a=this.nextElementSibling;a.style.maxHeight=a.style.maxHeight?'':a.scrollHeight+'px'">Can I transfer between a Fig and a TAK?<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></button><div class="faq-a"><div class="faq-a-inner">You don't even need the converter for that! Fig and TAK save messages the same way, so just take your backup file and put it on the other phone. It'll work as is.</div></div></div>
+  <div class="faq-item"><button class="faq-q" onclick="var p=this.parentElement,all=p.parentElement.querySelectorAll('.faq-item');all.forEach(function(i){if(i!==p){i.classList.remove('open');i.querySelector('.faq-a').style.maxHeight=''}});p.classList.toggle('open');var a=this.nextElementSibling;a.style.maxHeight=a.style.maxHeight?'':a.scrollHeight+'px'">Is it safe? Are my messages uploaded anywhere?<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></button><div class="faq-a"><div class="faq-a-inner">Completely safe. Everything happens right on your phone or computer, and your messages are never sent anywhere. No one can see them.</div></div></div>
+  <div class="faq-item"><button class="faq-q" onclick="var p=this.parentElement,all=p.parentElement.querySelectorAll('.faq-item');all.forEach(function(i){if(i!==p){i.classList.remove('open');i.querySelector('.faq-a').style.maxHeight=''}});p.classList.toggle('open');var a=this.nextElementSibling;a.style.maxHeight=a.style.maxHeight?'':a.scrollHeight+'px'">What if my backup file is very large?<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></button><div class="faq-a"><div class="faq-a-inner">No problem. It opens even very large backups (2 GB and up). If the converted file is bigger than about 500 MB, it is saved as several smaller files that download one after another. Restore them in order, starting with part 1. For big backups, use a computer, because phones usually can't save files that big.</div></div></div>
   <div class="faq-item"><button class="faq-q" onclick="var p=this.parentElement,all=p.parentElement.querySelectorAll('.faq-item');all.forEach(function(i){if(i!==p){i.classList.remove('open');i.querySelector('.faq-a').style.maxHeight=''}});p.classList.toggle('open');var a=this.nextElementSibling;a.style.maxHeight=a.style.maxHeight?'':a.scrollHeight+'px'">Does it work with iPhone?<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></button><div class="faq-a"><div class="faq-a-inner">Not currently. This tool is designed for kosher Android phones. iPhones use a completely different backup system that is not compatible.</div></div></div>
   <div class="faq-item"><button class="faq-q" onclick="var p=this.parentElement,all=p.parentElement.querySelectorAll('.faq-item');all.forEach(function(i){if(i!==p){i.classList.remove('open');i.querySelector('.faq-a').style.maxHeight=''}});p.classList.toggle('open');var a=this.nextElementSibling;a.style.maxHeight=a.style.maxHeight?'':a.scrollHeight+'px'">What if my phone isn't listed?<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></button><div class="faq-a"><div class="faq-a-inner">New phones are added regularly. Use the Contact Us button below to request support for your phone.</div></div></div>
 </section>
 
 <section class="contact-cta">
   <h2 class="contact-cta-title">Need help or have a question?</h2>
-  <p class="contact-cta-sub">Feedback, a problem with a conversion, or a phone we don't support yet — we'd love to hear from you, and we'll get back to you as soon as possible.</p>
+  <p class="contact-cta-sub">Feedback, a problem with a conversion, or a phone we don't support yet? We'd love to hear from you, and we'll get back to you as soon as possible.</p>
   <button class="contact-cta-btn" id="contactCta" type="button">Contact Us</button>
 </section>
 
@@ -695,7 +695,7 @@ const BROWSER=(u=>u.indexOf('Edg/')>-1?'Edge':u.indexOf('OPR/')>-1?'Opera':u.ind
 const GAS_URL=window.GAS_URL='https://script.google.com/macros/s/AKfycbzSrDeatu4a0rgT9pkypGDyiWdc-i89XSYoVhnSae7gRUvRaXlHee98ycsDE084TUVN4A/exec';
 function sendAnalytics(data){try{var p=Object.assign({type:'analytics',version:(document.getElementById('verSpan')||{}).textContent||'?',beta:BETA_MODE,ts:new Date().toISOString(),sid:SID,device:IS_MOBILE?'mobile':'desktop',browser:BROWSER},data);fetch(GAS_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(p)})}catch(e){}}
 
-// SUPPORT MATRIX — keep in sync with assets/chart.svg
+// SUPPORT MATRIX - keep in sync with assets/chart.svg
 // out = can read backups from this format, in = can write files that import on this phone
 const SUPPORT_MATRIX={
   smsbackup:{out:true, in:true},
@@ -803,7 +803,7 @@ if(!ai.compSize&&ai._needsScan){
 const scanSize=Math.min(10*1024*1024,ai.file.size-ai.zipOffset);const sb=new Uint8Array(await ai.file.slice(ai.zipOffset,ai.zipOffset+scanSize).arrayBuffer());
 for(let si=1;si<sb.length-4;si++){if(sb[si]===0x50&&sb[si+1]===0x4B&&((sb[si+2]===0x03&&sb[si+3]===0x04)||(sb[si+2]===0x01&&sb[si+3]===0x02))){ai.compSize=si;break}}
 if(!ai.compSize)ai.compSize=scanSize;delete ai._needsScan}
-if(!ai.compSize){log('Attachment has unknown size, skipping: '+(p.cl||'?'),'warn');return null}const compData=ai.file.slice(ai.zipOffset,ai.zipOffset+ai.compSize);let raw;if(ai.method===8){const ds=new DecompressionStream('deflate-raw');const reader=ds.readable.getReader();const writer=ds.writable.getWriter();const chunks=[];const readAll=(async()=>{try{while(true){const{done,value}=await reader.read();if(done)break;chunks.push(value)}}catch(e){}})();const sr=compData.stream().getReader();while(true){const{done,value}=await sr.read();if(done)break;try{await writer.write(value)}catch(we){break}}try{await writer.close()}catch(ce){}await readAll;let total=0;for(const c of chunks)total+=c.byteLength;raw=new Uint8Array(total);let off=0;for(const c of chunks){raw.set(c,off);off+=c.byteLength}p.data=raw.buffer}else{p.data=await compData.arrayBuffer()}if(!_attCache){const ab=p.data;delete p.data;return ab}delete p._fallbackAttach;return p.data}catch(e){log('Failed to read fallback attachment: '+(p.cl||'?')+' — '+e.message,'warn');return null}}return null}
+if(!ai.compSize){log('Attachment has unknown size, skipping: '+(p.cl||'?'),'warn');return null}const compData=ai.file.slice(ai.zipOffset,ai.zipOffset+ai.compSize);let raw;if(ai.method===8){const ds=new DecompressionStream('deflate-raw');const reader=ds.readable.getReader();const writer=ds.writable.getWriter();const chunks=[];const readAll=(async()=>{try{while(true){const{done,value}=await reader.read();if(done)break;chunks.push(value)}}catch(e){}})();const sr=compData.stream().getReader();while(true){const{done,value}=await sr.read();if(done)break;try{await writer.write(value)}catch(we){break}}try{await writer.close()}catch(ce){}await readAll;let total=0;for(const c of chunks)total+=c.byteLength;raw=new Uint8Array(total);let off=0;for(const c of chunks){raw.set(c,off);off+=c.byteLength}p.data=raw.buffer}else{p.data=await compData.arrayBuffer()}if(!_attCache){const ab=p.data;delete p.data;return ab}delete p._fallbackAttach;return p.data}catch(e){log('Failed to read fallback attachment: '+(p.cl||'?')+': '+e.message,'warn');return null}}return null}
 
 function formatSize(b){if(b<1048576)return(b/1024).toFixed(0)+' KB';if(b<1073741824)return(b/1048576).toFixed(1)+' MB';return(b/1073741824).toFixed(2)+' GB'}
 function showProgress(l,p){progressEl.style.display='block';progressLabel.textContent=l;progressBar.style.width=p+'%'}
@@ -854,7 +854,7 @@ function extractXmlStructure(text,full){
 }
 function extractJsonStructure(text){
   try{const obj=JSON.parse(text);return{format:'json',shape:describeJsonShape(obj,3)}}catch(e){
-    // Try NDJSON — first 3 lines
+    // Try NDJSON - first 3 lines
     const lines=text.split('\n').filter(l=>l.trim());
     const shapes=[];
     for(let i=0;i<Math.min(3,lines.length);i++){
@@ -900,7 +900,7 @@ async function generateStructureReport(entries,fileName){
       try{
         const blob=await e.getData(new zip.BlobWriter());
         const text=await blob.text();
-        // Read more for full structure — up to 50KB
+        // Read more for full structure - up to 50KB
         const sample=text.substring(0,50000);
         info.encoding=text.charCodeAt(0)===0xFEFF?'UTF-16 BOM':'UTF-8';
         info.totalLength=text.length;
@@ -1012,7 +1012,7 @@ async function sendLog(){
   const btn=$('logSubmitBtn'),note=$('logNote'),comment=logNoteText();
   if(btn.disabled)return;
   if(comment.length<LOG_NOTE_MIN){
-    note.classList.add('err');note.textContent='Please tell us what happened first — a sentence or two is enough.';$('logComment').focus();return;
+    note.classList.add('err');note.textContent='Please tell us what happened first. A sentence or two is enough.';$('logComment').focus();return;
   }
   try{
     const logText=[...logBox.childNodes].filter(n=>!(n.classList&&n.classList.contains('log-prev'))).map(n=>n.textContent).join('');
@@ -1123,7 +1123,7 @@ function anonymizeXml(text){
 const PLACEHOLDER_PNG=new Uint8Array([137,80,78,71,13,10,26,10,0,0,0,13,73,72,68,82,0,0,0,1,0,0,0,1,8,2,0,0,0,144,119,83,222,0,0,0,12,73,68,65,84,8,215,99,248,207,192,0,0,0,3,0,1,54,174,213,252,0,0,0,0,73,69,78,68,174,66,96,130]);
 
 async function generateAnonymizedZip(entries,origFile,origName){
-  log('Generating anonymized copy — all private data replaced with fake data…');
+  log('Generating anonymized copy (all private data replaced with fake data)…');
   showProgress('Anonymizing…',0);
   const zipW=new zip.ZipWriter(new zip.BlobWriter('application/zip'));
   const total=entries.length;
@@ -1158,7 +1158,7 @@ async function generateAnonymizedZip(entries,origFile,origName){
     }else if(ext==='ics'){
       await zipW.add(e.filename,new zip.BlobReader(new Blob(['BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Anonymized//EN\nEND:VCALENDAR\n'])));
     }else if(ext==='zip'&&e.uncompressedSize<500000000){
-      // Nested ZIP — extract and recursively anonymize
+      // Nested ZIP - extract and recursively anonymize
       try{
         const blob=await e.getData(new zip.BlobWriter());
         const innerReader=new zip.ZipReader(new zip.BlobReader(blob));
@@ -1197,7 +1197,7 @@ async function generateAnonymizedZip(entries,origFile,origName){
         try{const raw=await e.getData(new zip.BlobWriter());await zipW.add(e.filename,new zip.BlobReader(raw))}catch(e5){}
       }
     }else{
-      // Unknown binary — keep as-is (could be database, etc.)
+      // Unknown binary - keep as-is (could be database, etc.)
       try{const raw=await e.getData(new zip.BlobWriter());await zipW.add(e.filename,new zip.BlobReader(raw))}catch(e6){}
     }
   }
@@ -1209,7 +1209,7 @@ async function generateAnonymizedZip(entries,origFile,origName){
 
 function downloadReport(report,origName){
   progressEl.style.display='none';
-  errorBox.innerHTML='<b>This phone format is not supported yet.</b><br><br>Help us add support! We\'ll create an anonymized copy of your file — <b>all messages, phone numbers, names, and pictures are replaced with fake data</b>. No private information is included.<br><br>This is <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener">open source</a> — you can verify exactly what gets changed in the code.<br><br><input id="phoneBrandInput" type="text" class="report-input" placeholder="Phone brand (e.g. Tak S7, Kosher XL...)"><input id="userEmailInput" type="email" class="report-input" placeholder="Your email (so we can let you know when it\'s supported)"><br><button id="anonBtn" class="report-btn" style="background:#4f46e5">Anonymize &amp; Download</button><div id="anonInstructions" style="display:none;margin-top:14px;padding:12px 16px;border-radius:8px;background:#ecfdf5;color:#065f46;font-size:.85rem;line-height:1.6"><b>Almost done!</b><ol style="margin:8px 0 0 16px;padding:0"><li>Open <a href="https://drive.google.com" target="_blank" rel="noopener">Google Drive</a></li><li>Upload the anonymized file you just downloaded</li><li>Right-click the file → Share</li><li>Share with <b>pythonivelt@gmail.com</b></li></ol><br>Thanks for helping us add support for your phone!</div>';
+  errorBox.innerHTML='<b>This phone format is not supported yet.</b><br><br>Help us add support! We\'ll create an anonymized copy of your file: <b>all messages, phone numbers, names, and pictures are replaced with fake data</b>. No private information is included.<br><br>This is <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener">open source</a>, so you can verify exactly what gets changed in the code.<br><br><input id="phoneBrandInput" type="text" class="report-input" placeholder="Phone brand (e.g. Tak S7, Kosher XL...)"><input id="userEmailInput" type="email" class="report-input" placeholder="Your email (so we can let you know when it\'s supported)"><br><button id="anonBtn" class="report-btn" style="background:#4f46e5">Anonymize &amp; Download</button><div id="anonInstructions" style="display:none;margin-top:14px;padding:12px 16px;border-radius:8px;background:#ecfdf5;color:#065f46;font-size:.85rem;line-height:1.6"><b>Almost done!</b><ol style="margin:8px 0 0 16px;padding:0"><li>Open <a href="https://drive.google.com" target="_blank" rel="noopener">Google Drive</a></li><li>Upload the anonymized file you just downloaded</li><li>Right-click the file → Share</li><li>Share with <b>pythonivelt@gmail.com</b></li></ol><br>Thanks for helping us add support for your phone!</div>';
   errorBox.style.display='block';scanBtn.style.display='';scanBtn.disabled=false;cancelBtn.style.display='none';
   $('anonBtn').onclick=async function(){
     const brand=($('phoneBrandInput').value||'').trim();
@@ -1229,14 +1229,14 @@ function downloadReport(report,origName){
       }
       this.textContent='Downloaded!';this.style.background='#16a34a';
       $('anonInstructions').style.display='block';
-      log('Anonymized file downloaded + structure report sent — thank you!','ok');
+      log('Anonymized file downloaded + structure report sent. Thank you!','ok');
     }catch(e){
       this.textContent='Failed';this.style.background='#dc2626';
       log('Error: '+e.message+errWhere(e),'err');
     }
   };
 }
-// XML can't carry control characters even when escaped — one stray \u0001 in a message makes the whole file unreadable
+// XML can't carry control characters even when escaped - one stray \u0001 in a message makes the whole file unreadable
 function escXml(s){if(s==null)return'';return String(s).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\uFFFE\uFFFF]/g,'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/\r/g,'&#13;').replace(/\n/g,'&#10;')}
 function fmtDate(ts){const ms=parseInt(ts,10);if(!ms||isNaN(ms))return'';const d=new Date(ms<1e12?ms*1000:ms);return d.toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit',second:'2-digit',hour12:true})}
 function ab2b64(buf){const u=new Uint8Array(buf);let b='';for(let i=0;i<u.length;i+=32768)b+=String.fromCharCode.apply(null,u.subarray(i,i+32768));return btoa(b)}
@@ -1274,7 +1274,7 @@ async function fallbackZipScan(file){
 
     // For NDJSON, decompress and parse
     if(fileName.endsWith('.ndjson')){
-      log('Found '+fileName+' — decompressing…','ok');
+      log('Found '+fileName+', decompressing…','ok');
       ndjsonFound=true;fmt='fig';
       // Need to find the compressed data size
       let ndjsonNextOffset=0; // where to resume scanning after this entry
@@ -1294,15 +1294,15 @@ async function fallbackZipScan(file){
                 found=true;break;
               }
               if(chunk[i+2]===0x03&&chunk[i+3]===0x04){
-                // Next local file header — use full distance as compSize
-                // (some ZIPs have unsigned DD before this, some don't — DEFLATE handles either)
+                // Next local file header - use full distance as compSize
+                // (some ZIPs have unsigned DD before this, some don't - DEFLATE handles either)
                 compSize=searchOffset+i-dataStart;
                 ndjsonNextOffset=searchOffset+i;
                 found=true;break;
               }
             }
           }
-          if(!found)searchOffset+=chunkSize; // no overlap needed — PK is 2 bytes
+          if(!found)searchOffset+=chunkSize; // no overlap needed - PK is 2 bytes
         }
         if(!found){compSize=fileSize-dataStart;ndjsonNextOffset=fileSize}
       }
@@ -1310,7 +1310,7 @@ async function fallbackZipScan(file){
       const compData=file.slice(dataStart,dataStart+compSize);
       let ndjsonText;
       if(method===8){
-        // DEFLATE — use DecompressionStream (tolerates truncated streams)
+        // DEFLATE - use DecompressionStream (tolerates truncated streams)
         try{
           const ds=new DecompressionStream('deflate-raw');
           const reader=ds.readable.getReader();
@@ -1321,13 +1321,13 @@ async function fallbackZipScan(file){
           while(true){const{done,value}=await compReader.read();if(done)break;await writer.write(value)}
           try{await writer.close()}catch(e){partial=true;try{await reader.cancel()}catch(e2){}}
           await readAll;
-          if(chunks.length===0){log('Backup file appears damaged — no data could be recovered. Try transferring the backup from your phone again.','err');return null}
+          if(chunks.length===0){log('Backup file appears damaged. No data could be recovered. Try transferring the backup from your phone again.','err');return null}
           const dec=new TextDecoder();
           ndjsonText=chunks.map(c=>dec.decode(c,{stream:true})).join('');
-          if(partial)log('Backup may be incomplete — recovered '+formatSize(ndjsonText.length)+' of data','warn');
+          if(partial)log('Backup may be incomplete. Recovered '+formatSize(ndjsonText.length)+' of data','warn');
         }catch(e){log('Decompression failed: '+e.message,'err');return null}
       }else if(method===0){
-        // STORE — read raw
+        // STORE - read raw
         ndjsonText=await compData.text();
       }else{
         log('Unsupported compression method: '+method,'err');return null;
@@ -1353,7 +1353,7 @@ async function fallbackZipScan(file){
               if(p.ct==='application/smil')continue;
               if(p._data){
                 const pn=p._data.split('/').pop();
-                // Store reference to find in ZIP later — but we can't seek back easily
+                // Store reference to find in ZIP later - but we can't seek back easily
                 // Mark as needing attachment from ZIP
                 parts.push({ct:p.ct,cl:p.cl||p.name||'',text:p.text||'',_zipRef:pn,seq:parseInt(p.seq)||0});
               }else{
@@ -1373,7 +1373,7 @@ async function fallbackZipScan(file){
     if(fileName.startsWith('data/')){
       const pn=fileName.split('/').pop();
       if(hasDD&&compSize===0){
-        // Skip — we'll try to resolve attachments after
+        // Skip - we'll try to resolve attachments after
         // For now just record that we know about this part
         attachMap[pn]={zipOffset:dataStart,method,hasDD,file};
       }else{
@@ -1466,7 +1466,7 @@ const DEFAULT_DROP_TEXT=document.querySelector('.drop-text').textContent;
 $('mergeLink').addEventListener('click',e=>{
   e.preventDefault();
   MERGE.on=!MERGE.on;MERGE.old=MERGE.oldFile=MERGE.newAll=null;
-  $('mergeLink').innerHTML=MERGE.on?'✖ Exit merge mode — back to normal convert':'🔧 Already imported with an old version? Fix &amp; merge →';
+  $('mergeLink').innerHTML=MERGE.on?'✖ Exit merge mode (back to normal convert)':'🔧 Already imported with an old version? Fix &amp; merge →';
   $('mergeBanner').style.display=MERGE.on?'block':'none';
   selectedFile=null;parsedData=null;fileInput.value='';fileNameEl.style.display='none';scanBtn.style.display='none';
   scanResults.style.display='none';optionsEl.style.display='none';infoBox.style.display='none';errorBox.style.display='none';$('downloadBtn').style.display='none';$('figWarn').style.display='none';$('convertNotice').style.display='none';$('figTakNotice').style.display='none';buildBtn.disabled=true;dropZone.classList.remove('done');dropZone.style.display='';$('mergeLink').parentElement.style.display='';
@@ -1532,7 +1532,7 @@ async function scan(){
         zipReader=new zip.ZipReader(br);
         entries=await zipReader.getEntries();
       }catch(zipErr){
-        // zip.js failed — try fallback for ZIPs it can't handle (e.g. POM)
+        // zip.js failed - try fallback for ZIPs it can't handle (e.g. POM)
         log('Standard ZIP reader failed: '+zipErr.message,'warn');
         log('Trying fallback ZIP reader…');
         const fallback=await fallbackZipScan(selectedFile);
@@ -1542,14 +1542,14 @@ async function scan(){
           pdfCount=fallback.pdfCount||0;pdfSize=fallback.pdfSize||0;if(fallback.pomLegacy)pomLegacy=true;
           entries=null; // skip normal flow
         }else{
-          log('Fallback failed — generating structure report…','warn');
+          log('Fallback failed, generating structure report…','warn');
           await generateRawStructureReport(selectedFile);
           return;
         }
       }
       if(BETA_MODE&&entries&&!entries.some(e=>e.filename.endsWith('.ndjson'))&&entries.some(e=>e.filename==='messages.zip')){
         // Fig IV: the usual Fig messages ZIP sits inside this one as messages.zip
-        log('Detected Fig IV backup — opening messages.zip inside','ok');
+        log('Detected Fig IV backup, opening messages.zip inside','ok');
         const inner=await entries.find(e=>e.filename==='messages.zip').getData(new zip.BlobWriter('application/zip'));
         entries=await new zip.ZipReader(new zip.BlobReader(inner)).getEntries();figIV=true;
       }
@@ -1568,7 +1568,7 @@ async function scan(){
             if(messages.some(m=>m.creator&&m.creator.includes('.pom'))){fmt='pom';pomLegacy=true;log('Detected Pom legacy backup (creator: com.figmessenger.pom)','ok')}
             if(figIV&&fmt==='fig')fmt='fig4';
           }catch(parseErr){
-            log('zip.js read failed: '+parseErr.message+' — trying fallback…','warn');
+            log('zip.js read failed: '+parseErr.message+', trying fallback…','warn');
             const fallback=await fallbackZipScan(selectedFile);
             if(fallback){fmt=fallback.fmt;messages=fallback.messages;attachMap=fallback.attachMap;pdfCount=fallback.pdfCount||0;pdfSize=fallback.pdfSize||0;if(fallback.pomLegacy)pomLegacy=true}
             else{log('Fallback also failed','err');return}
@@ -1584,7 +1584,7 @@ async function scan(){
           if(xmlEntry){
             const sample=await xmlEntry.getData(new zip.BlobWriter());
             const sampleText=await sample.slice(0,10000).text();
-            // Log tag names, attribute names, structure — no private data
+            // Log tag names, attribute names, structure - no private data
             const tags=[...new Set((sampleText.match(/<(\w[\w:-]*)/g)||[]).map(m=>m.slice(1)))];
             const attrs=[...new Set((sampleText.match(/\s(\w[\w:-]*)=/g)||[]).map(m=>m.trim().replace('=','')))];
             log('Wonder XML tags: '+tags.join(', '));
@@ -1603,7 +1603,7 @@ async function scan(){
           fmt='buggy';log('Detected Buggy Backup format','ok');
           ({messages,attachMap,pdfCount,pdfSize}=await parseBuggyBackupZip(entries));
         }else{
-          log('Unknown ZIP format — generating structure report…','warn');
+          log('Unknown ZIP format, generating structure report…','warn');
           window._lastUnknownEntries=entries;
           await generateStructureReport(entries,selectedFile.name);
           return;
@@ -1622,7 +1622,7 @@ async function scan(){
       MERGE.newAll=messages;MERGE.newFmt=fmt;
       const fresh=messages.filter(m=>nd(m.date)>cutoff);
       MERGE.added=fresh.length;MERGE.dropped=messages.length-fresh.length;
-      log('Merge: old backup ends '+new Date(cutoff).toLocaleString()+' — adding '+fresh.length+' newer messages from the new backup, skipping '+MERGE.dropped+' older ones (already in the old backup)','ok');
+      log('Merge: old backup ends '+new Date(cutoff).toLocaleString()+', adding '+fresh.length+' newer messages from the new backup, skipping '+MERGE.dropped+' older ones (already in the old backup)','ok');
       messages=MERGE.old.messages.concat(fresh);
       messages.sort((a,b)=>nd(a.date)-nd(b.date));
       if(MERGE.old.attachMap){attachMap=attachMap||{};for(const k in MERGE.old.attachMap)if(!(k in attachMap))attachMap[k]=MERGE.old.attachMap[k]}
@@ -1632,7 +1632,7 @@ async function scan(){
     parsedData={messages,attachMap,fmt,groupCount:grp.groupCount,pomLegacy};
     showProgress('Done!',100);await tick();progressEl.style.display='none';
 
-    // Stats (also feeds anonymous analytics: counts only — no numbers, names or content)
+    // Stats (also feeds anonymous analytics: counts only - no numbers, names or content)
     let cIn=0,cOut=0,cMms=0,cAttach=0;
     const _att={img:0,aud:0,vid:0,pdf:0,other:0},_thr=new Set();
     let _dMin=Infinity,_dMax=0;
@@ -1644,7 +1644,7 @@ async function scan(){
       else{cMms++;for(const p of m.parts){if(!hasAttach(p))continue;cAttach++;const c=String(p.ct||'').toLowerCase();if(c.indexOf('image/')===0)_att.img++;else if(c.indexOf('audio/')===0)_att.aud++;else if(c.indexOf('video/')===0)_att.vid++;else if(c==='application/pdf')_att.pdf++;else _att.other++}}
     }
     scanExtras={threads:_thr.size,span:_dMax>_dMin?Math.round((_dMax-_dMin)/2629800000):0,inSize:selectedFile?selectedFile.size:0,attImg:_att.img,attAud:_att.aud,attVid:_att.vid,attPdf:_att.pdf,attOther:_att.other,ownOk:!!grp.own};
-    // backup fingerprint: one-way FNV-1a hash of counts + date range only — same backup always hashes the same, nothing recoverable
+    // backup fingerprint: one-way FNV-1a hash of counts + date range only - same backup always hashes the same, nothing recoverable
     {const _fp=(cIn+cOut)+'|'+cMms+'|'+cAttach+'|'+(_dMin<Infinity?_dMin:0)+'|'+(_dMax||0);let _h=2166136261;for(let _i=0;_i<_fp.length;_i++){_h^=_fp.charCodeAt(_i);_h=Math.imul(_h,16777619)}scanExtras.bkp=('0000000'+(_h>>>0).toString(16)).slice(-8)}
 
     log('Parsed '+messages.length+' messages ('+cIn+' in, '+cOut+' out, '+cMms+' MMS, '+cAttach+' attachments)'+(pdfCount?' + '+pdfCount+' PDFs':''),'ok');
@@ -1659,7 +1659,7 @@ async function scan(){
     $('statGroupRow').style.display=grp.groupCount>0?'':'none';
     $('optGroups').style.display=grp.groupCount>0?'':'none';
     $('groupsChk').checked=true;$('optGroups').classList.add('selected');
-    $('groupsDesc').textContent=grp.groupCount.toLocaleString()+' messages in group chats — uncheck to leave them out (group threading fixed in v0.0.71, feedback welcome)';
+    $('groupsDesc').textContent=grp.groupCount.toLocaleString()+' messages in group chats. Uncheck to leave them out (group threading fixed in v0.0.71, feedback welcome)';
     const pmw=$('pomMmsWarn');if(pmw)pmw.style.display='none';
 
     if(pdfCount>0){
@@ -1679,8 +1679,8 @@ async function scan(){
     for(const[k,elId]of Object.entries(targets)){
       const el=$(elId), sup=SUPPORT_MATRIX[k];
       const descIds={smsbackup:'smsDesc',fig:'figDesc',fig4:'fig4Desc',wonder:'wonderDesc'};
-      const defaultDescs={smsbackup:'XML file — import on any Android phone',fig:'NDJSON ZIP — for Fig & TAK phones',fig4:'ZIP file — for the Fig IV',wonder:'ZIP file — for Wonder phones'};
-      const cleanupDesc='Remove MMS or filter content — stays in same format';
+      const defaultDescs={smsbackup:'XML file for any Android phone',fig:'NDJSON ZIP for Fig & TAK phones',fig4:'ZIP file for the Fig IV',wonder:'ZIP file for Wonder phones'};
+      const cleanupDesc='Remove MMS or filter content, and keep the same format';
       const cl=$('cleanupLabel');
       // an Old Pom backup can still be turned into a (new) Pom file, so Pom stays a choice
       const same=k===fmt&&!(k==='pom'&&pomLegacy);
@@ -1703,7 +1703,7 @@ async function scan(){
       }
     }
     // from an Old Pom backup, the Pom choice is the new system, so say so
-    {const oldPom=fmt==='pom'&&pomLegacy,o=$('optPom');o.querySelector('.option-label').textContent=oldPom?'New Pom':'Pom';o.querySelector('.option-desc').textContent=oldPom?'The current Pom backup system — this is what works on Pom phones today':'ZIP file — for Pom phones'}
+    {const oldPom=fmt==='pom'&&pomLegacy,o=$('optPom');o.querySelector('.option-label').textContent=oldPom?'New Pom':'Pom';o.querySelector('.option-desc').textContent=oldPom?'The current Pom backup system, the one Pom phones use today':'ZIP file for Pom phones'}
     // Reset target selection
     document.querySelectorAll('input[name="target"]').forEach(r=>r.checked=false);
     if(fmt==='merge'){
@@ -1730,7 +1730,7 @@ async function scan(){
     sendAnalytics(Object.assign({event:'scan',source:fmt,sms:cIn+cOut,mms:cMms,attachments:cAttach,groups:grp.groupCount,merge:MERGE.on?1:0,duration:((Date.now()-_scanStart)/1000).toFixed(1)},scanExtras));
     scanBtn.disabled=false;cancelBtn.style.display='none';
     sourceFormat=fmt;
-    if(fmt==='fig'){$('figTakNotice').innerHTML='<b>Switching to another Fig or TAK?</b> No conversion needed — just import your backup directly.'+(BETA_MODE?' <b>Moving to a Fig IV?</b> Select Fig IV below.':'')+' To remove pictures or keep only certain messages, select Fig / TAK below and choose what to keep.';$('figTakNotice').style.display='block';}
+    if(fmt==='fig'){$('figTakNotice').innerHTML='<b>Switching to another Fig or TAK?</b> No conversion needed. Just import your backup directly.'+(BETA_MODE?' <b>Moving to a Fig IV?</b> Select Fig IV below.':'')+' To remove pictures or keep only certain messages, select Fig / TAK below and choose what to keep.';$('figTakNotice').style.display='block';}
     else if(fmt==='fig4'){$('figTakNotice').innerHTML='<b>Moving from the Fig IV to an older Fig, TAK or Wonder?</b> Select it below. To remove pictures or keep only certain messages, select Fig IV below.';$('figTakNotice').style.display='block';}
     else if(fmt==='wonder'){$('figTakNotice').innerHTML='<b>Want to clean up your Wonder backup?</b> Select Wonder below to remove pictures or keep only certain messages.';$('figTakNotice').style.display='block';}
     else if(fmt==='smsbackup'){$('figTakNotice').innerHTML='<b>Want to clean up your backup?</b> Select SMS Backup &amp; Restore below to remove MMS or keep only certain messages.';$('figTakNotice').style.display='block';}
@@ -1738,15 +1738,15 @@ async function scan(){
     else{$('figTakNotice').style.display='none';}
     updateUI();
     if(MERGE.on&&!MERGE.old){
-      // merge step 1 complete — stash and ask for the new-phone backup
+      // merge step 1 complete - stash and ask for the new-phone backup
       MERGE.old=parsedData;MERGE.oldFile=selectedFile;
       scanResults.style.display='none';optionsEl.style.display='none';
-      infoBox.innerHTML='✅ Step 1 done — old backup scanned: <b>'+messages.length.toLocaleString()+'</b> messages.<br>Now upload the fresh backup from the <b>NEW</b> phone (SMS Backup &amp; Restore) and scan again.';
+      infoBox.innerHTML='✅ Step 1 done. Old backup scanned: <b>'+messages.length.toLocaleString()+'</b> messages.<br>Now upload the fresh backup from the <b>NEW</b> phone (SMS Backup &amp; Restore) and scan again.';
       infoBox.style.display='block';
       selectedFile=null;fileInput.value='';fileNameEl.style.display='none';scanBtn.style.display='none';
       dropZone.classList.remove('done');dropZone.style.display='';
       document.querySelector('.drop-text').textContent='Upload the NEW phone backup (step 2)';
-      zipReader=null; // keep the old file's reader open — its attachments are read during convert
+      zipReader=null; // keep the old file's reader open - its attachments are read during convert
     }
   }catch(err){
     if(err&&err.cancelled){log('Scan cancelled by user','warn');progressEl.style.display='none';infoBox.textContent='Cancelled.';infoBox.style.display='block';scanBtn.style.display='';scanBtn.disabled=false;cancelBtn.style.display='none';return}
@@ -1754,8 +1754,8 @@ async function scan(){
     log('Scan failed: '+msg+errWhere(err),'err');
     progressEl.style.display='none';
     if(msg.includes('central directory')||msg.includes('not a valid')){
-      // Not a ZIP — try reading as raw file for structure report
-      log('Not a ZIP file — analyzing raw structure…','warn');
+      // Not a ZIP - try reading as raw file for structure report
+      log('Not a ZIP file, analyzing raw structure…','warn');
       await generateRawStructureReport(selectedFile);
       return;
     }
@@ -2139,7 +2139,7 @@ function blobSink(type){
   const flush=async()=>{
     if(!parts.length)return;
     const b=new Blob(parts);parts=[];sz=0;blobs.push(b);
-    // an unreadable piece means the browser ran out of room — stop now instead of handing out a download that fails
+    // an unreadable piece means the browser ran out of room - stop now instead of handing out a download that fails
     try{await b.slice(0,1).arrayBuffer()}catch(e){throw{tooBig:true}}
   };
   return{
@@ -2176,7 +2176,7 @@ function shrinkParts(job,from,kind,why){
   _partSize=Math.max(PART_MIN,_partSize/2);job.log.push(kind+'@'+(from+1));
   job.groups=job.groups.slice(0,from).concat(splitParts([].concat(...job.groups.slice(from)),job.target,1));
   job.k=from;job.names.length=from;job.sizes.length=from;
-  log(why+' — continuing with smaller parts (up to '+formatSize(_partSize)+')','warn');
+  log(why+', continuing with smaller parts (up to '+formatSize(_partSize)+')','warn');
 }
 async function runParts(job){
   _attCache=false;
@@ -2446,7 +2446,7 @@ async function buildFigZip(messages,sink){
       lines.push(JSON.stringify(obj));
     }
   }
-  // Build ZIP manually — zip.js output not compatible with Fig's reader
+  // Build ZIP manually - zip.js output not compatible with Fig's reader
   const smsCt=lines.filter(l=>!l.includes('"__parts"')).length;
   const mmsCt=lines.length-smsCt;
   log('Building Fig ZIP: '+smsCt+' SMS, '+mmsCt+' MMS, '+attachFiles.length+' attachments','ok');
@@ -2462,7 +2462,7 @@ async function buildFig4Zip(messages,sink){
   return await buildRawZip([{name:'messages.zip',data:inner,stream:true}],undefined,sink);
 }
 async function buildRawZip(files,zipComment,sink=blobSink('application/zip')){
-  // Pure JS ZIP creator (STORE, no compression) — compatible with Fig
+  // Pure JS ZIP creator (STORE, no compression) - compatible with Fig
   // Build CRC32 table once
   if(!buildRawZip._t){const t=new Uint32Array(256);for(let n=0;n<256;n++){let v=n;for(let k=0;k<8;k++)v=v&1?(0xEDB88320^(v>>>1)):(v>>>1);t[n]=v}buildRawZip._t=t}
   function crcUpdate(c,data){
@@ -2907,7 +2907,7 @@ buildBtn.addEventListener('click',()=>{
   const t=document.querySelector('input[name="target"]:checked');
   if(!t)return;
   if(parsedData.fmt==='fig'&&t.value==='wonder'){
-    infoBox.innerHTML='<b>No conversion needed!</b><br>Wonder accepts Fig backups directly. Just take your Fig backup file and import it into Wonder — no conversion required.';
+    infoBox.innerHTML='<b>No conversion needed!</b><br>Wonder accepts Fig backups directly. Just take your Fig backup file and import it into Wonder. No conversion required.';
     infoBox.style.display='block';infoBox.scrollIntoView({behavior:'smooth',block:'center'});return;
   }
   if(parsedData.fmt===t.value&&!(t.value==='pom'&&parsedData.pomLegacy)){
@@ -2965,7 +2965,7 @@ async function build(target){
     if(needsParts(target,est)){
       const ext=filename.match(/\.\w+$/)[0];
       job={target,type,writeOne,est,own:detectOwnNumber(msgs),groups:splitParts(msgs,target),k:0,names:[],sizes:[],log:[],buildMs:[],auto:(()=>{try{return localStorage.getItem('ksc-auto-parts')!=='0'}catch(e){return true}})(),stem:filename.slice(0,-ext.length),ext,summary:''};
-      log('Big output — saving as '+job.groups.length+' parts of up to '+formatSize(_partSize),'ok');
+      log('Big output, saving as '+job.groups.length+' parts of up to '+formatSize(_partSize),'ok');
       await runParts(job);
       out={size:job.sizes.reduce((a,b)=>a+b,0)};
     }else if(pomNative){
@@ -2990,7 +2990,7 @@ async function build(target){
       infoBox.textContent='Converted '+total+' messages'+detail+' ('+formatSize(out.size)+') successfully!';
       if(target==='fig')showFigWarn(false);
     }
-    if(parsedData.fmt==='merge'){infoBox.innerHTML+='<br><br><b>Now on the new phone:</b><br>1. SMS Backup &amp; Restore → menu → Tools → <b>Delete Messages</b> → All messages.<br>2. Restore this merged file.<br>3. Done — old chats correctly grouped, new messages kept, no duplicates.';}
+    if(parsedData.fmt==='merge'){infoBox.innerHTML+='<br><br><b>Now on the new phone:</b><br>1. SMS Backup &amp; Restore → menu → Tools → <b>Delete Messages</b> → All messages.<br>2. Restore this merged file.<br>3. Done: old chats correctly grouped, new messages kept, no duplicates.';}
     infoBox.style.display='block';
     sendAnalytics(Object.assign({event:'convert',source:parsedData.fmt,target:target,success:true,sms:smsC,mms:mmsC,groups:msgs.filter(m=>m.isGroup).length,skipGroups:skipGroups,content:content,merge:MERGE.on?1:0,mergeAdded:MERGE.added,mergeDropped:MERGE.dropped,size:out.size,duration:((Date.now()-_buildStart)/1000).toFixed(1)},scanExtras,partsInfo(job)));
   }catch(err){
@@ -2999,7 +2999,7 @@ async function build(target){
     if(err&&err.cancelled){log('Build cancelled by user','warn');infoBox.textContent='Cancelled.';infoBox.style.display='block';if(job)fail('cancelled after '+job.names.length+' of '+job.groups.length+' parts');}
     else if(err&&err.tooBig){
       _forceParts=true;_partSize=Math.max(PART_MIN,_partSize/2);log('Browser ran out of room to hold the file','err');
-      errorBox.innerHTML='<b>This backup is too big for your browser to build in one piece.</b><br>Click <b>Convert</b> again — this time it is saved as several smaller files.';
+      errorBox.innerHTML='<b>This backup is too big for your browser to build in one piece.</b><br>Click <b>Convert</b> again. This time it is saved as several smaller files.';
       errorBox.style.display='block';fail('too big for browser memory');
     }else{log('Build failed: '+(err.message||err)+errWhere(err),'err');errorBox.textContent=err.message||String(err);errorBox.style.display='block';fail((err.message||String(err)).slice(0,100));}
   }finally{_attCache=true}
@@ -3031,7 +3031,7 @@ async function build(target){
       <label for="ctMsg">Message *</label>
       <textarea id="ctMsg" maxlength="4000"></textarea>
       <button class="send-btn" id="ctSend" type="button">Send message</button>
-      <p class="modal-alt">Or reach me directly: <a href="mailto:pythonivelt@gmail.com?subject=SMS%20Converter" style="color:#4f46e5">pythonivelt@gmail.com</a> — email or Google Chat</p>
+      <p class="modal-alt">Or reach me directly: <a href="mailto:pythonivelt@gmail.com?subject=SMS%20Converter" style="color:#4f46e5">pythonivelt@gmail.com</a> (email or Google Chat)</p>
     </div>
     <div class="modal-ok" id="contactOk">
       <div style="font-size:2rem;margin-bottom:8px">✅</div>
@@ -3061,7 +3061,7 @@ g('ctSend').addEventListener('click',function(){
   g('ctEmail').style.borderColor='';
   btn.disabled=true;btn.textContent='Sending…';
   var p={type:'contact',name:g('ctName').value.trim().slice(0,80),email:em.slice(0,120),subject:g('ctSubject').value,message:msg.slice(0,4000),version:(document.getElementById('verSpan')||{}).textContent||'?',ts:new Date().toISOString()};
-  // if anything goes wrong (network, script error, hang) fall back to a prefilled email — never leave the button stuck
+  // if anything goes wrong (network, script error, hang) fall back to a prefilled email - never leave the button stuck
   var fallback=function(){
     btn.disabled=false;btn.textContent='Send message';
     window.location.href='mailto:pythonivelt@gmail.com?subject='+encodeURIComponent('SMS Converter: '+p.subject)+'&body='+encodeURIComponent(msg);
