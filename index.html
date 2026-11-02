@@ -673,7 +673,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')setMenu(fals
 </section>
 
 <footer class="site-footer">
-  <p><span id="verSpan">v1.1.8</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
+  <p><span id="verSpan">v1.1.9</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
   <p style="margin-top:6px">Free and open source · Nothing gets uploaded</p>
 </footer>
 
@@ -930,6 +930,7 @@ async function generateStructureReport(entries,fileName){
 }
 
 async function generateRawStructureReport(file){
+  window._lastUnknownEntries=null;
   const report={fileName:file.name,fileSize:file.size,fileSizeFormatted:formatSize(file.size),type:'raw'};
   // Read first 50KB for thorough analysis
   const readSize=Math.min(file.size,50000);
@@ -1040,176 +1041,226 @@ $('logSubmitBtn').addEventListener('click',sendLog);
 
 const FAKE_NAMES=['Alex Johnson','Sam Rivera','Jordan Lee','Morgan Chen','Casey Kim','Riley Patel','Taylor Brooks','Quinn Adams','Avery Cooper','Dakota Hayes','Jamie Torres','Blake Murphy','Drew Collins','Sage Martin','Phoenix Wright'];
 const FAKE_WORDS=['lorem','ipsum','dolor','sit','amet','hello','thanks','sure','okay','sounds','good','great','later','tomorrow','meeting','check','update','running','late','dinner','lunch','store','pick','home','work','school','call','text','soon','morning'];
-function fakePhone(){return'(555) '+String(Math.floor(Math.random()*900)+100)+'-'+String(Math.floor(Math.random()*9000)+1000)}
-function fakeEmail(i){return'user'+i+'@example.com'}
-function fakeSentence(len){let s='';while(s.length<len){s+=(s?' ':'')+FAKE_WORDS[Math.floor(Math.random()*FAKE_WORDS.length)]}return s.substring(0,len)}
-function fakeName(){return FAKE_NAMES[Math.floor(Math.random()*FAKE_NAMES.length)]}
-
-function anonymizeText(text){
-  // Replace phone numbers
-  let out=text.replace(/\+?\d[\d\s()\-]{7,}\d/g,function(){return fakePhone()});
-  // Replace email addresses
-  let ec=0;out=out.replace(/[\w.+-]+@[\w.-]+\.\w{2,}/g,function(){return fakeEmail(ec++)});
-  return out;
-}
-
-function anonymizeJsonValue(v,depth){
-  if(v===null||v===undefined)return v;
-  if(typeof v==='boolean')return v;
-  if(typeof v==='number'){
-    // Keep small numbers (type codes, flags), randomize large ones (IDs)
-    if(v>9999999999)return Date.now()-Math.floor(Math.random()*86400000*30); // timestamp-like
-    if(v>9999)return Math.floor(Math.random()*v);
-    return v;
-  }
-  if(typeof v==='string'){
-    if(!v)return v;
-    if(/^\+?\d[\d\s()\-]{7,}/.test(v))return fakePhone();
-    if(/@/.test(v))return fakeEmail(Math.floor(Math.random()*50));
-    if(/^(https?|ftp|content):\/\//.test(v))return'https://example.com/'+Math.random().toString(36).substring(2,8);
-    if(/^\d{4}-\d{2}-\d{2}/.test(v))return v; // keep date strings
-    if(/^\d+$/.test(v)&&v.length<=4)return v; // keep short numeric strings (type codes)
-    if(v.length<=3)return v; // keep very short values (status codes, etc.)
-    if(v.length>10)return fakeSentence(v.length);
-    return fakeName().split(' ')[0];
-  }
-  if(Array.isArray(v)){
-    if(depth>5)return v;
-    return v.map(item=>anonymizeJsonValue(item,depth+1));
-  }
-  if(typeof v==='object'){
-    if(depth>5)return v;
-    const out={};
-    for(const[k,val]of Object.entries(v))out[k]=anonymizeJsonValue(val,depth+1);
-    return out;
-  }
-  return v;
-}
-
-function anonymizeNdjson(text){
-  const lines=text.split('\n');
-  return lines.map(line=>{
-    const t=line.trim();if(!t)return'';
-    try{return JSON.stringify(anonymizeJsonValue(JSON.parse(t),0))}
-    catch(e){return anonymizeText(t)}
-  }).join('\n');
-}
-
-function anonymizeXml(text){
-  // Replace attribute values (keep attribute names)
-  let out=text.replace(/(\s[\w:-]+=")([^"]*?)(")/g,function(_,pre,val,post){
-    if(!val)return pre+post;
-    if(/^\d{4}-\d{2}-\d{2}/.test(val))return pre+val+post;
-    if(/^\d+$/.test(val)&&val.length<=4)return pre+val+post;
-    if(/^\+?\d[\d\s()\-]{7,}/.test(val))return pre+fakePhone()+post;
-    if(/@/.test(val))return pre+fakeEmail(Math.floor(Math.random()*50))+post;
-    if(val.length>10)return pre+fakeSentence(val.length)+post;
-    if(val.length<=3)return pre+val+post;
-    return pre+fakeName().split(' ')[0]+post;
-  });
-  // Replace text content between tags
-  out=out.replace(/>([^<]+)</g,function(_,content){
-    const t=content.trim();
-    if(!t||/^\s+$/.test(content))return'>'+content+'<';
-    if(/^\d+$/.test(t)&&t.length<=4)return'>'+t+'<';
-    if(/^\+?\d[\d\s()\-]{7,}/.test(t))return'>'+fakePhone()+'<';
-    if(t.length>10)return'>'+fakeSentence(t.length)+'<';
-    return'>'+t+'<';
-  });
-  return out;
-}
-
 // 1x1 transparent PNG placeholder (89 bytes)
 const PLACEHOLDER_PNG=new Uint8Array([137,80,78,71,13,10,26,10,0,0,0,13,73,72,68,82,0,0,0,1,0,0,0,1,8,2,0,0,0,144,119,83,222,0,0,0,12,73,68,65,84,8,215,99,248,207,192,0,0,0,3,0,1,54,174,213,252,0,0,0,0,73,69,78,68,174,66,96,130]);
-
+const PLACEHOLDER_B64=btoa(String.fromCharCode.apply(null,PLACEHOLDER_PNG));
+const AN_TEXT_EXT=['json','ndjson','xml','txt','csv','html','htm','vcf','vmg','ics','cfg','ini','yaml','yml','log','smil'];
+const AN_TECH_NAME=/^(_?pom_backup_manifest|messages|calls|contacts|notes|calendar|smartalerts|data|smil|text|attachments|mms_attachments|manifest|conversations|conv|threads?|parts?|media|files?|images?|audio|video|fig|pom|wonder|tak|anonymized)(?![a-z])/i;
+const AN_SAFE_NAME=/^(messages_backup|messagesbackup|mmsbackup|autobackup|backup|export_all|img|vid|pxl|aud|part|dsc|screenshot|sms|mms)/i;
+// One run = one anonymized copy. Every phone number, name and email gets ONE fake stand-in used everywhere,
+// so chats stay grouped exactly as in the original; all dates move back by the same amount, so order and gaps stay too.
+let A=null;
+function anRand(n){return Math.floor(Math.random()*n)}
+function anWord(len){let w='';while(w.length<len)w+=FAKE_WORDS[anRand(FAKE_WORDS.length)];return w.slice(0,len)}
+function anDigits(n){let s='';while(s.length<n)s+=anRand(10);return s}
+function anPhone(v){
+  v=String(v);
+  if(/[~,;]/.test(v))return v.split(/([~,;]\s*)/).map(p=>/\d/.test(p)?anPhone(p):p).join('');
+  const digits=v.replace(/\D/g,'');
+  if(digits.length<7)return /[a-z]/i.test(v)?anName(v):v; // short codes aren't private; letter senders become names
+  const key=pvPhoneKey(v),core=key.includes(':')?key.split(':')[1]:digits;
+  let e=A.nums.get(key);if(!e)A.nums.set(key,e={i:A.nums.size+1,forms:new Map()});
+  // keep how it was written (+972 55…, 055…, +1 845…) and only swap the number itself, so "same number, different form" bugs still show
+  const fake=('5550000000'+e.i).slice(-Math.max(7,core.length)).padStart(core.length,'5').slice(-core.length);
+  const ch=[...v];let k=fake.length;
+  for(let j=ch.length-1;j>=0&&k>0;j--)if(/\d/.test(ch[j]))ch[j]=fake[--k];
+  const out=ch.join('');e.forms.set(out,(e.forms.get(out)||0)+1);return out;
+}
+function anName(v){
+  const k=String(v).trim().toLowerCase();if(!k)return v;
+  let f=A.names.get(k);
+  if(!f){const n=A.names.size;f=FAKE_NAMES[n%FAKE_NAMES.length]+(n>=FAKE_NAMES.length?' '+(Math.floor(n/FAKE_NAMES.length)+1):'');A.names.set(k,f)}
+  return f;
+}
+function anEmail(v){let f=A.emails.get(v);if(!f){f='user'+(A.emails.size+1)+'@example.com';A.emails.set(v,f)}return f}
+function anTs(n){
+  if(n>=1e12&&n<2.2e12)return n-A.shift;
+  if(n>=1e9&&n<2.2e9)return n-Math.round(A.shift/1000);
+  return n;
+}
+function anFileName(p){
+  return String(p).split('/').map(seg=>{
+    const m=seg.match(/^(.*?)(\.[a-z0-9]{1,7})?$/i),base=m[1],ext=m[2]||'';
+    if(!base||AN_SAFE_NAME.test(base)||AN_TECH_NAME.test(base)||!/[a-z]{3,}/i.test(base))return seg;
+    let f=A.files_.get(base);if(!f){f='file'+(A.files_.size+1);A.files_.set(base,f)}return f+ext;
+  }).join('/');
+}
+// free text: words become random words of the same length; punctuation, spaces, line breaks and emojis stay, so the shape of a chat is still visible
+function anText(s){
+  return String(s).replace(/[\w.+-]+@[\w.-]+\.\w{2,}|&(?:#\d+|#x[0-9a-f]+|[a-z]+);|\+?\d[\d\s().\-]{5,}\d|[\p{L}\p{N}]+/giu,m=>{
+    if(m.includes('@'))return anEmail(m);
+    if(m[0]==='&'&&m.endsWith(';'))return m;
+    if(/^\+?\d[\d\s().\-]{5,}\d$/.test(m)&&m.replace(/\D/g,'').length>=7)return anPhone(m);
+    return /^\d+$/.test(m)?anDigits(m.length):anWord(m.length);
+  });
+}
+function anValue(v,key){
+  key=String(key||'').toLowerCase();
+  if(v===null||v===undefined||typeof v==='boolean')return v;
+  if(typeof v==='number'){
+    if(/addr|number|phone|recip|sender/.test(key)&&String(Math.abs(v)).length>=7)return Number(anPhone(String(v)).replace(/\D/g,''));
+    return anTs(v);
+  }
+  const s=String(v);
+  if(!s||/^(null|true|false|nan|undefined|\(unknown\)|insert-address-token)$/i.test(s))return s;
+  if(/^(columns|fields|keys|headers|projection)$/.test(key)&&/^[a-z_][a-z0-9_]*$/i.test(s))return s; // table column names
+  if(/^[a-z]+\/[\w.+-]+$/i.test(s)||/^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*){2,}$/i.test(s)||(/creator|package|pkg|app/.test(key)&&/^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$/i.test(s)))return s; // file types (image/jpeg), app names (com.figmessenger.pom)
+  if(/b64|base64/.test(key)||(s.length>200&&/^[A-Za-z0-9+/=\s]+$/.test(s))){A.b64++;return PLACEHOLDER_B64}
+  if(/(^|_)(id|type|cls|class|status|box|charset|chset|ct_t|ct|enc|encoding|version|v|countryiso)$/.test(key)&&s.length<=40&&!/\s/.test(s))return s;
+  if(/(^|_)(addr|address|addresses|number|phone|recipients?|sender|from|to)$/.test(key))return anPhone(s);
+  if(/^-?\d+$/.test(s)){
+    if(/^1\d{9}$|^1\d{12}$/.test(s))return String(anTs(+s));
+    if(s[0]==='-'||/(^|_)id$|size|count|type|box|status|seq|charset|chset|ver|index|pri|err|flag/.test(key)||s.length<7)return s;
+    return anPhone(s);
+  }
+  if(/^\+?[\d\s().\-]{7,}$/.test(s)&&s.replace(/\D/g,'').length>=7)return anPhone(s);
+  if(/^[\w.+-]+@[\w.-]+\.\w{2,}$/.test(s))return anEmail(s);
+  if(/^content:\/\//i.test(s))return s;
+  if(/^https?:\/\//i.test(s))return'https://example.com/'+anWord(6);
+  if(/^\d{4}-\d{2}-\d{2}/.test(s)){const t=Date.parse(s.slice(0,10));return isNaN(t)?s:new Date(t-A.shift).toISOString().slice(0,10)+s.slice(10)}
+  if(/^\/?[^\s]+\.(jpe?g|png|gif|bmp|webp|heic|mp4|3gpp?|amr|aac|m4a|mp3|ogg|opus|wav|pdf|vcf|vmg|txt|xml|json|ndjson|smil|zip|html?)$/i.test(s)||/(^|_)(cl|fn|file|filename|path|_data|src)$/.test(key))return anFileName(s);
+  if(/name|^cn$|person|display/.test(key))return anName(s);
+  return anText(s);
+}
+function anJson(v,key){
+  if(Array.isArray(v))return v.map(x=>anJson(x,key));
+  if(v&&typeof v==='object'){const o={};for(const[k,x]of Object.entries(v))o[k]=anJson(x,k);return o}
+  return anValue(v,key);
+}
+function anXml(t){
+  t=t.replace(/<\?[^>]*\?>|(\s)([\w:.-]+)="([^"]*)"/g,(all,sp,k,val)=>k===undefined?all:sp+k+'="'+anValue(val,k)+'"');
+  return t.replace(/(<([\w:.-]+)(?:\s[^>]*)?>)([^<]+)(?=<\/\2>)/g,(_,open,tag,txt)=>/^\s*$/.test(txt)?open+txt:open+anValue(txt,tag));
+}
+function anLines(t,csv){
+  return t.split('\n').map((l,i)=>{
+    if(csv&&i===0)return l;
+    const m=l.match(/^([A-Z][A-Z0-9-]*(?:;[^:]*)?):(.*)$/);
+    if(m){
+      const k=m[1].split(';')[0];
+      if(/^(BEGIN|END|VERSION|PRODID|TZ|METHOD|CALSCALE|DATE|DTSTART|DTEND|DTSTAMP|X-IRMC-BOX|X-BOX|X-READ|X-MESSAGE-TYPE|X-IRMC-STATUS)$/.test(k))return l;
+      if(/^(TEL|FROM|TO)$/.test(k))return m[1]+':'+anPhone(m[2]);
+      if(/^(N|FN|ORG|NICKNAME)$/.test(k))return m[1]+':'+m[2].split(';').map(x=>x.trim()?anName(x):x).join(';');
+      return m[1]+':'+anText(m[2]);
+    }
+    return anText(l);
+  }).join('\n');
+}
+function anFile(t,ext){
+  const s=t.trimStart();
+  if(['xml','html','htm','smil'].includes(ext)||s[0]==='<')return anXml(t);
+  if(ext==='json'||ext==='ndjson'||s[0]==='{'||s[0]==='['){
+    try{return JSON.stringify(anJson(JSON.parse(t)),null,t.includes('\n  ')?2:0)}catch(e){}
+    return t.split('\n').map(l=>{const x=l.trim();if(!x)return l;try{return JSON.stringify(anJson(JSON.parse(x)))}catch(e){return anText(l)}}).join('\n');
+  }
+  return anLines(t,ext==='csv');
+}
+async function anEntries(entries,zipW,path,depth){
+  for(const e of entries){
+    const name=anFileName(e.filename),row={path:path+name,size:e.uncompressedSize||0,csize:e.compressedSize||0,method:e.compressionMethod};
+    A.rows.push(row);A.done++;
+    showProgress('Anonymizing '+row.path,Math.min(99,Math.round(A.done/A.total*100)));
+    if(e.directory){row.did='folder';await zipW.add(name,null,{directory:true});continue}
+    const ext=e.filename.includes('.')?e.filename.split('.').pop().toLowerCase():'';
+    let data,out;
+    try{data=await e.getData(new zip.BlobWriter())}
+    catch(err){row.did='could not be read in the original: '+err.message;await zipW.add(name,new zip.BlobReader(new Blob(['['+row.did+']'])));continue}
+    const head=new Uint8Array(await data.slice(0,8).arrayBuffer());
+    row.magic=[...head].map(b=>b.toString(16).padStart(2,'0')).join(' ');
+    if(head[0]===0x50&&head[1]===0x4b&&depth<4){
+      try{
+        const r=new zip.ZipReader(new zip.BlobReader(data)),inner=await r.getEntries(),w=new zip.ZipWriter(new zip.BlobWriter('application/zip'));
+        A.total+=inner.length;await anEntries(inner,w,row.path+' > ',depth+1);await r.close();out=await w.close();row.did='ZIP, cleaned inside';
+      }catch(err){row.did='looks like a ZIP but could not be opened ('+err.message+'), replaced'}
+    }else if(AN_TEXT_EXT.includes(ext)||(head.length&&head.every(b=>b===9||b===10||b===13||(b>=32&&b<127)||b>=0xc2))){
+      const cap=20*1024*1024;let t=await (row.size>cap?data.slice(0,cap):data).text();
+      if(row.size>cap){t=t.slice(0,Math.max(t.lastIndexOf('>'),t.lastIndexOf('\n'))+1);row.did='text, cleaned (first '+formatSize(cap)+' only, the rest left out)'}
+      else row.did='text, cleaned';
+      out=new Blob([anFile(t,ext)]);
+    }
+    if(!out){
+      const img=/^(jpe?g|png|gif|bmp|webp|heic)$/.test(ext)||(head[0]===0xff&&head[1]===0xd8)||(head[0]===0x89&&head[1]===0x50);
+      if(!row.did)row.did=img?'picture, replaced':'replaced (audio, video or other file)';
+      out=new Blob([img?PLACEHOLDER_PNG:'[anonymized: original was '+row.size+' bytes, starting with '+row.magic+']']);
+    }
+    await zipW.add(name,new zip.BlobReader(out));
+  }
+}
+// for files the converter can't open as a ZIP: list the ZIP pieces found inside, straight from the bytes
+async function anRawScan(file){
+  const rows=[],items=[],CH=8*1024*1024;let next=0;
+  for(let off=0;off<file.size&&rows.length<5000;off+=CH-512){
+    const b=new Uint8Array(await file.slice(off,Math.min(file.size,off+CH)).arrayBuffer());
+    for(let i=0;i+30<b.length&&rows.length<5000;i++){
+      if(b[i]!==0x50||b[i+1]!==0x4b||b[i+2]!==3||b[i+3]!==4||off+i<next)continue;
+      const dv=new DataView(b.buffer,i),nl=dv.getUint16(26,true);
+      if(!nl||nl>400||i+30+nl>b.length)continue;
+      const nm=new TextDecoder().decode(b.subarray(i+30,i+30+nl));
+      if(!/^[\x20-\x7e]+$/.test(nm))continue;
+      rows.push('  at byte '+(off+i)+'  '+anFileName(nm)+'  method '+dv.getUint16(8,true)+'  flags '+dv.getUint16(6,true)+'  compressed '+dv.getUint32(18,true)+'  size '+dv.getUint32(22,true));
+      items.push({at:off+i,name:nm,method:dv.getUint16(8,true),csize:dv.getUint32(18,true),start:off+i+30+nl+dv.getUint16(28,true)});
+      next=off+i+1;
+    }
+  }
+  const tail=new Uint8Array(await file.slice(Math.max(0,file.size-66000)).arrayBuffer());
+  let eocd=false;for(let i=tail.length-22;i>=0;i--)if(tail[i]===0x50&&tail[i+1]===0x4b&&tail[i+2]===5&&tail[i+3]===6){eocd=true;break}
+  const head=new Uint8Array(await file.slice(0,16).arrayBuffer());
+  items.forEach((it,k)=>{it.end=k+1<items.length?items[k+1].at:file.size});
+  return{items,lines:['Could not open it as a ZIP. Read straight from the bytes instead:','  starts with '+[...head].map(x=>x.toString(16).padStart(2,'0')).join(' '),'  end-of-ZIP directory '+(eocd?'found':'NOT found (file cut short or not a ZIP)'),'  ZIP pieces found: '+rows.length].concat(rows)};
+}
+function anReport(file,origName,raw){
+  const L=['Anonymized copy made by Kosher Phone SMS Converter','Original file: '+anFileName(origName)+' ('+formatSize(file?file.size:0)+')','',
+    'Every phone number, name and email was swapped for a fake one, and the same fake one is used everywhere it appears, so chats stay grouped exactly as in the original.',
+    'Message words were swapped for random words of the same length. Punctuation, line breaks and emojis were kept.',
+    'All dates were moved back by '+Math.round(A.shift/86400000)+' days, so their order and the gaps between them are unchanged.',
+    'Pictures, voice notes, videos and other files were replaced with tiny placeholders.',''];
+  L.push('Phone numbers: '+A.nums.size+' different');
+  for(const e of [...A.nums.values()].sort((a,b)=>a.i-b.i)){
+    let n=0;for(const c of e.forms.values())n+=c;
+    L.push('  #'+e.i+'  appears '+n+'x'+(e.forms.size>1?'  written '+e.forms.size+' ways':'')+':  '+[...e.forms].map(([f,c])=>f+' ('+c+')').join(', '));
+  }
+  L.push('Names: '+A.names.size+' different. Emails: '+A.emails.size+' different. Attachments stored inside text: '+A.b64+'.','');
+  if(raw)L.push.apply(L,raw.lines);
+  else{L.push('Files (size / compressed / method / first bytes / what was done):');for(const r of A.rows)L.push('  '+r.path+'  '+r.size+' / '+r.csize+' / '+(r.method==null?'?':r.method)+' / '+(r.magic||'-')+' / '+(r.did||''))}
+  return L.join('\n')+'\n';
+}
 async function generateAnonymizedZip(entries,origFile,origName){
   log('Generating anonymized copy (all private data replaced with fake data)…');
   showProgress('Anonymizing…',0);
-  const zipW=new zip.ZipWriter(new zip.BlobWriter('application/zip'));
-  const total=entries.length;
-  for(let i=0;i<total;i++){
-    const e=entries[i];
-    if(e.directory){await zipW.add(e.filename,null,{directory:true});continue}
-    showProgress('Anonymizing '+e.filename,Math.round(i/total*100));
-    const ext=e.filename.split('.').pop().toLowerCase();
-    if(['json','ndjson','xml','txt','csv','html','cfg','ini','yaml','yml','log'].includes(ext)&&e.uncompressedSize<50000000){
-      try{
-        const blob=await e.getData(new zip.BlobWriter());
-        const text=await blob.text();
-        let anon;
-        if(ext==='xml'||ext==='html')anon=anonymizeXml(text);
-        else if(ext==='json'||ext==='ndjson'){
-          const t=text.trimStart();
-          if(t.startsWith('[')||t.startsWith('{'))try{
-            const parsed=JSON.parse(text);
-            anon=JSON.stringify(anonymizeJsonValue(parsed,0),null,text.includes('\n  ')?2:0);
-          }catch(e2){anon=anonymizeNdjson(text)}
-          else anon=anonymizeNdjson(text);
-        }else anon=anonymizeText(text);
-        await zipW.add(e.filename,new zip.BlobReader(new Blob([anon])));
-      }catch(err){
-        log('Skipping '+e.filename+': '+err.message,'warn');
+  A={nums:new Map(),names:new Map(),emails:new Map(),files_:new Map(),shift:(30+anRand(365))*86400000,rows:[],b64:0,done:0,total:entries.length||1};
+  try{
+    const zipW=new zip.ZipWriter(new zip.BlobWriter('application/zip'));
+    let raw=null;
+    if(entries.length)await anEntries(entries,zipW,'',0);
+    else{
+      raw=await anRawScan(origFile);
+      const head=new Uint8Array(await origFile.slice(0,4).arrayBuffer()),cap=20*1024*1024;
+      if(!raw.items.length&&head.length&&head.every(b=>b===9||b===10||b===13||(b>=32&&b<127)||b>=0xc2)){
+        await zipW.add(anFileName(origName),new zip.BlobReader(new Blob([anFile(await origFile.slice(0,cap).text(),(origName.split('.').pop()||'').toLowerCase())])));
+        raw.lines.push('  The file is text: a cleaned copy is included'+(origFile.size>cap?' (first 20 MB only)':'')+'.');
       }
-    }else if(['jpg','jpeg','png','gif','bmp','webp','tif','tiff','svg'].includes(ext)){
-      await zipW.add(e.filename,new zip.BlobReader(new Blob([PLACEHOLDER_PNG])));
-    }else if(['amr','mp3','ogg','wav','aac','m4a','opus','3gp','mp4','3gpp'].includes(ext)){
-      // Tiny silent placeholder
-      await zipW.add(e.filename,new zip.BlobReader(new Blob([new Uint8Array(64)])));
-    }else if(ext==='ics'){
-      await zipW.add(e.filename,new zip.BlobReader(new Blob(['BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Anonymized//EN\nEND:VCALENDAR\n'])));
-    }else if(ext==='zip'&&e.uncompressedSize<500000000){
-      // Nested ZIP - extract and recursively anonymize
-      try{
-        const blob=await e.getData(new zip.BlobWriter());
-        const innerReader=new zip.ZipReader(new zip.BlobReader(blob));
-        const innerEntries=await innerReader.getEntries();
-        const innerZipW=new zip.ZipWriter(new zip.BlobWriter('application/zip'));
-        for(let j=0;j<innerEntries.length;j++){
-          const ie=innerEntries[j];
-          if(ie.directory){await innerZipW.add(ie.filename,null,{directory:true});continue}
-          const iext=ie.filename.split('.').pop().toLowerCase();
-          if(['json','ndjson','xml','txt','csv'].includes(iext)&&ie.uncompressedSize<50000000){
-            try{
-              const ib=await ie.getData(new zip.BlobWriter());const it=await ib.text();
-              let ia;
-              if(iext==='xml')ia=anonymizeXml(it);
-              else if(iext==='json'||iext==='ndjson'){
-                const tt=it.trimStart();
-                if(tt.startsWith('[')||tt.startsWith('{'))try{ia=JSON.stringify(anonymizeJsonValue(JSON.parse(it),0),null,it.includes('\n  ')?2:0)}catch(e3){ia=anonymizeNdjson(it)}
-                else ia=anonymizeNdjson(it);
-              }else ia=anonymizeText(it);
-              await innerZipW.add(ie.filename,new zip.BlobReader(new Blob([ia])));
-            }catch(err2){log('Skipping inner '+ie.filename,'warn')}
-          }else if(['jpg','jpeg','png','gif','bmp','webp'].includes(iext)){
-            await innerZipW.add(ie.filename,new zip.BlobReader(new Blob([PLACEHOLDER_PNG])));
-          }else if(['amr','mp3','ogg','wav','aac','m4a','opus','3gp','mp4','3gpp'].includes(iext)){
-            await innerZipW.add(ie.filename,new zip.BlobReader(new Blob([new Uint8Array(64)])));
-          }else{
-            try{const raw=await ie.getData(new zip.BlobWriter());await innerZipW.add(ie.filename,new zip.BlobReader(raw))}catch(e4){}
-          }
-          showProgress('Anonymizing '+e.filename+' ('+Math.round(j/innerEntries.length*100)+'%)',Math.round(i/total*100));
-        }
-        await innerReader.close();
-        const innerBlob=await innerZipW.close();
-        await zipW.add(e.filename,new zip.BlobReader(innerBlob));
-      }catch(err){
-        log('Could not process nested ZIP '+e.filename+': '+err.message,'warn');
-        try{const raw=await e.getData(new zip.BlobWriter());await zipW.add(e.filename,new zip.BlobReader(raw))}catch(e5){}
+      // damaged ZIP: unpack the text pieces straight from the bytes, the way the converter's fallback reader does
+      for(const it of raw.items){
+        const ext=it.name.includes('.')?it.name.split('.').pop().toLowerCase():'',len=it.csize||it.end-it.start;
+        if(!AN_TEXT_EXT.includes(ext)||len<=0||len>50*1024*1024||(it.method!==0&&it.method!==8))continue;
+        try{
+          let blob=origFile.slice(it.start,it.start+len);
+          if(it.method===8){const r=blob.stream().pipeThrough(new DecompressionStream('deflate-raw')).getReader(),parts=[];try{for(;;){const{done,value}=await r.read();if(done)break;parts.push(value)}}catch(e){if(!parts.length)throw e}blob=new Blob(parts)}
+          await zipW.add('recovered/'+anFileName(it.name),new zip.BlobReader(new Blob([anFile(await blob.text(),ext)])));
+          raw.lines.push('  recovered and cleaned: '+anFileName(it.name));
+        }catch(err){raw.lines.push('  could not recover '+anFileName(it.name)+': '+err.message)}
       }
-    }else{
-      // Unknown binary - keep as-is (could be database, etc.)
-      try{const raw=await e.getData(new zip.BlobWriter());await zipW.add(e.filename,new zip.BlobReader(raw))}catch(e6){}
     }
-  }
-  const blob=await zipW.close();
-  showProgress('Done!',100);
-  log('Anonymized ZIP ready ('+formatSize(blob.size)+')','ok');
-  return blob;
+    await zipW.add('_anonymized_report.txt',new zip.BlobReader(new Blob([anReport(origFile,origName,raw)])));
+    const blob=await zipW.close();
+    showProgress('Done!',100);
+    log('Anonymized ZIP ready ('+formatSize(blob.size)+')','ok');
+    return blob;
+  }finally{A=null}
 }
 
 function downloadReport(report,origName){
   progressEl.style.display='none';
-  errorBox.innerHTML='<b>This phone format is not supported yet.</b><br><br>Help us add support! We\'ll create an anonymized copy of your file: <b>all messages, phone numbers, names, and pictures are replaced with fake data</b>. No private information is included.<br><br>This is <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener">open source</a>, so you can verify exactly what gets changed in the code.<br><br><input id="phoneBrandInput" type="text" class="report-input" placeholder="Phone brand (e.g. Tak S7, Kosher XL...)"><input id="userEmailInput" type="email" class="report-input" placeholder="Your email (so we can let you know when it\'s supported)"><br><button id="anonBtn" class="report-btn" style="background:#4f46e5">Anonymize &amp; Download</button><div id="anonInstructions" style="display:none;margin-top:14px;padding:12px 16px;border-radius:8px;background:#ecfdf5;color:#065f46;font-size:.85rem;line-height:1.6"><b>Almost done!</b><ol style="margin:8px 0 0 16px;padding:0"><li>Open <a href="https://drive.google.com" target="_blank" rel="noopener">Google Drive</a></li><li>Upload the anonymized file you just downloaded</li><li>Right-click the file → Share</li><li>Share with <b>pythonivelt@gmail.com</b></li></ol><br>Thanks for helping us add support for your phone!</div>';
+  errorBox.innerHTML='<b>This phone format is not supported yet.</b><br><br>Help us add support! We\'ll create an anonymized copy of your file: <b>all messages, phone numbers, names, pictures and contacts are replaced with fake data</b>. Chats stay grouped the same way, so we can see what went wrong. No private information is included.<br><br>This is <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener">open source</a>, so you can verify exactly what gets changed in the code.<br><br><input id="phoneBrandInput" type="text" class="report-input" placeholder="Phone brand (e.g. Tak S7, Kosher XL...)"><input id="userEmailInput" type="email" class="report-input" placeholder="Your email (so we can let you know when it\'s supported)"><br><button id="anonBtn" class="report-btn" style="background:#4f46e5">Anonymize &amp; Download</button><div id="anonInstructions" style="display:none;margin-top:14px;padding:12px 16px;border-radius:8px;background:#ecfdf5;color:#065f46;font-size:.85rem;line-height:1.6"><b>Almost done!</b><ol style="margin:8px 0 0 16px;padding:0"><li>Open <a href="https://drive.google.com" target="_blank" rel="noopener">Google Drive</a></li><li>Upload the anonymized file you just downloaded</li><li>Right-click the file → Share</li><li>Share with <b>pythonivelt@gmail.com</b></li></ol><br>Thanks for helping us add support for your phone!</div>';
   errorBox.style.display='block';scanBtn.style.display='';scanBtn.disabled=false;cancelBtn.style.display='none';
   $('anonBtn').onclick=async function(){
     const brand=($('phoneBrandInput').value||'').trim();
