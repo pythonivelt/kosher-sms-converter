@@ -673,7 +673,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')setMenu(fals
 </section>
 
 <footer class="site-footer">
-  <p><span id="verSpan">v1.1.7</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
+  <p><span id="verSpan">v1.1.8</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
   <p style="margin-top:6px">Free and open source · Nothing gets uploaded</p>
 </footer>
 
@@ -1547,9 +1547,9 @@ async function scan(){
           return;
         }
       }
-      if(BETA_MODE&&entries&&!entries.some(e=>e.filename.endsWith('.ndjson'))&&entries.some(e=>e.filename==='messages.zip')){
+      if(entries&&!entries.some(e=>e.filename.endsWith('.ndjson'))&&entries.some(e=>e.filename==='messages.zip')){
         // Fig IV: the usual Fig messages ZIP sits inside this one as messages.zip
-        log('Detected Fig IV backup, opening messages.zip inside','ok');
+        log('Detected Fig all-in-one backup, using only messages.zip inside','ok');
         const inner=await entries.find(e=>e.filename==='messages.zip').getData(new zip.BlobWriter('application/zip'));
         entries=await new zip.ZipReader(new zip.BlobReader(inner)).getEntries();figIV=true;
       }
@@ -1566,7 +1566,7 @@ async function scan(){
           try{
             ({messages,attachMap,pdfCount,pdfSize}=await parseFigZip(entries));
             if(messages.some(m=>m.creator&&m.creator.includes('.pom'))){fmt='pom';pomLegacy=true;log('Detected Pom legacy backup (creator: com.figmessenger.pom)','ok')}
-            if(figIV&&fmt==='fig')fmt='fig4';
+            if(BETA_MODE&&figIV&&fmt==='fig')fmt='fig4';
           }catch(parseErr){
             log('zip.js read failed: '+parseErr.message+', trying fallback…','warn');
             const fallback=await fallbackZipScan(selectedFile);
