@@ -673,7 +673,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')setMenu(fals
 </section>
 
 <footer class="site-footer">
-  <p><span id="verSpan">v1.1.10</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
+  <p><span id="verSpan">v1.1.11</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
   <p style="margin-top:6px">Free and open source · Nothing gets uploaded</p>
 </footer>
 
@@ -1104,7 +1104,7 @@ function anValue(v,key){
   const s=String(v);
   if(!s||/^(null|true|false|nan|undefined|\(unknown\)|insert-address-token)$/i.test(s))return s;
   if(/^(columns|fields|keys|headers|projection)$/.test(key)&&/^[a-z_][a-z0-9_]*$/i.test(s))return s; // table column names
-  if(/^[a-z]+\/[\w.+-]+$/i.test(s)||/^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*){2,}$/i.test(s)||(/creator|package|pkg|app/.test(key)&&/^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$/i.test(s)))return s; // file types (image/jpeg), app names (com.figmessenger.pom)
+  if(/^(image|audio|video|text|application|multipart|message|font|model)\/[\w.+-]+$/i.test(s)||/^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*){2,}$/i.test(s)||(/creator|package|pkg|app/.test(key)&&/^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$/i.test(s)))return s; // file types (image/jpeg), app names (com.figmessenger.pom)
   if(/b64|base64/.test(key)||(s.length>200&&/^[A-Za-z0-9+/=\s]+$/.test(s))){A.b64++;return PLACEHOLDER_B64}
   if(/(^|_)(id|type|cls|class|status|box|charset|chset|ct_t|ct|enc|encoding|version|v|countryiso)$/.test(key)&&s.length<=40&&!/\s/.test(s))return s;
   if(/(^|_)(addr|address|addresses|number|phone|recipients?|sender|from|to)$/.test(key))return anPhone(s);
@@ -1258,10 +1258,665 @@ async function generateAnonymizedZip(entries,origFile,origName){
   }finally{A=null}
 }
 
+// ===== File description (.md): how an unsupported backup is built, with none of its content =====
+// Every value is described by its shape ("phone-like +nnnnnnnnnnn", "text (words, emoji)"), never copied.
+// Only technical values are listed as they are: small numbers, file types, app ids and short lowercase codes.
+const SD_WORDS=/^(sms|mms|msg|msgs|message|messages|backup|backups|export|data|part|parts|attach|attachment|attachments|media|image|images|img|photo|photos|pic|pics|video|videos|vid|audio|aud|voice|rec|record|recording|thumb|thumbnail|thumbnails|contact|contacts|call|calls|log|logs|thread|threads|conv|conversation|conversations|chat|chats|db|database|manifest|meta|metadata|info|index|file|files|full|all|settings|config|app|apps|android|phone|fig|pom|wonder|tak|keyphone|smil|text|mime|raw|blob|blobs|cache|tmp|temp|version|res|assets|inbox|sent|draft|drafts|outbox|default|main|user|users|account|sim|tel|address|addresses|addr|group|groups|note|notes|calendar|events|bookmarks|pdu|json|xml|ndjson|txt|vcf|zip|wal|shm|journal|sqlite|bak)$/i;
+const SD_PRIVATE_KEY=/addr|phone|recip|sender|body|name|subject|^sub$|email|note|display|title|^text$|snippet|content|message|^msg$|^data$|^value$|label|caption|^tel$|^fn$|^n$|^adr$|^org$/;
+const SD_EXTRA={1:'Zip64',10:'NTFS times',0x5455:'extended time',0x7875:'Unix owner',0x7855:'Unix (old)',0x9901:'AES',0xcafe:'Java JAR',0xd935:'Android alignment',0x6375:'Unicode comment',0x7075:'Unicode path'};
+const SD_SIGS=[['ZIP piece','PK\x03\x04'],['JPEG picture','\xff\xd8\xff'],['PNG picture','\x89PNG'],['SQLite database','SQLite f'],['XML text','<?xml'],['JSON object','{"'],['GZIP','\x1f\x8b\x08'],['MP4/3GP media','ftyp'],['AMR voice note','#!AMR'],['OGG audio','OggS']].map(([n,s])=>[n,[...s].map(c=>c.charCodeAt(0))]);
+// what common field names usually mean (Android's own names, which most backup apps reuse)
+const SD_MEANING={address:'phone number of the other person',addr:'phone number',addresses:'phone numbers in the chat',recipients:'phone numbers in the chat',recipient:'number it was sent to',sender:'number it came from',from:'who sent it',to:'who it was sent to',peer:'the other person',phone:'phone number',number:'phone number',
+  body:'message text',text:'message text',message:'message text',msg:'message text',content:'message content',snippet:'preview of the last message',subject:'MMS subject',sub:'MMS subject',
+  date:'when it was received or saved',date_sent:'when it was sent',timestamp:'time',time:'time',ts:'time',created:'when it was made',created_at:'when it was made',updated_at:'when it was changed',
+  type:'Android: 1 = received, 2 = sent, 3 = draft, 4 = outbox, 5 = failed, 6 = queued',msg_box:'MMS folder, Android: 1 = received, 2 = sent, 3 = draft, 4 = outbox',dir:'direction (in = received, out = sent)',direction:'received or sent',incoming:'received or not',outgoing:'sent or not',is_outgoing:'sent or not',is_from_me:'sent by this phone or not',
+  read:'Android: 1 = read, 0 = unread',seen:'Android: 1 = already notified',status:'delivery status, Android: -1 = none, 0 = delivered, 32 = pending, 64 = failed',locked:'1 = locked (protected from delete)',starred:'starred',pinned:'pinned chat',archived:'archived chat',deleted:'deleted',
+  thread_id:'which chat it belongs to',thread:'which chat it belongs to',conversation_id:'which chat it belongs to',conv_id:'which chat it belongs to',chat_id:'which chat it belongs to',
+  id:'record id',mid:'which message this part belongs to',msg_id:'which message this belongs to',message_id:'which message this belongs to',
+  sub_id:'SIM card id',sim_slot:'SIM card slot',sim_id:'SIM id',subscription_id:'SIM id',error_code:'error code',protocol:'SMS protocol (usually 0)',reply_path_present:'SMS reply path flag',service_center:'SMS center number',person:'contact id',creator:'app that made it',
+  m_type:'MMS kind: 128 = sent, 130 = notification, 132 = received',m_id:'MMS message id',m_cls:'MMS class (personal, advertisement…)',m_size:'MMS size',ct_t:'MMS content type',ct_l:'MMS download link',tr_id:'MMS transaction id',exp:'MMS expiry',pri:'MMS priority (129 = normal)',rr:'read report wanted (128 = yes, 129 = no)',d_rpt:'delivery report wanted (128 = yes, 129 = no)',v:'MMS version',resp_st:'MMS response status',retr_st:'MMS download status',st:'MMS status',sub_cs:'subject character set',text_only:'1 = MMS with only text',
+  ct:'file type of this part',seq:'order of the part (-1 = the layout part)',cid:'content id (links the part to the layout)',cl:'file name used in the layout',fn:'file name',name:'name (of a file or a person)',chset:'character set (106 = UTF-8)',charset:'character set (106 = UTF-8)',_data:'where the file was saved on the phone',data:'the file itself, or where it is',
+  contact_name:'contact name',display_name:'contact name',__display_name:'contact name',readable_date:'date written out for people',__parts:'MMS parts (text, pictures, audio)',parts:'MMS parts',part:'one MMS part',__addresses:'everyone in the MMS',__sender_address:'who sent the MMS',
+  group:'group chat',is_group:'group chat or not',participants:'people in the chat',members:'people in the chat',mime:'file type',mime_type:'file type',mimetype:'file type',content_type:'file type',size:'size in bytes',length:'length',width:'picture width',height:'picture height',duration:'audio or video length',
+  path:'file location',file:'file',filename:'file name',file_name:'file name',uri:'file link',url:'web link',thumbnail:'small preview picture',version:'format version',app:'app that made it',package:'app that made it',device:'phone model',model:'phone model',count:'how many',
+  tel:'phone number',fn:'full name',n:'name parts',email:'email',bday:'birthday',org:'company',note:'note',photo:'contact picture'};
+const SD_KNOWN=[
+  ['Fig / TAK backup (NDJSON, made by the sms-ie app)',['address','body','date','date_sent','type','read','seen','thread_id','sub_id','msg_box','__parts','__addresses','__sender_address','creator']],
+  ['SMS Backup & Restore XML (Pom backups use it too)',['smses','sms','mms','address','date','type','body','readable_date','contact_name','parts','part','addrs','addr','ct','data','msg_box','m_type']],
+  ['Android messages database (mmssms.db)',['sms','pdu','part','addr','threads','canonical_addresses','thread_id','address','body','date','type','msg_box','ct','_data','mid']],
+  ['vCard contacts',['VCARD','VERSION','FN','N','TEL']]];
+let SD=null;
+// everything that broke a backup before (Pom, Fig and others) until the converter was fixed: each one is checked
+const SD_CHECKS=[
+  ['zipEnd','p','ZIP is complete (has its end-of-ZIP directory)','Old Pom backups were cut short like this, so the converter needed a fallback reader.'],
+  ['zipEmpty','p','No empty (0 byte) files inside','Empty attachments show up as broken pictures.'],
+  ['zipDup','p','No two files with the same name inside','One of them gets lost when unpacking.'],
+  ['zipEnc','p','Nothing is password protected','Encrypted files can\'t be read at all.'],
+  ['encrypted','p','The data is not encrypted or scrambled','An encrypted backup can only be read with the app\'s key.'],
+  ['zipInZip','n','No backup inside the backup','Fig all-in-one backups keep messages.zip inside (handled since v1.1.8).'],
+  ['extMismatch','n','File names match what is inside','Fig\'s calls.zip and contacts.zip are really plain JSON.'],
+  ['noExt','n','Pictures and audio have file extensions','Fig keeps attachments without extensions.'],
+  ['utf8','p','Text is valid UTF-8','Other encodings turn Hebrew and emoji into junk.'],
+  ['nul','p','No zero bytes inside text','They cut text short in many apps.'],
+  ['lineEnd','n','One kind of line ending','Mixed line endings can split records the wrong way.'],
+  ['ctrl','p','No stray control characters in XML','One stray character made Pom skip every picture message (fixed in v1.1.4).'],
+  ['amp','p','Every & in XML is written as &amp;','A bare & makes strict XML readers stop.'],
+  ['xmlTags','p','XML tags open and close in the right order','A mismatch means the file is damaged.'],
+  ['xmlEnd','p','XML is complete (every element is closed)','A file cut short loses everything after the cut.'],
+  ['jsonOk','p','JSON can be read','A broken JSON file can\'t be read at all.'],
+  ['ndBad','p','Every NDJSON line can be read','Broken lines are skipped, so those messages are lost.'],
+  ['cutEnd','p','The file doesn\'t end in the middle of a record','That happens when a backup is cut short.'],
+  ['dups','p','No repeated records','Restoring twice made doubles before. Pom checks for duplicates by content.'],
+  ['dateUnit','n','Dates in seconds or milliseconds','Pom\'s XML uses seconds, Android uses milliseconds. Mixing them up puts messages in 1970.'],
+  ['dateMixed','p','Each date field uses one unit','Mixed units put some messages in the wrong year.'],
+  ['dateRange','p','No dates in the future','Usually a wrong unit or a broken value.'],
+  ['phones','p','Each phone number is written one way','+1 vs no +1 split one chat into two before.'],
+  ['inline','n','Pictures are stored as separate files','Pom\'s mms.xml keeps pictures inside the text (base64), which needs streaming for big backups.'],
+  ['bigText','n','No huge text inside XML elements','Very big inline pictures needed streaming so the browser doesn\'t run out of memory.'],
+  ['missing','p','Every file the records point to is in the backup','Missing files mean missing pictures.'],
+  ['wal','p','No unsaved database changes in a -wal file','The newest messages can sit in the -wal file instead of the database.']];
+function sdFound(k,d){const c=SD&&SD.chk;if(!c)return;let x=c.get(k);if(!x||x.st==='ok'){x={st:'found',d:[]};c.set(k,x)}if(d&&x.d.length<6&&!x.d.includes(d))x.d.push(d)}
+function sdOk(k){const c=SD&&SD.chk;if(c&&!c.has(k))c.set(k,{st:'ok',d:[]})}
+function sdHash(s){let h=2166136261,g=5381;for(let i=0;i<s.length;i++){const c=s.charCodeAt(i);h=Math.imul(h^c,16777619);g=Math.imul(g,33)^c}return(h>>>0)+':'+(g>>>0)}
+function sdPhonesChk(){
+  let n=0,ex='';for(const f of SD.phones.values())if(f.size>1){n++;if(!ex)ex=[...f].slice(0,3).map(x=>x.replace(/\d/g,'n')).join(' and ')}
+  if(n)sdFound('phones',n+' number'+(n>1?'s are':' is')+' written in more than one way, for example '+ex);else if(SD.phones.size)sdOk('phones');
+}
+function sdChecksOut(){
+  const L=['','## Problem check','','Everything that broke a backup before (Pom, Fig and others) until the converter was fixed, checked on this file.','','| # | Check | Result | Why it matters |','|---|---|---|---|'];
+  SD_CHECKS.forEach(([k,t,label,why],i)=>{const x=SD.chk.get(k),r=!x?'doesn\'t apply':x.st==='ok'?'OK':(t==='p'?'**PROBLEM**':'Found')+(x.d.length?': '+x.d.join('; '):'');L.push('| '+(i+1)+' | '+sdEsc(label)+' | '+sdEsc(r)+' | '+sdEsc(why)+' |')});
+  return L;
+}
+function sdEsc(s){return String(s).replace(/\|/g,'\\|').replace(/[\r\n]+/g,' ')}
+function sdSize(n){n=n||0;return n<1024?n+' bytes':formatSize(n)+' ('+n.toLocaleString()+' bytes)'}
+function sdIsText(b){const n=Math.min(b.length,512);for(let i=0;i<n;i++){const x=b[i];if(!(x===9||x===10||x===13||(x>=32&&x<127)||x>=0x80))return false}return n>0}
+function sdMagicName(b){
+  if(!b||!b.length)return'empty';
+  const s=String.fromCharCode.apply(null,b.subarray(0,16)),h=i=>b[i];
+  if(s.startsWith('PK\x03\x04')||s.startsWith('PK\x05\x06'))return'ZIP';
+  if(s.startsWith('SQLite format 3'))return'SQLite database';
+  if(h(0)===0x37&&h(1)===0x7f&&h(2)===0x06&&(h(3)===0x82||h(3)===0x83))return'SQLite WAL (database changes not saved into the database yet)';
+  if(h(0)===0xd9&&h(1)===0xd5&&h(2)===0x05&&h(3)===0xf9)return'SQLite journal';
+  if(h(0)===0xff&&h(1)===0xd8)return'JPEG picture';
+  if(s.startsWith('\x89PNG'))return'PNG picture';
+  if(s.startsWith('GIF8'))return'GIF picture';
+  if(s.startsWith('RIFF')&&s.slice(8,12)==='WEBP')return'WEBP picture';
+  if(s.startsWith('RIFF')&&s.slice(8,12)==='WAVE')return'WAV audio';
+  if(s.slice(4,8)==='ftyp'){const br=s.slice(8,12).trim();if(/hei|mif1|msf1|avif/i.test(br))return'HEIC/AVIF picture ('+br+')';if(/^3g/i.test(br))return'3GP video/audio ('+br+')';if(/M4A|M4B/.test(br))return'M4A audio';return'MP4 video ('+br+')'}
+  if(s.startsWith('#!AMR'))return'AMR voice note';
+  if(s.startsWith('OggS'))return'OGG audio';
+  if(s.startsWith('%PDF'))return'PDF';
+  if(h(0)===0x1f&&h(1)===0x8b)return'GZIP';
+  if(s.startsWith('7z\xbc\xaf'))return'7-Zip';
+  if(s.startsWith('Rar!'))return'RAR';
+  if(s.startsWith('ANDROID BACKUP'))return'Android backup (adb)';
+  if(s.startsWith('Salted__'))return'OpenSSL encrypted';
+  if(s.startsWith('BZh'))return'BZIP2';
+  if(h(0)===0x28&&h(1)===0xb5&&h(2)===0x2f&&h(3)===0xfd)return'Zstandard';
+  if(h(0)===0xfd&&s.slice(1,6)==='7zXZ\x00')return'XZ';
+  if(s.startsWith('dex\n'))return'Android code (dex)';
+  if(h(0)===0xff&&h(1)===0xfe)return'text (UTF-16 LE)';
+  if(h(0)===0xfe&&h(1)===0xff)return'text (UTF-16 BE)';
+  if(s.startsWith('ID3')||(h(0)===0xff&&(h(1)&0xe0)===0xe0))return'MP3/AAC audio';
+  if(!sdIsText(b))return'';
+  const t=new TextDecoder().decode(b).replace(/^\ufeff/,'').trimStart();
+  if(t[0]==='<')return'XML/HTML text';
+  if(t[0]==='{'||t[0]==='[')return'JSON text';
+  if(/^BEGIN:V/i.test(t))return'vCard/vMessage text';
+  return'text';
+}
+function sdNumKind(d,neg){
+  if(neg)return'negative';
+  if(/^1\d{12}$/.test(d))return'looks like a date in milliseconds';
+  if(/^1\d{9}$/.test(d))return'looks like a date in seconds';
+  if(/^1\d{15}$/.test(d))return'looks like a date in microseconds';
+  if(d.length>=7)return d.length+' digits (phone or id)';
+  return'small ('+d.length+' digit'+(d.length>1?'s':'')+')';
+}
+function sdB64Kind(s){const sz='about '+formatSize(Math.round(s.length*3/4));try{const b=Uint8Array.from(atob(s.replace(/\s/g,'').slice(0,64)),c=>c.charCodeAt(0));return(sdMagicName(b)||'unknown bytes')+', '+sz}catch(e){return sz}}
+function sdPattern(p,rep,keepLower){
+  return String(p).split('/').map(seg=>seg.replace(/[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}|[0-9a-f]{16,}|\d+|\p{L}+/giu,t=>{
+    if(t.length===36&&t.includes('-'))return'{uuid}';
+    if(/^\d+$/.test(t))return'#'.repeat(Math.min(t.length,24));
+    if(/\d/.test(t)&&/^[0-9a-f]+$/i.test(t))return'{hex '+t.length+'}';
+    if(SD_WORDS.test(t)||AN_TECH_NAME.test(t)||AN_SAFE_NAME.test(t)||(rep&&rep.has(t.toLowerCase()))||t.length<=3||(keepLower&&/^[a-z]{1,14}$/.test(t)))return t;
+    return'{word}';
+  })).join('/');
+}
+function sdShape(v,key){
+  if(v===null||v===undefined)return'null';
+  if(typeof v==='boolean')return'true/false';
+  if(v instanceof Uint8Array)return'binary ('+(sdMagicName(v)||'unknown bytes')+')';
+  if(typeof v==='number')return Number.isInteger(v)?'number, '+sdNumKind(String(Math.abs(v)),v<0):'decimal number';
+  const s=String(v),k=String(key||'').toLowerCase();
+  if(!s)return'empty text';
+  if(/^-?\d+$/.test(s))return'digits as text, '+sdNumKind(s.replace('-',''),s[0]==='-');
+  if(/^(image|audio|video|text|application|multipart|message|font|model)\/[\w.+-]+$/i.test(s))return'file type (mime)';
+  if(/^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*){2,}$/i.test(s)||(/creator|package|pkg|app/.test(k)&&/^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$/i.test(s)))return'app id';
+  if(/^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(s))return'uuid';
+  {const sep=(s.match(/[~,;|]/)||[' '])[0],ps=s.split(sep).map(x=>x.trim()).filter(Boolean);if(ps.length>=2&&ps.every(x=>/^\+?[\d().\-]{7,}$/.test(x)&&x.replace(/\D/g,'').length>=7))return'several phone numbers separated by "'+sep+'"'}
+  if(/^\+?[\d\s().\-]{7,}$/.test(s)&&s.replace(/\D/g,'').length>=7)return'phone-like '+s.replace(/\d/g,'n');
+  if(/^[\w.+-]+@[\w.-]+\.\w{2,}$/.test(s))return'email';
+  if(/^content:\/\//i.test(s))return'content:// link '+s.replace(/\d+/g,'#').slice(0,60);
+  if(/^https?:\/\//i.test(s))return'web link';
+  if(s.length<=40&&/\d/.test(s)&&/^[\d\s.:\/,\-+TZ]+$/.test(s))return'date/number text '+s.replace(/\d/g,'n');
+  if(s.length>=100&&/^[A-Za-z0-9+/=\r\n]+$/.test(s))return'base64 data ('+sdB64Kind(s)+')';
+  if(/^[0-9a-f]{16,}$/i.test(s))return'hex, '+s.length+' chars';
+  if(s.length<=200&&/^\/?[^\s]+\.[a-z0-9]{2,5}$/i.test(s))return'file name '+sdPattern(s);
+  if(/^\s*[\[{]/.test(s)){try{JSON.parse(s);return'JSON text'}catch(e){}}
+  if(/^\s*</.test(s)&&/>\s*$/.test(s))return'markup (XML/HTML)';
+  const f=[];
+  if(/\s/.test(s.trim()))f.push('words');
+  if(/[\u0590-\u05ff]/.test(s))f.push('Hebrew letters');
+  if(/[a-z]/i.test(s))f.push('English letters');
+  if(/\p{Extended_Pictographic}/u.test(s))f.push('emoji');
+  if(/\n/.test(s))f.push('line breaks');
+  if(/&(#\d+|#x[0-9a-f]+|[a-z]+);/i.test(s))f.push('&entities;');
+  return'text'+(f.length?' ('+f.join(', ')+')':'');
+}
+function sdSafe(v,key){
+  if(v===null||v===undefined||typeof v==='boolean')return true;
+  if(v instanceof Uint8Array)return false;
+  if(typeof v==='number')return Number.isInteger(v)&&Math.abs(v)<100000;
+  const s=String(v),k=String(key||'').toLowerCase();
+  if(!s)return true;
+  if(s.length>60)return false;
+  if(/^(image|audio|video|text|application|multipart|message|font|model)\/[\w.+-]+$/i.test(s)||/^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*){2,}$/.test(s)||(/creator|package|pkg|app/.test(k)&&/^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$/.test(s)))return true;
+  if(SD_PRIVATE_KEY.test(k)||/\d{5,}/.test(s))return false;
+  return/^-?\d{1,4}$/.test(s)||/^[a-z0-9_:+.-]{1,30}$/.test(s)||/^[A-Z0-9_]{1,30}$/.test(s);
+}
+function sdKey(k){return/^[A-Za-z_$@#][\w$.:@#-]{0,60}$/.test(k)&&!/\d{5,}/.test(k)?k:'{'+sdShape(k,'')+'}'}
+function sdYear(v,sh){
+  const n=Number(v);let t=null;
+  if(/milliseconds/.test(sh))t=n;else if(/in seconds/.test(sh))t=n*1000;else if(/microseconds/.test(sh))t=n/1000;
+  else if(/^date\/number text nnnn-/.test(sh))return+String(v).slice(0,4);
+  if(t===null)return 0;
+  const y=new Date(t).getUTCFullYear();return y>1970&&y<2100?y:0;
+}
+function sdNewS(){return{f:new Map(),k:new Map()}}
+function sdNewI(ext){return{ext:String(ext||'').toLowerCase(),files:0,bytes:0,crlf:0,lf:0,cr:0,endNl:0,lines:0,blank:0,bad:0,cap:256*1024*1024,ents:new Map(),el:new Map(),lineShapes:new Map(),dups:0}}
+function sdNote(S,path,key,v){
+  let F=S.f.get(path);
+  if(!F){if(S.f.size>=2000)return;F={key:String(key||''),n:0,sh:new Map(),vals:new Map(),many:false,priv:false,lmin:Infinity,lmax:-1,ymin:9999,ymax:0};S.f.set(path,F)}
+  F.n++;let sh;
+  if(Array.isArray(v)){sh='list';F.lmin=Math.min(F.lmin,v.length);F.lmax=Math.max(F.lmax,v.length)}
+  else if(v&&typeof v==='object'&&!(v instanceof Uint8Array))sh='object';
+  else{
+    sh=sdShape(v,F.key);
+    if(typeof v==='string'||v instanceof Uint8Array){F.lmin=Math.min(F.lmin,v.length);F.lmax=Math.max(F.lmax,v.length)}
+    const y=sdYear(v,sh);if(y){F.ymin=Math.min(F.ymin,y);F.ymax=Math.max(F.ymax,y)}
+    if(SD&&/^phone-like|\(phone or id\)$|^several phone/.test(sh)&&SD.phones.size<20000)for(const x of String(v).split(/[~,;|]/)){const d=x.replace(/[^\d+]/g,''),k=d.replace(/\D/g,'').slice(-10);if(k.length<7)continue;let f=SD.phones.get(k);if(!f){f=new Set();SD.phones.set(k,f)}if(f.size<5)f.add(d)}
+    if(/in seconds/.test(sh))F.sec=(F.sec||0)+1;else if(/milliseconds/.test(sh))F.ms=(F.ms||0)+1;
+    if(/in seconds|milliseconds|microseconds/.test(sh)){const t=/in seconds/.test(sh)?Number(v)*1000:/micro/.test(sh)?Number(v)/1000:Number(v);if(t>Date.now()+864e5)F.future=(F.future||0)+1}
+    if(v!==null&&v!==undefined&&!(v instanceof Uint8Array)){if(!F.ds)F.ds=new Set();if(F.ds.size<50000)F.ds.add(typeof v==='string'?v.slice(0,200):String(v));else F.dmany=true}
+    if(y){const t=typeof v==='string'&&!/^-?\d+$/.test(v)?Date.parse(v)||0:Number(v);if(F.prev!==undefined){if(t>F.prev)F.up=(F.up||0)+1;else if(t<F.prev)F.down=(F.down||0)+1}F.prev=t}
+    if(!sdSafe(v,F.key))F.priv=true;
+    else if(!F.many){const k=typeof v==='string'?JSON.stringify(v):String(v);F.vals.set(k,(F.vals.get(k)||0)+1);if(F.vals.size>25){F.many=true;F.vals.clear()}}
+  }
+  if(F.sh.has(sh)||F.sh.size<12)F.sh.set(sh,(F.sh.get(sh)||0)+1);else F.shMore=true;
+}
+function sdKind(S,path,keys,skel,pairs){
+  let K=S.k.get(path);if(!K){if(S.k.size>=200)return;K=new Map();S.k.set(path,K)}
+  const sig=keys.slice().sort().join(',');let r=K.get(sig);
+  if(!r){if(K.size>=30)return;r={n:0,ex:skel(),order:new Map()};K.set(sig,r)}
+  r.n++;const o=keys.join(',');if(r.order.has(o)||r.order.size<5)r.order.set(o,(r.order.get(o)||0)+1);
+  if(pairs){if(!r.tv)r.tv=new Map();for(const[k,x]of pairs){if(x===null||typeof x==='object'||!sdSafe(x,k)||(typeof x==='string'&&x.length>20))continue;let m=r.tv.get(k);if(!m){if(r.tv.size>=12)continue;m=new Map();r.tv.set(k,m)}if(m.many)continue;const vk=typeof x==='string'?JSON.stringify(x):String(x);m.set(vk,(m.get(vk)||0)+1);if(m.size>8)m.many=true}}
+}
+function sdSkel(v,key,d){
+  if(Array.isArray(v))return d>5?'<list, '+v.length+' items>':!v.length?[]:[sdSkel(v[0],key,d+1)].concat(v.length>1?['<'+(v.length-1)+' more like this>']:[]);
+  if(v&&typeof v==='object'&&!(v instanceof Uint8Array)){if(d>5)return'<object>';const o={};for(const k of Object.keys(v))o[sdKey(k)]=sdSkel(v[k],sdKey(k),d+1);return o}
+  return sdSafe(v,key)&&!(typeof v==='string'&&v.length>30)?v:'<'+sdShape(v,key)+'>';
+}
+function sdWalk(v,path,key,S,d){
+  sdNote(S,path,key,v);
+  if(v===null||typeof v!=='object'||v instanceof Uint8Array){
+    if(typeof v==='string'&&d<8&&v.length<2e6&&/^\s*[\[{]/.test(v)){let j;try{j=JSON.parse(v)}catch(e){}if(j&&typeof j==='object')sdWalk(j,path+' (JSON inside)',key,S,d+1)}
+    return;
+  }
+  if(d>12)return;
+  if(Array.isArray(v)){const n=Math.min(v.length,20000);for(let i=0;i<n;i++)sdWalk(v[i],path+'[]',key,S,d+1);return}
+  const raw=Object.keys(v),ks=raw.map(sdKey);
+  sdKind(S,path,ks,()=>sdSkel(v,key,0),raw.map((k,i)=>[ks[i],v[k]]));
+  for(let i=0;i<raw.length;i++)sdWalk(v[raw[i]],(path?path+'.':'')+ks[i],ks[i],S,d+1);
+}
+function sdUnesc(s){return s.replace(/&(lt|gt|amp|quot|apos|#\d+|#x[0-9a-f]+);/gi,(m,e)=>e==='lt'?'<':e==='gt'?'>':e==='amp'?'&':e==='quot'?'"':e==='apos'?"'":String.fromCodePoint(e[1]==='x'||e[1]==='X'?parseInt(e.slice(2),16):parseInt(e.slice(1),10)))}
+async function* sdChunks(blob,I){
+  const dec=new TextDecoder(),CH=4*1024*1024,end=Math.min(blob.size,I.cap);
+  if(blob.size>I.cap)I.capped=true;
+  for(let off=0;off<end;off+=CH){yield dec.decode(new Uint8Array(await blob.slice(off,Math.min(end,off+CH)).arrayBuffer()),{stream:off+CH<end});await tick()}
+}
+async function sdXmlInto(blob,S,I){
+  const st=[],re=/<!--[\s\S]*?-->|<!\[CDATA\[([\s\S]*?)\]\]>|<\?[\s\S]*?\?>|<!DOCTYPE[^>]*>|<(\/?)([\w:.-]+)((?:\s+[\w:.-]+\s*=\s*(?:"[^"]*"|'[^']*'))*)\s*(\/?)>/g,ar=/([\w:.-]+)\s*=\s*(?:"([^"]*)"|'([^']*)')/g;
+  let carry='';
+  const txt=t=>{if(st.length&&t.trim())sdNote(S,'/'+st.join('/')+' (text)',st[st.length-1],sdUnesc(t.trim()))};
+  for await(const ch of sdChunks(blob,I)){
+    const s=carry+ch;let last=0,m;re.lastIndex=0;
+    I.ctrl=(I.ctrl||0)+(ch.match(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g)||[]).length;
+    while((m=re.exec(s))){
+      txt(s.slice(last,m.index));last=re.lastIndex;const t=m[0];
+      if(t.startsWith('<!--')){I.comments=(I.comments||0)+1;continue}
+      if(t.startsWith('<![CDATA[')){I.cdata=(I.cdata||0)+1;if(st.length)sdNote(S,'/'+st.join('/')+' (CDATA)',st[st.length-1],m[1]);continue}
+      if(t.startsWith('<?')){if(!I.decl)I.decl=t.slice(0,200);continue}
+      if(t.startsWith('<!')){I.doctype=t.slice(0,200);continue}
+      if(m[2]){if(st[st.length-1]!==m[3])I.mis=(I.mis||0)+1;st.pop();continue}
+      if(!I.root)I.root=m[3];
+      st.push(m[3]);const p='/'+st.join('/'),at=[];let a;
+      I.depth=Math.max(I.depth||0,st.length);I.el.set(p,(I.el.get(p)||0)+1);
+      ar.lastIndex=0;
+      while((a=ar.exec(m[4]))){
+        const val=a[2]!==undefined?a[2]:a[3];at.push([a[1],val]);
+        if(/&(?!(#\d+|#x[0-9a-f]+|[a-z]+);)/i.test(val))I.amp=(I.amp||0)+1;
+        for(const e of val.match(/&#x?[0-9a-f]+;/gi)||[]){const c=/x/i.test(e)?parseInt(e.slice(3),16):parseInt(e.slice(2),10);if(c<32&&c!==9&&c!==10&&c!==13)I.ctrl=(I.ctrl||0)+1}
+        for(const e of val.match(/&(#\d+|#x[0-9a-f]+|[a-z]+);/gi)||[]){const k=/^&#x/i.test(e)?'&#x…;':/^&#/.test(e)?'&#…;':e;I.ents.set(k,(I.ents.get(k)||0)+1)}
+        sdNote(S,p+' @'+a[1],a[1],sdUnesc(val));
+      }
+      sdKind(S,p,at.map(x=>x[0]),()=>'<'+m[3]+at.map(([k,v])=>{const u=sdUnesc(v);return' '+k+'="'+(sdSafe(u,k)&&v.length<=30?v:'<'+sdShape(u,k)+'>')+'"'}).join('')+(m[5]?'/>':'>'),at.map(([k,x])=>[k,sdUnesc(x)]));
+      if(m[5]){st.pop();I.selfClose=(I.selfClose||0)+1}
+    }
+    carry=s.slice(last);
+    if(carry.length>4e6){const lt=carry.lastIndexOf('<');I.bigText=(I.bigText||0)+1;carry=lt>=0&&carry.length-lt<1e5?carry.slice(lt):carry.slice(-100)}
+  }
+  I.open=(I.open||0)+st.length;
+}
+function sdCsv(l,d){const r=[];let c='',q=false;for(let i=0;i<l.length;i++){const ch=l[i];if(q){if(ch==='"'){if(l[i+1]==='"'){c+='"';i++}else q=false}else c+=ch}else if(ch==='"')q=true;else if(ch===d){r.push(c);c=''}else c+=ch}r.push(c);return r}
+async function sdTextInto(blob,S,I){
+  I.files++;I.bytes+=blob.size;
+  const head=new Uint8Array(await blob.slice(0,Math.min(blob.size,1<<20)).arrayBuffer());
+  if(head[0]===0xef&&head[1]===0xbb&&head[2]===0xbf)I.bom='UTF-8 with BOM';else if(head[0]===0xff&&head[1]===0xfe)I.bom='UTF-16 LE with BOM';else if(head[0]===0xfe&&head[1]===0xff)I.bom='UTF-16 BE with BOM';
+  try{new TextDecoder('utf-8',{fatal:true}).decode(head.subarray(0,Math.max(0,head.length-4)))}catch(e){I.badUtf8=true}
+  for(let i=0;i<head.length;i++){if(head[i]===10){if(i&&head[i-1]===13)I.crlf++;else I.lf++}else if(head[i]===13&&head[i+1]!==10)I.cr++;else if(!head[i])I.nul=true}
+  const endsNl=blob.size&&new Uint8Array(await blob.slice(blob.size-1).arrayBuffer())[0]===10;if(endsNl)I.endNl++;
+  const t=new TextDecoder().decode(head.subarray(0,4096)).replace(/^\ufeff/,'').trimStart();
+  if(!I.fmt)I.fmt=t[0]==='<'?'xml':/^BEGIN:/i.test(t)?'vcard':(t[0]==='{'||t[0]==='[')?(I.ext==='ndjson'||I.ext==='jsonl'||(I.ext!=='json'&&t[0]==='{'&&(()=>{try{JSON.parse(t.split('\n')[0]);return true}catch(e){return false}})())?'ndjson':'json'):(I.ext==='csv'||I.ext==='tsv')?'csv':'text';
+  if(I.fmt==='xml')return sdXmlInto(blob,S,I);
+  if(I.fmt==='json'&&blob.size<=200*1024*1024){
+    let j;try{j=JSON.parse((await blob.text()).replace(/^\ufeff/,''))}catch(e){const p=/position (\d+)/.exec(e.message);I.badJson='could not be read as JSON'+(p?' (problem at character '+p[1]+')':'')}
+    if(j!==undefined){I.top=Array.isArray(j)?'a list of '+j.length.toLocaleString()+' items':j&&typeof j==='object'?'an object with '+Object.keys(j).length+' keys':typeof j;sdWalk(j,'','',S,0)}
+    return;
+  }
+  let carry='',delim=null,cols=null;const vst=[];
+  const line=l=>{
+    if(!l.trim()){I.blank++;return}
+    I.lines++;
+    if(I.fmt==='ndjson'){if(!I.hs)I.hs=new Set();if(I.hs.size<300000){const h=sdHash(l);if(I.hs.has(h))I.dups++;else I.hs.add(h)}if(I.lines>200000)return;let o;try{o=JSON.parse(l);I.lastBad=false}catch(e){I.bad++;I.lastBad=true;return}sdWalk(o,'','',S,0);return}
+    if(I.fmt==='csv'){
+      if(I.lines>100000)return;
+      if(!delim)delim=[',',';','\t','|'].sort((a,b)=>l.split(b).length-l.split(a).length)[0];
+      const c=sdCsv(l,delim);
+      if(!cols){if(c.every(x=>/^[A-Za-z_][\w .()#-]{0,40}$/.test(x)&&!/\d{5,}/.test(x))){cols=c;I.header=true;return}cols=c.map((x,i)=>'col'+(i+1))}
+      c.forEach((x,i)=>sdNote(S,cols[i]||'col'+(i+1),cols[i]||'',x));return;
+    }
+    if(I.fmt==='vcard'){
+      if(/^[ \t]/.test(l)){I.folded=(I.folded||0)+1;return}
+      const m=l.match(/^([\w.-]+)((?:;[^:]*)?):(.*)$/);if(!m){I.bad++;return}
+      const nm=m[1].toUpperCase().replace(/^ITEM\d+\./,'itemN.');
+      if(nm==='BEGIN'){vst.push(m[3].trim().toUpperCase());const p='/'+vst.join('/');I.el.set(p,(I.el.get(p)||0)+1);return}
+      if(nm==='END'){vst.pop();return}
+      const p='/'+vst.join('/')+'/'+nm;
+      if(m[2]){const ps=m[2].slice(1);sdNote(S,p+' ;params','params',/^[\w=;,.\-]{1,60}$/.test(ps)&&!/\d{5,}/.test(ps)?ps.toLowerCase():'<'+sdShape(ps,'')+'>')}
+      sdNote(S,p,nm,m[3]);return;
+    }
+    if(I.lines<=5000){const mk=l.slice(0,80).replace(/\p{L}/gu,'a').replace(/\d/g,'n');if(I.lineShapes.has(mk)||I.lineShapes.size<30)I.lineShapes.set(mk,(I.lineShapes.get(mk)||0)+1)}
+  };
+  for await(const ch of sdChunks(blob,I)){const s=carry+ch,ps=s.split('\n');carry=ps.pop();for(const l of ps)line(l.replace(/\r$/,''))}
+  if(carry)line(carry.replace(/\r$/,''));
+  if(I.fmt==='ndjson'&&I.lastBad&&!endsNl)I.cut=true;
+}
+function sdMeaning(F){
+  const k=F.key.replace(/^@/,'').toLowerCase(),m=SD_MEANING[k]||SD_MEANING[k.replace(/^_+/,'')];
+  if(m)return m;
+  const top=[...F.sh].sort((a,b)=>b[1]-a[1])[0],sh=top?top[0]:'';
+  if(/^several phone/.test(sh))return'(guess) everyone in a group chat';
+  if(/phone-like|digits \(phone/.test(sh))return'(guess) a phone number';
+  if(/date|milliseconds|seconds/.test(sh))return'(guess) a date and time';
+  if(/^base64/.test(sh))return'(guess) a file stored inside the text';
+  if(/^binary/.test(sh))return'(guess) a file stored in the database';
+  if(/mime/.test(sh))return'(guess) a file type';
+  if(/app id/.test(sh))return'(guess) the app that made it';
+  if(/uuid|hex/.test(sh))return'(guess) an id';
+  if(/true\/false/.test(sh))return'(guess) a yes/no setting';
+  if(/file name/.test(sh))return'(guess) a file name or location';
+  if(/^text \(.*words/.test(sh))return'(guess) free text: a message, name or note';
+  if(/small/.test(sh))return F.ds&&F.ds.size<=8?'(guess) a code with a few options':'(guess) a number or id';
+  return'';
+}
+function sdFieldsOut(S,out,h,where){
+  if(!S.f.size)return;
+  if(h)out.push('',h+' Fields');
+  out.push('','| Field | Found | Different values | What the values look like | Values seen | Length | Years | Probably means |','|---|---|---|---|---|---|---|---|');
+  let i=0;
+  for(const[p,F]of S.f){
+    if(SD&&F.ds&&(/(^|_)id$|^mid$|^thread$/i.test(F.key)||/file name|content:/.test([...F.sh.keys()].join())||/^(_data|data|path|file|fn|cl|src|filename|file_name|uri)$/i.test(F.key)))SD.refs.push({where:(where?where+' > ':'')+(p||'(top)'),F});
+    if(SD){const w=(where?where+' > ':'')+(p||'(top)');
+      if([...F.sh.keys()].some(k=>/^base64/.test(k)))sdFound('inline',w);
+      if(F.sec)sdFound('dateUnit','seconds in '+w);if(F.ms)sdFound('dateUnit','milliseconds in '+w);
+      if(F.sec&&F.ms)sdFound('dateMixed',w+' ('+F.sec+' in seconds, '+F.ms+' in milliseconds)');else if(F.sec||F.ms)sdOk('dateMixed');
+      if(F.future)sdFound('dateRange',F.future+' in '+w);else if(F.sec||F.ms)sdOk('dateRange');}
+    if(i++>=800){if(i===801)out.push('','…and '+(S.f.size-800)+' more fields.');continue}
+    const sh=[...F.sh].sort((a,b)=>b[1]-a[1]).map(([s,n])=>sdEsc(s)+(F.sh.size>1?' ×'+n.toLocaleString():'')).join('; ')+(F.shMore?'; …':'');
+    let vals='';
+    if(F.many)vals='many different';
+    else{const vs=[...F.vals].filter(([k,n])=>k[0]!=='"'||n>=2||k==='""').sort((a,b)=>b[1]-a[1]);vals=vs.slice(0,25).map(([k,n])=>'`'+sdEsc(k)+'` ×'+n.toLocaleString()).join(', ');if(F.priv&&vals)vals+=', and other values'}
+    let yrs=F.ymax?(F.ymin===F.ymax?String(F.ymin):F.ymin+' to '+F.ymax):'-';
+    if(F.ymax&&(F.up||F.down))yrs+=!F.down?', oldest first':!F.up?', newest first':', not in order';
+    const dif=F.ds?(F.dmany?'50,000+':F.ds.size.toLocaleString())+(F.ds.size===F.n&&F.n>1?' (all different)':''):'-';
+    out.push('| `'+sdEsc(p||'(top)')+'` | '+F.n.toLocaleString()+' | '+dif+' | '+sh+' | '+(vals||'-')+' | '+(F.lmax>=0?(F.lmin===F.lmax?F.lmin:F.lmin+' to '+F.lmax):'-')+' | '+yrs+' | '+sdEsc(sdMeaning(F)||'-')+' |');
+  }
+}
+function sdKnownOut(have,out,h){
+  const low=new Set([...have].map(x=>String(x).toLowerCase()));let best=null;
+  for(const[name,list]of SD_KNOWN){const hit=list.filter(k=>low.has(k.toLowerCase()));if(!best||hit.length>best.hit.length)best={name,list,hit}}
+  out.push('',h+' Closest known format','');
+  if(best.hit.length<3)out.push('None. The names here don\'t match any format the converter knows.');
+  else out.push(best.name+': '+best.hit.length+' of '+best.list.length+' names match.','',best.list.map(k=>'`'+k+'` '+(low.has(k.toLowerCase())?'found':'missing')).join(', '));
+}
+function sdLinksOut(out){
+  const L=new Set(),ids=SD.refs.filter(r=>/(^|_)id$|^mid$|^thread$/i.test(r.F.key)&&!r.F.dmany&&r.F.ds.size>=2);
+  for(const a of ids)for(const b of ids){
+    const box=r=>r.where.slice(0,r.where.lastIndexOf(' > '));
+    if(a===b||!/^_?id$/i.test(b.F.key)||/^_?id$/i.test(a.F.key)||box(a)===box(b))continue;
+    let hit=0;for(const x of a.F.ds)if(b.F.ds.has(x))hit++;
+    if(hit>=Math.max(2,a.F.ds.size*.9))L.add('`'+sdEsc(a.where)+'` points to `'+sdEsc(b.where)+'` ('+hit+' of '+a.F.ds.size+' values match)');
+  }
+  if(SD.files.size)for(const r of SD.refs){
+    let hit=0,tot=0;
+    for(const x of r.F.ds){tot++;const v=String(x).toLowerCase(),base=v.split(/[\/\\]/).pop();if(SD.files.has(v)||SD.files.has(base)||SD.files.has(v.replace(/^\/+/,'')))hit++}
+    if(hit&&hit<tot)sdFound('missing',(tot-hit)+' of '+tot+' names in '+r.where);else if(hit)sdOk('missing');
+    if(hit&&(hit>=3||hit===tot))L.add('`'+sdEsc(r.where)+'` names files inside the ZIP ('+hit+' of '+tot+' values match a file name)');
+  }
+  out.push('','## Links between files and fields','',L.size?'Fields whose values point to other records or to files:':'None found.');
+  for(const x of L)out.push('- '+x);
+}
+function sdTextOut(S,I,out,h){
+  const names={xml:'XML',json:'JSON (one document)',ndjson:'NDJSON (one JSON object per line)',csv:'CSV table',vcard:'vCard / vMessage style (BEGIN: … END:)',text:'plain text'};
+  const wh=I.where||'the file';
+  if(I.badUtf8)sdFound('utf8',wh);else sdOk('utf8');
+  if(I.nul)sdFound('nul',wh);else sdOk('nul');
+  if(I.crlf&&I.lf||I.cr&&(I.crlf||I.lf))sdFound('lineEnd',wh);else sdOk('lineEnd');
+  if(I.fmt==='xml'){I.ctrl?sdFound('ctrl',I.ctrl+' in '+wh):sdOk('ctrl');I.amp?sdFound('amp',I.amp+' in '+wh):sdOk('amp');I.mis?sdFound('xmlTags',I.mis+' in '+wh):sdOk('xmlTags');I.open?(sdFound('xmlEnd',I.open+' element'+(I.open>1?'s':'')+' never closed in '+wh),sdFound('cutEnd',wh)):(sdOk('xmlEnd'),sdOk('cutEnd'));I.bigText?sdFound('bigText',I.bigText+' in '+wh):sdOk('bigText')}
+  if(I.fmt==='json')I.badJson?sdFound('jsonOk',wh):sdOk('jsonOk');
+  if(I.fmt==='ndjson'){I.bad?sdFound('ndBad',I.bad+' line'+(I.bad>1?'s':'')+' in '+wh):sdOk('ndBad');I.cut?sdFound('cutEnd',wh):sdOk('cutEnd');I.dups?sdFound('dups',I.dups+' repeated line'+(I.dups>1?'s':'')+' in '+wh):sdOk('dups')}
+  sdOk('inline');
+  out.push('- Format: '+(names[I.fmt]||I.fmt));
+  if(I.files>1)out.push('- Files: '+I.files+', '+formatSize(I.bytes)+' together');
+  out.push('- Text encoding: '+(I.bom||'no BOM')+(I.badUtf8?', NOT valid UTF-8 (maybe another encoding)':', valid UTF-8')+(I.nul?', has zero bytes':''));
+  out.push('- Line endings: '+(I.crlf&&!I.lf?'CRLF (Windows)':I.lf&&!I.crlf?'LF':I.crlf&&I.lf?'mixed CRLF and LF':I.cr?'CR only':'no line breaks')+'; ends with a line break: '+(I.endNl===I.files?'yes':I.endNl?'some files':'no'));
+  if(I.lines)out.push('- Lines with content: '+I.lines.toLocaleString()+(I.blank?', empty lines: '+I.blank.toLocaleString():'')+(I.bad?', lines that could not be read: '+I.bad.toLocaleString():'')+(I.fmt==='ndjson'&&I.lines>200000?' (first 200,000 looked at)':''));
+  if(I.top)out.push('- Top level: '+I.top);
+  if(I.badJson)out.push('- '+I.badJson);
+  if(I.fmt==='csv')out.push('- Header row: '+(I.header?'yes':'no (columns named col1, col2, …)'));
+  if(I.folded)out.push('- Folded (continued) lines: '+I.folded);
+  if(I.fmt==='xml'){
+    out.push('- XML declaration: '+(I.decl?'`'+sdEsc(I.decl)+'`':'none'),'- Root element: `'+(I.root||'?')+'`, deepest nesting: '+(I.depth||0)+' levels','- Self-closing tags (`<x/>`): '+(I.selfClose||0)+', comments: '+(I.comments||0)+', CDATA blocks: '+(I.cdata||0));
+    if(I.doctype)out.push('- DOCTYPE: `'+sdEsc(I.doctype)+'`');
+    if(I.ents.size)out.push('- Escapes used in attributes: '+[...I.ents].map(([k,n])=>'`'+k+'` ×'+n.toLocaleString()).join(', '));
+    if(I.bigText)out.push('- Very long text inside elements (over 4 MB): '+I.bigText);
+  }
+  if(I.capped)out.push('- Only the first '+formatSize(I.cap)+' of each file was looked at.');
+  if(I.el.size){out.push('',h+' Elements','','| Element | Count |','|---|---|');let i=0;for(const[p,n]of I.el){if(i++>=300)break;out.push('| `'+sdEsc(p)+'` | '+n.toLocaleString()+' |')}}
+  const paths=[...S.k].map(([p,K])=>[p,K,[...K.values()].reduce((a,r)=>a+r.n,0)]).sort((a,b)=>b[2]-a[2]).slice(0,25);
+  if(paths.length){
+    out.push('',h+' Record layouts','','Each layout is one combination of fields, in the order they appear in the file. Every value is replaced by a description, except technical ones.');
+    for(const[p,K,tot]of paths){
+      const kinds=[...K.values()].sort((a,b)=>b.n-a.n);
+      out.push('',h+'# `'+sdEsc(p||(I.fmt==='ndjson'?'each line':'top level'))+'`: '+tot.toLocaleString()+' records, '+kinds.length+' layout'+(kinds.length>1?'s':''));
+      kinds.slice(0,8).forEach((r,i)=>{
+        const ex=typeof r.ex==='string'?r.ex:JSON.stringify(r.ex,null,2);
+        out.push('','Layout '+(i+1)+': '+r.n.toLocaleString()+' times'+(r.order.size>1?', fields come in '+r.order.size+(r.order.size>=5?' or more':'')+' different orders':''),'```'+(typeof r.ex==='string'?'xml':'json'),ex.length>6000?ex.slice(0,6000)+'\n…':ex,'```');
+        if(r.tv){const tv=[...r.tv].filter(([k,m])=>!m.many).map(([k,m])=>[k,[...m].filter(([x,n])=>x[0]!=='"'||n>=2).sort((a,b)=>b[1]-a[1])]).filter(([k,l])=>l.length).map(([k,l])=>'`'+sdEsc(k)+'`: '+l.map(([x,n])=>x+' ×'+n.toLocaleString()).join(', '));if(tv.length)out.push('Codes in this layout: '+tv.join('; '))}
+      });
+      if(kinds.length>8)out.push('','…and '+(kinds.length-8)+' more layouts.');
+    }
+  }
+  sdFieldsOut(S,out,h,I.where);
+  if(I.lineShapes.size){out.push('',h+' Line shapes','','Letters are shown as `a` and digits as `n`.','','```text');for(const[k,n]of[...I.lineShapes].sort((a,b)=>b[1]-a[1]).slice(0,30))out.push(k+'   (×'+n+')');out.push('```')}
+  if(/json|xml|vcard|csv/.test(I.fmt)){const have=new Set([...S.f.keys()].map(p=>p.split(/[.@\/]/).pop().replace(/\[\]|\s.*$/g,'').trim()));for(const p of I.el.keys())have.add(p.split('/').pop());sdKnownOut(have,out,h)}
+}
+async function sdPeek(blob,e,n){
+  try{
+    if(e.offset===undefined||e.encrypted)return null;
+    const lh=new DataView(await blob.slice(e.offset,e.offset+30).arrayBuffer());
+    if(lh.byteLength<30||lh.getUint32(0,true)!==0x04034b50)return null;
+    const start=e.offset+30+lh.getUint16(26,true)+lh.getUint16(28,true),m=lh.getUint16(8,true),raw=blob.slice(start,start+Math.min(e.compressedSize||65536,65536));
+    if(m===0)return new Uint8Array(await raw.slice(0,n).arrayBuffer());
+    if(m!==8)return null;
+    const r=raw.stream().pipeThrough(new DecompressionStream('deflate-raw')).getReader();let out=new Uint8Array(0);
+    try{while(out.length<n){const{done,value}=await r.read();if(done)break;const t=new Uint8Array(out.length+value.length);t.set(out);t.set(value,out.length);out=t}}catch(x){}
+    r.cancel().catch(()=>{});
+    return out.length?out.slice(0,n):null;
+  }catch(x){return null}
+}
+async function sdZipTech(blob){
+  const tl=Math.min(blob.size,66000),tail=new Uint8Array(await blob.slice(blob.size-tl).arrayBuffer()),dv=new DataView(tail.buffer);
+  let e=-1;for(let i=tail.length-22;i>=0;i--)if(dv.getUint32(i,true)===0x06054b50){e=i;break}
+  if(e<0)return{eocd:false};
+  const cl=dv.getUint16(e+20,true),T={eocd:true,total:dv.getUint16(e+10,true),cdSize:dv.getUint32(e+12,true),cdOff:dv.getUint32(e+16,true),comment:new TextDecoder().decode(tail.subarray(e+22,e+22+cl)),tailBytes:tail.length-(e+22+cl),zip64:false};
+  if(e>=20&&dv.getUint32(e-20,true)===0x07064b50){
+    T.zip64=true;const o=Number(dv.getBigUint64(e-12,true)),z=new DataView(await blob.slice(o,o+56).arrayBuffer());
+    if(z.byteLength===56&&z.getUint32(0,true)===0x06064b50){T.total=Number(z.getBigUint64(32,true));T.cdSize=Number(z.getBigUint64(40,true));T.cdOff=Number(z.getBigUint64(48,true))}
+  }
+  if(T.cdSize>32*1024*1024)return T;
+  const cd=new Uint8Array(await blob.slice(T.cdOff,T.cdOff+T.cdSize).arrayBuffer()),c=new DataView(cd.buffer);T.items=[];
+  for(let p=0;p+46<=cd.length&&c.getUint32(p,true)===0x02014b50&&T.items.length<100000;){
+    const nl=c.getUint16(p+28,true),xl=c.getUint16(p+30,true),kl=c.getUint16(p+32,true),extra=[],d=c.getUint16(p+14,true),t=c.getUint16(p+12,true);
+    for(let q=p+46+nl;q+4<=Math.min(cd.length,p+46+nl+xl);q+=4+c.getUint16(q+2,true))extra.push(c.getUint16(q,true));
+    T.items.push({made:c.getUint16(p+4,true),need:c.getUint16(p+6,true),flags:c.getUint16(p+8,true),method:c.getUint16(p+10,true),ext:c.getUint32(p+38,true),lho:c.getUint32(p+42,true),extra,
+      dt:d?((d>>9)+1980)+'-'+String(d>>5&15).padStart(2,'0')+'-'+String(d&31).padStart(2,'0')+' '+String(t>>11).padStart(2,'0')+':'+String(t>>5&63).padStart(2,'0'):''});
+    p+=46+nl+xl+kl;
+  }
+  return T;
+}
+function sdEntropy(b){const c=new Array(256).fill(0);for(const x of b)c[x]++;let e=0;for(const n of c)if(n){const p=n/b.length;e-=p*Math.log2(p)}return e}
+async function sdBinOut(blob,out){
+  const es=[];
+  for(const p of new Set([0,.25,.5,.75,1].map(x=>Math.max(0,Math.min(blob.size-65536,Math.floor(blob.size*x))))))es.push(sdEntropy(new Uint8Array(await blob.slice(p,p+65536).arrayBuffer())));
+  out.push('- Randomness (8 = completely random) at the start, 1/4, 1/2, 3/4 and end: '+es.map(e=>e.toFixed(2)).join(', ')+(es.every(e=>e>7.9)?'. Looks encrypted or compressed all the way through.':es.every(e=>e<6)?'. Not encrypted or compressed.':''));
+  const first=new Map();SD_SIGS.forEach((s,i)=>{const l=first.get(s[1][0])||[];l.push(i);first.set(s[1][0],l)});
+  const found=SD_SIGS.map(()=>({n:0,at:-1})),zipNames=[],CH=8<<20;
+  for(let off=0;off<blob.size;off+=CH-16){
+    const b=new Uint8Array(await blob.slice(off,Math.min(blob.size,off+CH)).arrayBuffer()),lim=off+CH>=blob.size?b.length:b.length-16;
+    for(let i=0;i<lim;i++){const l=first.get(b[i]);if(!l)continue;for(const s of l){const q=SD_SIGS[s][1];let j=1;while(j<q.length&&b[i+j]===q[j])j++;if(j<q.length)continue;found[s].n++;if(found[s].at<0)found[s].at=off+i;
+      if(s===0&&zipNames.length<100&&i+30<b.length){const nl=b[i+26]|b[i+27]<<8;if(nl&&nl<300&&i+30+nl<=b.length){const nm=new TextDecoder().decode(b.subarray(i+30,i+30+nl));if(/^[\x20-\x7e]+$/.test(nm))zipNames.push(sdPattern(nm)+' at byte '+(off+i))}}}}
+    showProgress('Looking through the file…',Math.min(99,Math.round(off/blob.size*100)));await tick();
+  }
+  const f=SD_SIGS.map((s,i)=>found[i].n?s[0]+' ×'+found[i].n.toLocaleString()+' (first at byte '+found[i].at.toLocaleString()+')':'').filter(Boolean);
+  if(es.every(e=>e>7.9)&&!found[0].n&&!found[6].n)sdFound('encrypted','the data looks random all the way through');else sdOk('encrypted');
+  out.push('- Known pieces found inside: '+(f.length?f.join('; '):'none'));
+  if(zipNames.length)out.push('','ZIP pieces found in the bytes:','','```text',...zipNames,'```');
+}
+async function sdSqlite(blob,out,h){
+  const CH=1<<22,cache=new Map();
+  const bytes=async(off,len)=>{const r=new Uint8Array(len);let got=0;while(got<len){const ci=Math.floor((off+got)/CH);let c=cache.get(ci);if(!c){c=new Uint8Array(await blob.slice(ci*CH,Math.min(blob.size,(ci+1)*CH)).arrayBuffer());cache.set(ci,c);if(cache.size>40)cache.delete(cache.keys().next().value)}const st=off+got-ci*CH,n=Math.min(len-got,c.length-st);if(n<=0)break;r.set(c.subarray(st,st+n),got);got+=n}return r};
+  const hd=await bytes(0,100),hv=new DataView(hd.buffer);
+  let ps=hv.getUint16(16);if(ps===1)ps=65536;
+  const U=ps-hd[20],enc=hv.getUint32(56),maxPage=Math.ceil(blob.size/ps),page=n=>bytes((n-1)*ps,ps);
+  const td=new TextDecoder(enc===2?'utf-16le':enc===3?'utf-16be':'utf-8');
+  const varint=(b,i)=>{let v=0;for(let k=0;k<8;k++){const x=b[i+k];v=v*128+(x&127);if(x<128)return[v,i+k+1]}return[v*256+b[i+8],i+9]};
+  const payload=async(pg,ci,P,table)=>{
+    const X=table?U-35:Math.floor((U-12)*64/255)-23;
+    if(P<=X)return pg.subarray(ci,ci+P);
+    const M=Math.floor((U-12)*32/255)-23,K=M+((P-M)%(U-4)),loc=K<=X?K:M,r=new Uint8Array(P);
+    r.set(pg.subarray(ci,ci+loc));let got=loc,ov=new DataView(pg.buffer).getUint32(ci+loc),guard=0;
+    while(got<P&&ov&&ov<=maxPage&&guard++<1e5){const o=await page(ov),n=Math.min(P-got,U-4);r.set(o.subarray(4,4+n),got);got+=n;ov=new DataView(o.buffer).getUint32(0)}
+    return r;
+  };
+  const record=b=>{
+    let[hs,i]=varint(b,0);const types=[],vals=[],dv=new DataView(b.buffer,b.byteOffset,b.byteLength);
+    while(i<hs){const[t,j]=varint(b,i);types.push(t);i=j}
+    let p=hs;
+    for(const t of types){
+      if(t===0)vals.push(null);
+      else if(t<=6){const L=[0,1,2,3,4,6,8][t];let v=0;if(t===6)v=Number(dv.getBigInt64(p));else{for(let k=0;k<L;k++)v=v*256+b[p+k];if(b[p]&128)v-=Math.pow(2,8*L)}vals.push(v);p+=L}
+      else if(t===7){vals.push(dv.getFloat64(p));p+=8}
+      else if(t===8||t===9)vals.push(t-8);
+      else if(t>=12&&t%2===0){const L=(t-12)/2;vals.push(b.slice(p,p+L));p+=L}
+      else if(t>=13){const L=(t-13)/2;vals.push(td.decode(b.subarray(p,p+L)));p+=L}
+      else vals.push(null);
+    }
+    return vals;
+  };
+  const walk=async(root,limit,cb)=>{
+    let count=0,seen=0;const stack=[root],visited=new Set();
+    while(stack.length){
+      const n=stack.pop();if(visited.has(n)||n<1||n>maxPage)continue;visited.add(n);
+      const pg=await page(n),o=n===1?100:0,t=pg[o],dv=new DataView(pg.buffer),cells=dv.getUint16(o+3),hl=t===2||t===5?12:8;
+      if(t===2||t===5){
+        const kids=[];
+        for(let c=0;c<cells;c++){const co=dv.getUint16(o+hl+c*2);kids.push(dv.getUint32(co));if(t===2){count++;if(seen<limit){const[P,i]=varint(pg,co+4);try{cb(record(await payload(pg,i,P,false)),null);seen++}catch(e){}}}}
+        kids.push(dv.getUint32(o+8));for(let k=kids.length-1;k>=0;k--)stack.push(kids[k]);
+      }else if(t===10||t===13){
+        count+=cells;
+        for(let c=0;c<cells&&seen<limit;c++){const co=dv.getUint16(o+hl+c*2);let[P,i]=varint(pg,co),rid=null;if(t===13)[rid,i]=varint(pg,i);try{cb(record(await payload(pg,i,P,t===13)),rid);seen++}catch(e){}}
+      }
+      if(visited.size%300===0){showProgress('Reading the database…',Math.min(99,Math.round(visited.size/maxPage*100)));await tick()}
+    }
+    return count;
+  };
+  sdOk('wal');const v=hv.getUint32(96);
+  out.push('| | |','|---|---|','| Page size | '+ps+' bytes |','| Pages | '+hv.getUint32(28).toLocaleString()+' (file has room for '+maxPage.toLocaleString()+') |','| Text encoding | '+({1:'UTF-8',2:'UTF-16 LE',3:'UTF-16 BE'}[enc]||enc)+' |','| Journal mode | '+(hd[18]===2?'WAL':'rollback (normal)')+' |','| user_version | '+hv.getUint32(60)+' |','| application_id | '+hv.getUint32(68)+' |','| Free pages | '+hv.getUint32(36).toLocaleString()+' |','| Made with SQLite | '+Math.floor(v/1e6)+'.'+Math.floor(v/1e3)%1000+'.'+v%1000+' |');
+  const master=[];await walk(1,1e5,r=>master.push(r));
+  out.push('',h+'# Schema','','```sql');for(const m of master)if(m[4])out.push(String(m[4]).trim()+';');out.push('```');
+  const sum=[],detail=[];
+  for(const m of master.filter(x=>x[0]==='table'&&x[3]>0)){
+    const sql=String(m[4]||''),wr=/without\s+rowid/i.test(sql),a=sql.indexOf('('),b=sql.lastIndexOf(')'),parts=[];
+    let dpt=0,cur='',q=null;
+    for(const ch of a>=0&&b>a?sql.slice(a+1,b):''){if(q){cur+=ch;if(ch===q)q=null;continue}if('"\'`['.includes(ch)){q=ch==='['?']':ch;cur+=ch;continue}if(ch==='(')dpt++;if(ch===')')dpt--;if(ch===','&&!dpt){parts.push(cur);cur=''}else cur+=ch}
+    parts.push(cur);
+    const cols=parts.map(s=>s.trim()).filter(s=>s&&!/^(primary|unique|check|foreign|constraint)\b/i.test(s)).map(s=>{const x=s.match(/^(?:"([^"]+)"|`([^`]+)`|\[([^\]]+)\]|'([^']+)'|(\S+))\s*([\s\S]*)$/);return{name:x[1]||x[2]||x[3]||x[4]||x[5],def:x[6]||''}});
+    const alias=wr?-1:cols.findIndex(c=>/^integer\s+primary\s+key/i.test(c.def.trim())),S=sdNewS();
+    const n=await walk(m[3],3000,(vals,rid)=>vals.forEach((x,k)=>{const c=wr||!cols[k]?'col'+(k+1):cols[k].name;sdWalk(k===alias&&x===null?rid:x,c,c,S,0)}));
+    sum.push('| `'+sdEsc(m[1])+'` | '+n.toLocaleString()+' | '+cols.length+' |');
+    detail.push([['',h+'# Table `'+sdEsc(m[1])+'`: '+n.toLocaleString()+' rows'+(n>3000?' (first 3,000 looked at)':'')],S,m[1]]);
+  }
+  out.push('',h+'# Tables','','| Table | Rows | Columns |','|---|---|---|',...sum);
+  for(const[lines,S,tn]of detail){out.push(...lines);sdFieldsOut(S,out,null,(SD&&SD.cur?SD.cur+' > ':'')+'table '+tn)}
+  const have=new Set();for(const m of master){if(m[1])have.add(String(m[1]));for(const x of String(m[4]||'').match(/[A-Za-z_]\w*/g)||[])have.add(x)}
+  sdKnownOut(have,out,h+'#');
+}
+async function sdZip(blob,label,out,depth){
+  const H='#'.repeat(Math.min(depth+2,4)),T=await sdZipTech(blob);
+  out.push('',H+' ZIP details'+(depth?' of `'+sdEsc(label)+'`':''),'');
+  let entries;
+  try{entries=await new zip.ZipReader(new zip.BlobReader(blob)).getEntries()}catch(e){out.push('Could not open it as a ZIP ('+sdEsc(e.message)+'). Looked at the bytes instead:','');sdFound('zipEnd','could not be opened as a ZIP');await sdBinOut(blob,out);return}
+  const words=new Map();for(const e of entries)for(const w of new Set(e.filename.toLowerCase().match(/\p{L}+/gu)||[]))words.set(w,(words.get(w)||0)+1);
+  const rep=new Set([...words].filter(x=>x[1]>=5).map(x=>x[0])),dirs=entries.filter(e=>e.directory).length;
+  if(SD)for(const e of entries)if(!e.directory){const f=e.filename.toLowerCase(),b=f.split('/').pop();SD.files.add(f);SD.files.add(b);SD.files.add(b.replace(/\.[a-z0-9]+$/,''))}
+  out.push('- Files inside: '+(entries.length-dirs).toLocaleString()+(dirs?', folders: '+dirs:''));
+  if(T.eocd)sdOk('zipEnd');else sdFound('zipEnd',label);
+  {const nm=new Set();let dup=0,emp=0;for(const e of entries){if(e.directory)continue;if(nm.has(e.filename))dup++;nm.add(e.filename);if(!e.uncompressedSize)emp++}
+   dup?sdFound('zipDup',dup+' in '+label):sdOk('zipDup');emp?sdFound('zipEmpty',emp+' in '+label):sdOk('zipEmpty');entries.some(e=>e.encrypted)?sdFound('zipEnc',label):sdOk('zipEnc')}
+  if(!T.eocd)out.push('- End-of-ZIP directory NOT found: the file may be cut short');
+  else{
+    out.push('- ZIP comment: '+(T.comment?'`'+sdEsc(T.comment.replace(/\d{5,}/g,'#').slice(0,200))+'`':'none'),'- Zip64 (for big files): '+(T.zip64?'yes':'no'),'- Central directory: '+sdSize(T.cdSize)+' at byte '+T.cdOff.toLocaleString()+(T.tailBytes?', '+T.tailBytes+' extra bytes after the end':''));
+    if(T.items&&T.items.length){
+      const os={0:'Windows/DOS',3:'Unix/Android',10:'Windows NTFS',19:'macOS'},cnt=f=>{const m=new Map();for(const it of T.items){const k=f(it);m.set(k,(m.get(k)||0)+1)}return[...m].slice(0,12).map(([k,n])=>k+(m.size>1?' ×'+n.toLocaleString():'')).join(', ')};
+      out.push('- Made by: '+cnt(it=>(os[it.made>>8]||'system '+(it.made>>8))+', zip version '+(it.made&255)/10),'- Version needed to open: '+cnt(it=>it.need/10),
+        '- Compression: '+cnt(it=>({0:'stored (not compressed)',8:'deflate',9:'deflate64',12:'bzip2',14:'lzma',93:'zstd',99:'AES encrypted'})[it.method]||'method '+it.method),
+        '- Flags: '+cnt(it=>[it.flags&1?'encrypted':'',it.flags&8?'sizes written after the data (streamed)':'',it.flags&2048?'UTF-8 names':''].filter(Boolean).join(' + ')||'none'),
+        '- Extra fields: '+cnt(it=>it.extra.map(x=>SD_EXTRA[x]||'0x'+x.toString(16).padStart(4,'0')).join(' + ')||'none'),
+        '- File permissions: '+cnt(it=>it.made>>8===3&&it.ext>>>16?((it.ext>>>16)&0o7777).toString(8):'not set'));
+      const ds=T.items.map(it=>it.dt).filter(Boolean).sort();
+      out.push('- Modified times (as written in the ZIP): '+(ds.length?ds[0]===ds[ds.length-1]?ds[0]+' (all the same)':ds[0]+' to '+ds[ds.length-1]:'none'));
+      const first=Math.min(...T.items.map(it=>it.lho));if(first>0)out.push('- '+first.toLocaleString()+' bytes before the first file (something is glued in front of the ZIP)');
+      const fl=T.items.filter(it=>!/\/$/.test(it.name));
+      if(fl.length&&fl.every(it=>it.made>>8===0&&!it.extra.length&&!it.ext&&it.flags&2048))out.push('- Probably written by: Java / Android ZipOutputStream (usual for Android apps)');
+      else if(fl.some(it=>it.extra.includes(0x5455))&&fl.some(it=>it.extra.includes(0x7875)))out.push('- Probably written by: an Info-ZIP style tool (the zip command)');
+    }
+  }
+  const rows=[];let k=0;
+  for(const e of entries){
+    if(++k%50===0){showProgress('Describing '+label+': '+k.toLocaleString()+' of '+entries.length.toLocaleString(),Math.round(k/entries.length*100));await tick()}
+    let kind='folder';
+    if(!e.directory){
+      let b=k<=5000?await sdPeek(blob,e,64):null;
+      if(!b&&k<=5000&&!e.encrypted&&e.uncompressedSize<=16e6){try{b=new Uint8Array(await (await e.getData(new zip.BlobWriter())).slice(0,64).arrayBuffer())}catch(x){}}
+      kind=b?sdMagicName(b)||'binary (unknown type)':e.encrypted?'encrypted':'not checked';
+    }
+    rows.push({e,kind,pat:sdPattern(e.filename,rep),ext:(e.filename.match(/\.([a-z0-9]{1,7})$/i)||['',''])[1].toLowerCase()});
+  }
+  {const EX={zip:/ZIP/,jpg:/JPEG/,jpeg:/JPEG/,png:/PNG/,gif:/GIF/,mp4:/MP4|3GP/,'3gp':/3GP|MP4/,m4a:/M4A|MP4/,amr:/AMR/,xml:/XML|text/,json:/JSON|text/,ndjson:/JSON|text/,pdf:/PDF/,db:/SQLite/,vcf:/vCard|text/};let mm=0,ne=0,zz=0;
+   for(const r of rows){if(r.e.directory||r.kind==='not checked')continue;if(EX[r.ext]&&!EX[r.ext].test(r.kind)){mm++;sdFound('extMismatch',r.pat+' is really '+r.kind)}if(!r.ext&&/picture|audio|video|voice/.test(r.kind))ne++;if(r.kind==='ZIP')zz++;if(/-wal$/i.test(r.e.filename)&&r.e.uncompressedSize)sdFound('wal',r.pat)}
+   if(!mm)sdOk('extMismatch');ne?sdFound('noExt',ne+' file'+(ne>1?'s':'')+' in '+label):sdOk('noExt');zz?sdFound('zipInZip',zz+' in '+label):sdOk('zipInZip')}
+  out.push('',H+'# Files inside','');
+  if(rows.length<=150){out.push('| # | Name (pattern) | Size | Compressed | What it is |','|---|---|---|---|---|');rows.forEach((r,i)=>out.push('| '+(i+1)+' | `'+sdEsc(r.pat)+'` | '+sdSize(r.e.uncompressedSize)+' | '+sdSize(r.e.compressedSize)+' | '+sdEsc(r.kind)+' |'))}
+  else{
+    const g=new Map();for(const r of rows){const key=r.pat+'|'+r.kind;let x=g.get(key);if(!x){x={pat:r.pat,kind:r.kind,n:0,tot:0,min:Infinity,max:0};g.set(key,x)}x.n++;x.tot+=r.e.uncompressedSize||0;x.min=Math.min(x.min,r.e.uncompressedSize||0);x.max=Math.max(x.max,r.e.uncompressedSize||0)}
+    out.push('Grouped by name pattern, in the order they first appear:','','| Name (pattern) | What it is | Files | Total size | Smallest | Biggest |','|---|---|---|---|---|---|');
+    let i=0;for(const x of g.values()){if(i++>=300)break;out.push('| `'+sdEsc(x.pat)+'` | '+sdEsc(x.kind)+' | '+x.n.toLocaleString()+' | '+formatSize(x.tot)+' | '+sdSize(x.min)+' | '+sdSize(x.max)+' |')}
+  }
+  out.push('','In name patterns `#` is a digit, `{uuid}` and `{hex N}` are ids, and `{word}` is a word that might be private, so it was hidden.');
+  const groups=new Map();let deep=0;
+  for(const r of rows){
+    if(r.e.directory)continue;
+    const textish=/text|JSON|XML/.test(r.kind)||(AN_TEXT_EXT.includes(r.ext)&&!/picture|audio|video|ZIP|SQLite|PDF|binary/.test(r.kind));
+    const type=r.kind==='ZIP'&&depth<3?'zip':/^SQLite database/.test(r.kind)?'sqlite':r.kind==='GZIP'&&depth<3?'gzip':textish?'text':null;
+    if(!type)continue;
+    const key=type==='text'?'t|'+r.pat.replace(/#+/g,'#')+'|'+r.kind.split(' ')[0]:r.e.filename;
+    let G=groups.get(key);if(!G){if(type!=='text'&&deep++>=10)continue;G={type,pat:r.pat,list:[]};groups.set(key,G)}G.list.push(r);
+  }
+  for(const G of groups.values()){
+    const n=G.list.length,take=G.list.slice(0,300);if(SD)SD.cur=G.pat;
+    out.push('',H+'# `'+sdEsc(G.pat)+'`'+(n>1?' ('+n.toLocaleString()+' files like this'+(n>take.length?', first '+take.length+' looked at':'')+')':''),'');
+    if(G.type==='text'){
+      const S=sdNewS(),I=sdNewI(G.list[0].ext);I.where=G.pat;
+      for(const r of take){showProgress('Describing '+G.pat,50);try{await sdTextInto(await r.e.getData(new zip.BlobWriter()),S,I)}catch(x){out.push('- Could not unpack one file: '+sdEsc(x.message))}}
+      if(I.files)sdTextOut(S,I,out,H+'##');
+      continue;
+    }
+    let data;try{data=await G.list[0].e.getData(new zip.BlobWriter())}catch(x){out.push('Could not unpack it: '+sdEsc(x.message));continue}
+    if(G.type==='zip'){out.push('A ZIP inside the ZIP.');await sdZip(data,G.pat,out,depth+1)}
+    else if(G.type==='sqlite'){out.push('SQLite database:','');await sdSqlite(data,out,H+'#')}
+    else await sdDescribe(data,G.pat,'GZIP',out,depth+1);
+  }
+}
+async function sdDescribe(blob,label,kind,out,depth){
+  const H='#'.repeat(Math.min(depth+2,4)),ext=(label.match(/\.([a-z0-9]{1,7})$/i)||['',''])[1];
+  if(kind==='ZIP')return sdZip(blob,label,out,depth);
+  if(/^SQLite database/.test(kind)){out.push('',H+' SQLite database','');return sdSqlite(blob,out,H)}
+  if(kind==='GZIP'&&depth<3){
+    try{const u=await new Response(blob.stream().pipeThrough(new DecompressionStream('gzip'))).blob();out.push('','GZIP-packed, unpacked size '+sdSize(u.size)+'.');return sdDescribe(u,label+' (unpacked)',sdMagicName(new Uint8Array(await u.slice(0,64).arrayBuffer()))||'binary (unknown type)',out,depth+1)}
+    catch(e){out.push('','Could not unpack the GZIP: '+sdEsc(e.message))}
+  }
+  if(/text|JSON|XML|vCard/.test(kind)){out.push('',H+' Text content','');const S=sdNewS(),I=sdNewI(ext);I.where=label;await sdTextInto(blob,S,I);sdTextOut(S,I,out,H+'#');return}
+  out.push('',H+' Binary content','');await sdBinOut(blob,out);
+}
+async function generateStructureMd(file,brand){
+  log('Writing the file description (no private data)…');
+  SD={refs:[],files:new Set(),cur:'',chk:new Map(),phones:new Map()};
+  const out=[],head=new Uint8Array(await file.slice(0,64).arrayBuffer()),kind=sdMagicName(head)||'binary (unknown type)',pat=sdPattern(file.name,null,true);
+  const logText=(logBox.textContent||'').split(file.name).join(pat).replace(/[\w.+-]+@[\w.-]+\.\w{2,}/g,'<email>').replace(/\+?\d[\d ().-]{6,}\d/g,m=>m.replace(/\d/g,'#')).replace(/\d{5,}/g,m=>'#'.repeat(m.length)).trim();
+  out.push('# Backup file description','','Made by Kosher Phone SMS Converter '+(($('verSpan')||{}).textContent||'')+' on '+new Date().toISOString().slice(0,10)+'.','',
+    'This only describes how the backup is built. It has no messages, phone numbers, names or pictures. Every value is replaced by a description of what it looks like, for example `phone-like +nnnnnnnnnnn` (n is a digit) or `text (words, emoji)`. Only technical values are shown as they are, like small numbers, file types and app ids.','',
+    '## Summary','','| | |','|---|---|','| Phone | '+sdEsc(brand||'-')+' |','| File name (pattern) | `'+sdEsc(pat)+'` |','| Size | '+sdSize(file.size)+' |','| First bytes | `'+[...head.subarray(0,16)].map(b=>b.toString(16).padStart(2,'0')).join(' ')+'` |','| What it is | '+sdEsc(kind)+' |','',
+    '## What the converter did','','```text',logText,'```');
+  const at=out.length;
+  await sdDescribe(file,pat,kind,out,0);
+  sdLinksOut(out);sdPhonesChk();out.splice(at,0,...sdChecksOut());SD=null;
+  out.push('','## Privacy','','This file was made in your browser and nothing was uploaded. You can read all of it before you send it.');
+  progressEl.style.display='none';
+  return out.join('\n')+'\n';
+}
 function downloadReport(report,origName){
   progressEl.style.display='none';
-  errorBox.innerHTML='<b>This phone format is not supported yet.</b><br><br>Help us add support! We\'ll create an anonymized copy of your file: <b>all messages, phone numbers, names, pictures and contacts are replaced with fake data</b>. Chats stay grouped the same way, so we can see what went wrong. No private information is included.<br><br>This is <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener">open source</a>, so you can verify exactly what gets changed in the code.<br><br><input id="phoneBrandInput" type="text" class="report-input" placeholder="Phone brand (e.g. Tak S7, Kosher XL...)"><input id="userEmailInput" type="email" class="report-input" placeholder="Your email (so we can let you know when it\'s supported)"><br><button id="anonBtn" class="report-btn" style="background:#4f46e5">Anonymize &amp; Download</button><div id="anonInstructions" style="display:none;margin-top:14px;padding:12px 16px;border-radius:8px;background:#ecfdf5;color:#065f46;font-size:.85rem;line-height:1.6"><b>Almost done!</b><ol style="margin:8px 0 0 16px;padding:0"><li>Open <a href="https://drive.google.com" target="_blank" rel="noopener">Google Drive</a></li><li>Upload the anonymized file you just downloaded</li><li>Right-click the file → Share</li><li>Share with <b>pythonivelt@gmail.com</b></li></ol><br>Thanks for helping us add support for your phone!</div>';
+  errorBox.innerHTML='<b>This phone format is not supported yet.</b><br><br>Help us add support! Send us one of these:<br><br><b>1. File description (best to start with).</b> A small text file that describes how your backup is built: the files inside, the field names, and what kind of values they hold. It has <b>no messages, phone numbers, names or pictures</b>, and you can open it and read it before you send it.<br><br><b>2. Anonymized copy.</b> Your whole backup, with all messages, phone numbers, names, pictures and contacts replaced with fake data. Chats stay grouped the same way. We might ask for this if the description isn\'t enough.<br><br>This is <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener">open source</a>, so you can verify exactly what gets changed in the code.<br><br><input id="phoneBrandInput" type="text" class="report-input" placeholder="Phone brand (e.g. Tak S7, Kosher XL...)"><input id="userEmailInput" type="email" class="report-input" placeholder="Your email (so we can let you know when it\'s supported)"><br><button id="mdBtn" class="report-btn" style="background:#4f46e5">Download file description</button> <button id="anonBtn" class="report-btn" style="background:#6b7280">Anonymize &amp; Download</button><div id="mdInstructions" style="display:none;margin-top:14px;padding:12px 16px;border-radius:8px;background:#ecfdf5;color:#065f46;font-size:.85rem;line-height:1.6"><b>Almost done!</b> Email the file you just downloaded to <b>pythonivelt@gmail.com</b>. It\'s small, so email works fine. You can open it first to see exactly what\'s inside.</div><div id="anonInstructions" style="display:none;margin-top:14px;padding:12px 16px;border-radius:8px;background:#ecfdf5;color:#065f46;font-size:.85rem;line-height:1.6"><b>Almost done!</b><ol style="margin:8px 0 0 16px;padding:0"><li>Open <a href="https://drive.google.com" target="_blank" rel="noopener">Google Drive</a></li><li>Upload the anonymized file you just downloaded</li><li>Right-click the file → Share</li><li>Share with <b>pythonivelt@gmail.com</b></li></ol><br>Thanks for helping us add support for your phone!</div>';
   errorBox.style.display='block';scanBtn.style.display='';scanBtn.disabled=false;cancelBtn.style.display='none';
+  let sent=false;
+  $('mdBtn').onclick=async function(){
+    const brand=($('phoneBrandInput').value||'').trim();
+    if(!brand){$('phoneBrandInput').style.border='2px solid red';$('phoneBrandInput').focus();return}
+    report.phoneBrand=brand;
+    const email=($('userEmailInput').value||'').trim();
+    if(email)report.userEmail=email;
+    this.textContent='Writing…';this.disabled=true;
+    try{
+      if(!sent){sent=true;fetch(GAS_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(report)}).catch(()=>{})}
+      const md=await generateStructureMd(selectedFile,brand),url=URL.createObjectURL(new Blob([md],{type:'text/markdown'})),a=document.createElement('a');
+      a.href=url;a.download='file-description-'+origName.replace(/\.[^.]+$/,'')+'.md';a.click();setTimeout(()=>URL.revokeObjectURL(url),2000);
+      this.textContent='Downloaded!';this.style.background='#16a34a';this.disabled=false;
+      $('mdInstructions').style.display='block';
+      log('File description downloaded ('+formatSize(md.length)+'). Thank you!','ok');
+    }catch(e){this.textContent='Failed';this.style.background='#dc2626';this.disabled=false;progressEl.style.display='none';log('File description failed: '+e.message,'err');console.error(e)}
+  };
   $('anonBtn').onclick=async function(){
     const brand=($('phoneBrandInput').value||'').trim();
     if(!brand){$('phoneBrandInput').style.border='2px solid red';$('phoneBrandInput').focus();return}
@@ -1271,7 +1926,7 @@ function downloadReport(report,origName){
     this.textContent='Anonymizing…';this.disabled=true;
     try{
       // Send structure report
-      await fetch(GAS_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(report)});
+      if(!sent){sent=true;await fetch(GAS_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(report)})}
       // Generate anonymized ZIP
       const anonBlob=await generateAnonymizedZip(window._lastUnknownEntries||[],selectedFile,origName);
       if(anonBlob){
@@ -1575,7 +2230,7 @@ async function scan(){
     showProgress('Opening file…',10);await tick();
     const head=new Uint8Array(await selectedFile.slice(0,4096).arrayBuffer());
     const isZip=(head[0]===0x50&&head[1]===0x4B)||selectedFile.name.toLowerCase().endsWith('.zip');
-    let messages,attachMap,fmt,pdfCount=0,pdfSize=0,pomLegacy=false,figIV=false;
+    let messages,attachMap,fmt,pdfCount=0,pdfSize=0,pomLegacy=false,figIV=false,zipEntries=null;
 
     if(isZip){
       let entries;
@@ -1612,7 +2267,7 @@ async function scan(){
         const hasMmsAttach=entries.some(e=>e.filename.startsWith('mms_attachments/'));
         const hasBuggyConv=entries.some(e=>/^conversations\/conv_\d+$/.test(e.filename));
 
-        log('ZIP contains '+entries.length+' entries');
+        zipEntries=entries;log('ZIP contains '+entries.length+' entries');
         if(hasNdjson){
           fmt='fig';log('Detected Fig format (NDJSON)','ok');
           try{
@@ -1669,9 +2324,15 @@ async function scan(){
       log('Detected SMS Backup & Restore XML','ok');
       fmt='smsbackup';
       ({messages,attachMap,pdfCount,pdfSize}=await parseSmsBackupXmlStream(selectedFile));
-      if(!messages.length){log('No messages found in this XML, generating structure report…','warn');await generateRawStructureReport(selectedFile);return}
     }
 
+    // looked like a known backup but nothing came out (e.g. Keyphone .kpb has a small .ndjson): treat as not supported
+    if(!messages.length){
+      log('No messages found, generating structure report…','warn');
+      if(zipEntries){window._lastUnknownEntries=zipEntries;await generateStructureReport(zipEntries,selectedFile.name)}
+      else await generateRawStructureReport(selectedFile);
+      return;
+    }
     if(MERGE.on&&MERGE.old){
       // merge: keep ALL old-backup messages; from the new backup keep only what's newer than the old backup's last message
       const nd=d=>{const n=parseInt(d,10)||0;return n<1e12?n*1000:n};
