@@ -673,7 +673,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')setMenu(fals
 </section>
 
 <footer class="site-footer">
-  <p><span id="verSpan">v1.1.9</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
+  <p><span id="verSpan">v1.1.10</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
   <p style="margin-top:6px">Free and open source · Nothing gets uploaded</p>
 </footer>
 
@@ -1573,7 +1573,8 @@ async function scan(){
     clearLog();_scanStart=Date.now();
     log('Scanning '+selectedFile.name+' ('+formatSize(selectedFile.size)+')');
     showProgress('Opening file…',10);await tick();
-    const isZip=selectedFile.name.toLowerCase().endsWith('.zip');
+    const head=new Uint8Array(await selectedFile.slice(0,4096).arrayBuffer());
+    const isZip=(head[0]===0x50&&head[1]===0x4B)||selectedFile.name.toLowerCase().endsWith('.zip');
     let messages,attachMap,fmt,pdfCount=0,pdfSize=0,pomLegacy=false,figIV=false;
 
     if(isZip){
@@ -1660,10 +1661,15 @@ async function scan(){
           return;
         }
       }
+    }else if(!/<\?xml|<smses|<sms\s|<mms\s/i.test(new TextDecoder().decode(head))){
+      log('Unknown file type, generating structure report…','warn');
+      await generateRawStructureReport(selectedFile);
+      return;
     }else{
       log('Detected SMS Backup & Restore XML','ok');
       fmt='smsbackup';
       ({messages,attachMap,pdfCount,pdfSize}=await parseSmsBackupXmlStream(selectedFile));
+      if(!messages.length){log('No messages found in this XML, generating structure report…','warn');await generateRawStructureReport(selectedFile);return}
     }
 
     if(MERGE.on&&MERGE.old){
