@@ -494,7 +494,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')setMenu(fals
   <div id="mergeBanner" style="display:none;margin-bottom:14px;padding:10px 14px;border-radius:10px;background:rgba(99,102,241,.07);border:1px solid rgba(99,102,241,.25);font-size:.78rem;line-height:1.55"><b>Fix a previous import (merge)</b><br>Step 1: upload the backup from your <b>OLD</b> phone. Those messages are kept as the correct ones.<br>Step 2: upload a fresh backup from your <b>NEW</b> phone. Only messages newer than the old backup are added.<br>Then delete all messages on the new phone and restore the merged file.</div>
 
   <div class="drop-zone" id="dropZone">
-    <input type="file" id="fileInput" accept=".zip,.xml" />
+    <input type="file" id="fileInput" />
     <div class="drop-icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><polyline points="12 12 12 21"/><polyline points="16 16 12 12 8 16"/></svg></div>
     <div class="drop-text">Upload your backup</div>
     <div class="drop-sub">ZIP or XML · drag & drop or tap to browse</div>
@@ -673,7 +673,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')setMenu(fals
 </section>
 
 <footer class="site-footer">
-  <p><span id="verSpan">v1.1.11</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
+  <p><span id="verSpan">v1.1.12</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
   <p style="margin-top:6px">Free and open source · Nothing gets uploaded</p>
 </footer>
 
@@ -1880,14 +1880,14 @@ async function sdDescribe(blob,label,kind,out,depth){
   if(/text|JSON|XML|vCard/.test(kind)){out.push('',H+' Text content','');const S=sdNewS(),I=sdNewI(ext);I.where=label;await sdTextInto(blob,S,I);sdTextOut(S,I,out,H+'#');return}
   out.push('',H+' Binary content','');await sdBinOut(blob,out);
 }
-async function generateStructureMd(file,brand){
+async function generateStructureMd(file){
   log('Writing the file description (no private data)…');
   SD={refs:[],files:new Set(),cur:'',chk:new Map(),phones:new Map()};
   const out=[],head=new Uint8Array(await file.slice(0,64).arrayBuffer()),kind=sdMagicName(head)||'binary (unknown type)',pat=sdPattern(file.name,null,true);
   const logText=(logBox.textContent||'').split(file.name).join(pat).replace(/[\w.+-]+@[\w.-]+\.\w{2,}/g,'<email>').replace(/\+?\d[\d ().-]{6,}\d/g,m=>m.replace(/\d/g,'#')).replace(/\d{5,}/g,m=>'#'.repeat(m.length)).trim();
   out.push('# Backup file description','','Made by Kosher Phone SMS Converter '+(($('verSpan')||{}).textContent||'')+' on '+new Date().toISOString().slice(0,10)+'.','',
     'This only describes how the backup is built. It has no messages, phone numbers, names or pictures. Every value is replaced by a description of what it looks like, for example `phone-like +nnnnnnnnnnn` (n is a digit) or `text (words, emoji)`. Only technical values are shown as they are, like small numbers, file types and app ids.','',
-    '## Summary','','| | |','|---|---|','| Phone | '+sdEsc(brand||'-')+' |','| File name (pattern) | `'+sdEsc(pat)+'` |','| Size | '+sdSize(file.size)+' |','| First bytes | `'+[...head.subarray(0,16)].map(b=>b.toString(16).padStart(2,'0')).join(' ')+'` |','| What it is | '+sdEsc(kind)+' |','',
+    '## Summary','','| | |','|---|---|','| File name (pattern) | `'+sdEsc(pat)+'` |','| Size | '+sdSize(file.size)+' |','| First bytes | `'+[...head.subarray(0,16)].map(b=>b.toString(16).padStart(2,'0')).join(' ')+'` |','| What it is | '+sdEsc(kind)+' |','',
     '## What the converter did','','```text',logText,'```');
   const at=out.length;
   await sdDescribe(file,pat,kind,out,0);
@@ -1898,19 +1898,14 @@ async function generateStructureMd(file,brand){
 }
 function downloadReport(report,origName){
   progressEl.style.display='none';
-  errorBox.innerHTML='<b>This phone format is not supported yet.</b><br><br>Help us add support! Send us one of these:<br><br><b>1. File description (best to start with).</b> A small text file that describes how your backup is built: the files inside, the field names, and what kind of values they hold. It has <b>no messages, phone numbers, names or pictures</b>, and you can open it and read it before you send it.<br><br><b>2. Anonymized copy.</b> Your whole backup, with all messages, phone numbers, names, pictures and contacts replaced with fake data. Chats stay grouped the same way. We might ask for this if the description isn\'t enough.<br><br>This is <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener">open source</a>, so you can verify exactly what gets changed in the code.<br><br><input id="phoneBrandInput" type="text" class="report-input" placeholder="Phone brand (e.g. Tak S7, Kosher XL...)"><input id="userEmailInput" type="email" class="report-input" placeholder="Your email (so we can let you know when it\'s supported)"><br><button id="mdBtn" class="report-btn" style="background:#4f46e5">Download file description</button> <button id="anonBtn" class="report-btn" style="background:#6b7280">Anonymize &amp; Download</button><div id="mdInstructions" style="display:none;margin-top:14px;padding:12px 16px;border-radius:8px;background:#ecfdf5;color:#065f46;font-size:.85rem;line-height:1.6"><b>Almost done!</b> Email the file you just downloaded to <b>pythonivelt@gmail.com</b>. It\'s small, so email works fine. You can open it first to see exactly what\'s inside.</div><div id="anonInstructions" style="display:none;margin-top:14px;padding:12px 16px;border-radius:8px;background:#ecfdf5;color:#065f46;font-size:.85rem;line-height:1.6"><b>Almost done!</b><ol style="margin:8px 0 0 16px;padding:0"><li>Open <a href="https://drive.google.com" target="_blank" rel="noopener">Google Drive</a></li><li>Upload the anonymized file you just downloaded</li><li>Right-click the file → Share</li><li>Share with <b>pythonivelt@gmail.com</b></li></ol><br>Thanks for helping us add support for your phone!</div>';
+  errorBox.innerHTML='<b>This phone format is not supported yet.</b><br><br>Help us add support! Send us one of these:<br><br><b>1. File description (best to start with).</b> A small text file that describes how your backup is built: the files inside, the field names, and what kind of values they hold. It has <b>no messages, phone numbers, names or pictures</b>, and you can open it and read it before you send it.<br><br><b>2. Anonymized copy.</b> Your whole backup, with all messages, phone numbers, names, pictures and contacts replaced with fake data. Chats stay grouped the same way. We might ask for this if the description isn\'t enough.<br><br>This is <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener">open source</a>, so you can verify exactly what gets changed in the code.<br><br><button id="mdBtn" class="report-btn" style="background:#4f46e5">Download file description</button> <button id="anonBtn" class="report-btn" style="background:#6b7280">Anonymize &amp; Download</button><div id="mdInstructions" style="display:none;margin-top:14px;padding:12px 16px;border-radius:8px;background:#ecfdf5;color:#065f46;font-size:.85rem;line-height:1.6"><b>Almost done!</b> Email the file you just downloaded to <b>pythonivelt@gmail.com</b>. It\'s small, so email works fine. You can open it first to see exactly what\'s inside.</div><div id="anonInstructions" style="display:none;margin-top:14px;padding:12px 16px;border-radius:8px;background:#ecfdf5;color:#065f46;font-size:.85rem;line-height:1.6"><b>Almost done!</b><ol style="margin:8px 0 0 16px;padding:0"><li>Open <a href="https://drive.google.com" target="_blank" rel="noopener">Google Drive</a></li><li>Upload the anonymized file you just downloaded</li><li>Right-click the file → Share</li><li>Share with <b>pythonivelt@gmail.com</b></li></ol><br>Thanks for helping us add support for your phone!</div>';
   errorBox.style.display='block';scanBtn.style.display='';scanBtn.disabled=false;cancelBtn.style.display='none';
   let sent=false;
   $('mdBtn').onclick=async function(){
-    const brand=($('phoneBrandInput').value||'').trim();
-    if(!brand){$('phoneBrandInput').style.border='2px solid red';$('phoneBrandInput').focus();return}
-    report.phoneBrand=brand;
-    const email=($('userEmailInput').value||'').trim();
-    if(email)report.userEmail=email;
     this.textContent='Writing…';this.disabled=true;
     try{
       if(!sent){sent=true;fetch(GAS_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(report)}).catch(()=>{})}
-      const md=await generateStructureMd(selectedFile,brand),url=URL.createObjectURL(new Blob([md],{type:'text/markdown'})),a=document.createElement('a');
+      const md=await generateStructureMd(selectedFile),url=URL.createObjectURL(new Blob([md],{type:'text/markdown'})),a=document.createElement('a');
       a.href=url;a.download='file-description-'+origName.replace(/\.[^.]+$/,'')+'.md';a.click();setTimeout(()=>URL.revokeObjectURL(url),2000);
       this.textContent='Downloaded!';this.style.background='#16a34a';this.disabled=false;
       $('mdInstructions').style.display='block';
@@ -1918,11 +1913,6 @@ function downloadReport(report,origName){
     }catch(e){this.textContent='Failed';this.style.background='#dc2626';this.disabled=false;progressEl.style.display='none';log('File description failed: '+e.message,'err');console.error(e)}
   };
   $('anonBtn').onclick=async function(){
-    const brand=($('phoneBrandInput').value||'').trim();
-    if(!brand){$('phoneBrandInput').style.border='2px solid red';$('phoneBrandInput').focus();return}
-    report.phoneBrand=brand;
-    const email=($('userEmailInput').value||'').trim();
-    if(email)report.userEmail=email;
     this.textContent='Anonymizing…';this.disabled=true;
     try{
       // Send structure report
