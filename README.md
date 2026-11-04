@@ -29,6 +29,8 @@ Free, nothing to install, and your messages never leave your device.
 
 > **Restoring on a Fig?** Open **Settings** and tap **Backup and restore**, go to the **Restore** tab and tap **Messages** (under "Or restore one thing"). Don't use "Choose a file". It only takes the Fig's own full-phone backup, so nothing gets restored.
 
+> **Restoring on a Wonder?** Already have messages on the Wonder? To be extra safe, back them up first in the Wonder's **Backup** app. Then tap **Import Messages**, pick the converted file and tap **Confirm**. Your messages won't show yet. That's normal: go to **Settings**, then **Apps**, then **Messages**, then **Storage**, and tap **Clear storage**. This only refreshes the Messages app, your messages stay safe. Open Messages and all your chats are there.
+
 ## What it can do
 
 - **Pictures and voice notes come along.** Photos, voice notes, videos and other MMS attachments are converted together with the texts.
@@ -52,9 +54,11 @@ Everything happens inside your browser. Your backup file, your messages, phone n
 
 To know the converter is working, it sends an anonymous summary of each conversion: totals like how many messages were converted, how big the file was and whether it worked. It never includes the content of any message.
 
+If your phone isn't supported yet, the converter offers to send us a **file description**: a small text file that only describes how your backup is built, with no messages, phone numbers, names or pictures. You can read the whole thing on the page first, and it's only sent if you add your email and phone model and tap **Send**.
+
 ## Questions or problems?
 
-Found a bug, or have a phone the converter doesn't support yet? Write to **pythonivelt@gmail.com** (email or Google Chat), or use the **Contact** link at the bottom of the converter page.
+Have a phone the converter doesn't support yet? Choose its backup file on the converter page and tap **Send file description**, so we can add it. Found a bug? Write to **pythonivelt@gmail.com** (email or Google Chat), or use the **Contact** link at the bottom of the converter page.
 
 ## Open source
 

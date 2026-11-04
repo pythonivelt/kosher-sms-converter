@@ -533,7 +533,6 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')setMenu(fals
       <div>
         <div class="option-label">Wonder</div>
         <div class="option-desc" id="wonderDesc">ZIP file for Wonder phones</div>
-        <div class="option-note" id="wonderNote">Wonder may only show the last few messages per conversation after the first import. If that happens, just import the same file again and everything will come through: messages, pictures and voice notes.</div>
       </div>
     </label>
     <label class="option" data-value="pom" id="optPom">
@@ -673,7 +672,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')setMenu(fals
 </section>
 
 <footer class="site-footer">
-  <p><span id="verSpan">v1.1.13</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
+  <p><span id="verSpan">v1.1.14</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
   <p style="margin-top:6px">Free and open source · Nothing gets uploaded</p>
 </footer>
 
@@ -1901,38 +1900,41 @@ async function generateStructureMd(file){
 }
 function downloadReport(report,origName){
   progressEl.style.display='none';
-  errorBox.innerHTML='<b>This phone format is not supported yet.</b><br><br>Help us add support! Send us one of these:<br><br><b>1. File description (best to start with).</b> A small text file that describes how your backup is built: the files inside, the field names, and what kind of values they hold. It has <b>no messages, phone numbers, names or pictures</b>, and you can open it and read it before you send it.<br><br><b>2. Anonymized copy.</b> Your whole backup, with all messages, phone numbers, names, pictures and contacts replaced with fake data. Chats stay grouped the same way. We might ask for this if the description isn\'t enough.<br><br>This is <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener">open source</a>, so you can verify exactly what gets changed in the code.<br><br><button id="mdBtn" class="report-btn" style="background:#4f46e5">Download file description</button> <button id="anonBtn" class="report-btn" style="background:#6b7280">Anonymize &amp; Download</button><div id="mdInstructions" style="display:none;margin-top:14px;padding:12px 16px;border-radius:8px;background:#ecfdf5;color:#065f46;font-size:.85rem;line-height:1.6"><b>Almost done!</b> Email the file you just downloaded to <b>pythonivelt@gmail.com</b>. It\'s small, so email works fine. You can open it first to see exactly what\'s inside.</div><div id="anonInstructions" style="display:none;margin-top:14px;padding:12px 16px;border-radius:8px;background:#ecfdf5;color:#065f46;font-size:.85rem;line-height:1.6"><b>Almost done!</b><ol style="margin:8px 0 0 16px;padding:0"><li>Open <a href="https://drive.google.com" target="_blank" rel="noopener">Google Drive</a></li><li>Upload the anonymized file you just downloaded</li><li>Right-click the file → Share</li><li>Share with <b>pythonivelt@gmail.com</b></li></ol><br>Thanks for helping us add support for your phone!</div>';
+  errorBox.innerHTML='<b>This phone isn\'t supported yet.</b><br><br>Want to help us add it? Tap <b>Send</b> to send us a <b>file description</b>: a small text file that describes how your backup is built, like the files inside, the field names and what kind of values they hold. It has <b>no messages, phone numbers, names or pictures</b>. Nothing is sent until you tap Send.'
+    +'<div style="display:flex;flex-direction:column;gap:8px;margin:14px 0 10px;max-width:360px">'
+    +'<input id="sdEmail" type="email" class="log-input" style="font-size:.85rem;padding:9px 12px" placeholder="Your email, so we can reach you" autocomplete="email">'
+    +'<input id="sdPhone" type="text" class="log-input" style="font-size:.85rem;padding:9px 12px" placeholder="Phone brand and model, e.g. Keyphone KP1">'
+    +'</div><button id="mdBtn" class="report-btn" style="background:#4f46e5">Send file description</button> <a href="#" id="mdView" style="font-size:.85rem;margin-left:8px">See what gets sent</a>'
+    +'<pre id="mdPreview" style="display:none;margin-top:10px;max-height:320px;overflow:auto;white-space:pre-wrap;word-break:break-word;font-size:.72rem;line-height:1.45;padding:10px 12px;border-radius:8px;border:1px solid var(--field-border);background:var(--field);color:var(--text)"></pre>'
+    +'<div id="mdNote" style="margin-top:10px;font-size:.85rem"></div>'
+    +'<div style="margin-top:12px;font-size:.8rem;opacity:.8">This is <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener">open source</a>, so you can check exactly what the file contains.</div>';
   errorBox.style.display='block';scanBtn.style.display='';scanBtn.disabled=false;cancelBtn.style.display='none';
-  let sent=false;
-  $('mdBtn').onclick=async function(){
-    this.textContent='Writing…';this.disabled=true;
-    try{
-      if(!sent){sent=true;fetch(GAS_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(report)}).catch(()=>{})}
-      const md=await generateStructureMd(selectedFile),url=URL.createObjectURL(new Blob([md],{type:'text/markdown'})),a=document.createElement('a');
-      a.href=url;a.download='file-description-'+origName.replace(/\.[^.]+$/,'')+'.md';a.click();setTimeout(()=>URL.revokeObjectURL(url),2000);
-      this.textContent='Downloaded!';this.style.background='#16a34a';this.disabled=false;
-      $('mdInstructions').style.display='block';
-      log('File description downloaded ('+formatSize(md.length)+'). Thank you!','ok');
-    }catch(e){this.textContent='Failed';this.style.background='#dc2626';this.disabled=false;progressEl.style.display='none';log('File description failed: '+e.message,'err');console.error(e)}
+  const file=selectedFile,note=$('mdNote'),pre=$('mdPreview'),view=$('mdView');
+  let mdP=null,sent=false;
+  const getMd=()=>mdP||(mdP=generateStructureMd(file).catch(e=>{mdP=null;throw e}));
+  const say=(t,bad)=>{note.textContent=t;note.style.color=bad?'#dc2626':''};
+  // shown right here on the page: most people can't open an .md file on their own
+  view.onclick=async ev=>{
+    ev.preventDefault();
+    if(pre.style.display==='block'){pre.style.display='none';view.textContent='See what gets sent';return}
+    view.textContent='Loading…';
+    try{pre.textContent=await getMd();pre.style.display='block';view.textContent='Hide';say('')}
+    catch(e){view.textContent='See what gets sent';say('Could not make the file: '+e.message,true)}
   };
-  $('anonBtn').onclick=async function(){
-    this.textContent='Anonymizing…';this.disabled=true;
+  // sent with the user's OK to the Apps Script, which emails it to us as an .md attachment (reply goes to their email)
+  $('mdBtn').onclick=async function(){
+    if(sent)return;
+    const email=$('sdEmail').value.trim(),phone=$('sdPhone').value.trim();
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){say('Please enter your email, so we can reach you.',true);$('sdEmail').focus();return}
+    if(phone.length<3){say('Please enter the phone brand and model.',true);$('sdPhone').focus();return}
+    this.textContent='Sending…';this.disabled=true;
     try{
-      // Send structure report
-      if(!sent){sent=true;await fetch(GAS_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(report)})}
-      // Generate anonymized ZIP
-      const anonBlob=await generateAnonymizedZip(window._lastUnknownEntries||[],selectedFile,origName);
-      if(anonBlob){
-        const url=URL.createObjectURL(anonBlob);
-        const a=document.createElement('a');a.href=url;a.download='anonymized-'+origName;a.click();URL.revokeObjectURL(url);
-      }
-      this.textContent='Downloaded!';this.style.background='#16a34a';
-      $('anonInstructions').style.display='block';
-      log('Anonymized file downloaded + structure report sent. Thank you!','ok');
-    }catch(e){
-      this.textContent='Failed';this.style.background='#dc2626';
-      log('Error: '+e.message+errWhere(e),'err');
-    }
+      const md=await getMd();
+      await fetch(GAS_URL,{method:'POST',mode:'no-cors',body:JSON.stringify({type:'description',fileName:origName,fileSize:file?file.size:0,userEmail:email,phoneBrand:phone,md,report,version:($('verSpan')||{}).textContent||'?',ts:new Date().toISOString()})});
+      sent=true;this.textContent='Sent ✓';this.style.background='#16a34a';$('sdEmail').disabled=$('sdPhone').disabled=true;
+      say('Thank you! We got it and will get back to you at '+email+'.');
+      log('File description sent ('+formatSize(md.length)+'). Thank you!','ok');
+    }catch(e){this.textContent='Send file description';this.disabled=false;say('Sending failed. Check your internet connection and try again.',true);log('File description send failed: '+e.message,'err')}
   };
 }
 // XML can't carry control characters even when escaped - one stray \u0001 in a message makes the whole file unreadable
@@ -2954,10 +2956,13 @@ async function runParts(job){
   dlBtn.style.display='none';cancelBtn.style.display='none';progressEl.style.display='none';
 }
 function partsInfo(job){return job?{parts:job.names.length,partsPlanned:job.groups.length,partFails:job.log.filter(s=>!s.startsWith('memory')).length,partMemRetries:job.log.filter(s=>s.startsWith('memory')).length,partLog:job.log.join(',')}:{}}
+// The Wonder hides imported chats until the Messages app's storage is cleared (tested on a real Wonder)
+const WONDER_STEPS=['Already have messages on the Wonder? To be extra safe, back them up first: in the Wonder\'s Backup app, export your messages to a file and keep it.','Your messages won\'t show yet. That\'s normal. Go to Settings, then Apps, then Messages, then Storage, and tap Clear storage. This only refreshes the Messages app. Your messages stay safe.','Open Messages. All your chats are there.'];
 function partsDone(job){
   const N=job.names.length,app={smsbackup:'SMS Backup & Restore',fig:'Fig',kp:'Keyphone',wonder:'Wonder',pom:'Pom'}[job.target]||'the app';
   partsCard('All '+N+' parts are saved',job.summary+', '+formatSize(job.sizes.reduce((a,b)=>a+b,0))+' in total. Find them in your Downloads folder, named '+job.names[0]+' to '+job.names[N-1]+'. The last one may need a few more seconds to finish saving.',0,0,
-    ['Copy all '+N+' files to your phone.','In '+app+', restore part 1.','When it finishes, restore part 2, then the rest in order, up to part '+N+'.'],
+    job.target==='wonder'?['Copy all '+N+' files to your Wonder.',WONDER_STEPS[0],'In the Backup app, tap Import Messages and import part 1, then part 2, and the rest in order, up to part '+N+'.',WONDER_STEPS[1],WONDER_STEPS[2]]
+    :['Copy all '+N+' files to your phone.','In '+app+', restore part 1.','When it finishes, restore part 2, then the rest in order, up to part '+N+'.'],
     [{text:'Part '+N+' didn\'t download? Download it again',onClick:()=>againLast(job)}]);
 }
 function againLast(job){
@@ -2991,6 +2996,7 @@ function outFilename(target){
     :target==='pom'?'MessagesBackup_'+n.getFullYear()+p(n.getMonth()+1)+p(n.getDate())+'_'+p(n.getHours())+p(n.getMinutes())+p(n.getSeconds())+'.zip'
     :target==='pom'?'last_'+p(n.getHours())+p(n.getMinutes())+p(n.getSeconds())+'.zip'
     :target==='kp'?'keyphone.kpb'
+    :target==='wonder'?'Messages_Backup_'+n.getFullYear()+'-'+p(n.getMonth()+1)+'-'+p(n.getDate())+'_kosher-sms-converter.zip'
     :'fig-'+baseName+'.zip';
 }
 function msgBytes(m,target){
@@ -3278,61 +3284,65 @@ async function buildRawZip(files,zipComment,sink=blobSink('application/zip')){
   return await sink.close();
 }
 
-async function buildWonderZip(messages){
-  let smsCount=0,mmsCount=0,attachId=1;
-  const xmlParts=[];
-  const attachFiles=[];
-  xmlParts.push('<?xml version="1.0" encoding="UTF-8"?>\n<messages sms_count="__SMS__" mms_count="__MMS__">\n');
-
-  for(let wi=0;wi<messages.length;wi++){
-    if(wi%50===0){if(cancelled)throw{cancelled:true};showProgress('Building Wonder… '+wi+'/'+messages.length,Math.round(wi/messages.length*80)+10);await tick()}
-    const m=messages[wi];
+// Wonder's own backup format, copied from a real Wonder backup; a test file in this exact format restored fully on a real Wonder
+async function buildWonderZip(messages,sink,own){
+  own=own||detectOwnNumber(messages);
+  const isOwn=a=>!!own&&normNum(a)===own,ownSent=a=>{const d=String(a).replace(/\D/g,'');return d.length===10?'1'+d:d};
+  const ms=d=>{const v=parseInt(d,10)||0;return v&&v<1e12?v*1000:v};
+  const sms=[],mms=[],files=[];let mid=1,pid=1;
+  for(let i=0;i<messages.length;i++){
+    const m=messages[i];
+    if(i%200===0){if(cancelled)throw{cancelled:true};showProgress('Building Wonder file… '+i.toLocaleString()+' / '+messages.length.toLocaleString(),Math.round(i/messages.length*80)+10);await tick()}
     if(m.type==='sms'){
-      xmlParts.push(`  <sms address="${escXml(m.address)}" body="${escXml(m.body)}" date="${escXml(m.date)}" date_sent="0" type="${m.direction==='in'?'1':'2'}" read="${escXml(m.read||'1')}" seen="1" />\n`);
-      smsCount++;
-    }else{
-      const mb=m.direction==='in'?'1':'2';
-      const mmsDate=parseInt(m.date,10)>1e12?Math.floor(parseInt(m.date,10)/1000):parseInt(m.date,10)||0;
-      let xml=`  <mms date="${mmsDate}" read="${escXml(m.read||'1')}" msg_box="${mb}" ct_t="${escXml(m.ctT||'application/vnd.wap.multipart.related')}" m_type="${escXml(m.mType||(mb==='1'?'132':'128'))}" seen="${mb==='2'?'0':'1'}">\n`;
-      for(const a of(m.addrs||[]))xml+=`    <addr address="${escXml(a.address)}" type="${a.type}" />\n`;
-      const smilParts=[];
-      for(const p of m.parts){
-        if(hasAttach(p)){const d=await resolveData(p);if(d){
-          const ext=(p.ct||'').split('/').pop().replace('jpeg','jpg')||'bin';
-          const imgName=(p.cl||'image'+String(attachId).padStart(6,'0')+'.'+ext);
-          const fn='mms_'+(mmsCount+1)+'_'+attachId+'.'+ext;attachId++;
-          attachFiles.push({fn,data:new Blob([new Uint8Array(d)])});
-          xml+=`    <part ct="${escXml(p.ct)}" name="${escXml(imgName)}" cl="${escXml(imgName)}" file="${escXml(fn)}" />\n`;
-          smilParts.push({src:imgName,ct:p.ct});
-        }}else{
-          xml+=`    <part ct="text/plain" text="${escXml(p.text||'')}" />\n`;
-        }
-      }
-      if(smilParts.length){
-        let smil='<smil>\n    <head>\n        <layout>\n            <root-layout width="240" height="160"/>\n';
-        smil+='            <region id="Image" width="100%" height="67%" left="0%" top="0%" fit="meet"/>\n';
-        smil+='            <region id="Text" width="100%" height="33%" left="0%" top="67%" fit="meet"/>\n';
-        smil+='        </layout>\n    </head>\n    <body>\n';
-        for(const ap of smilParts){
-          const tag=ap.ct.startsWith('image')?'img':ap.ct.startsWith('video')?'video':'ref';
-          smil+=`    <par dur="8000ms"><${tag} src="${escXml(ap.src)}" region="Image"/></par>`;
-        }
-        smil+=`</body>\n</smil>`;
-        xml=xml.replace(/(\n    <part ct=)/, `    <part ct="application/smil" name="smil.xml" cl="smil.xml" text="${escXml(smil)}" />\n$1`);
-      }
-      xml+=`  </mms>\n`;
-      xmlParts.push(xml);
-      mmsCount++;
+      sms.push(`  <sms address="${escXml(m.address)}" body="${escXml(m.body)}" date="${ms(m.date)}" date_sent="${ms(m.dateSent)}" type="${m.direction==='in'?1:2}" read="1" seen="1" />`);
+      continue;
     }
+    // sender first, then everyone else; Wonder writes her own number as 1XXXXXXXXXX when she sent it and +1XXXXXXXXXX when she got it
+    const sent=m.direction!=='in',id=mid++,addrs=(m.addrs||[]).filter(a=>a.address);
+    const fa=addrs.find(a=>parseInt(a.type,10)===137);
+    let from=fa?fa.address:sent?(own?'1'+own:''):(m.address||'');
+    // sent MMS often say insert-address-token instead of her number
+    if(sent&&!/\d/.test(from))from=own?'1'+own:'';else if(sent&&isOwn(from))from=ownSent(from);
+    let to=addrs.filter(a=>a!==fa).map(a=>a.address);
+    if(!to.length&&sent)to=String(m.address||'').split('~');
+    if(!sent&&own&&!to.some(isOwn))to.push('+1'+own);
+    const seen=new Set([normNum(from)]);
+    to=to.filter(a=>{const k=normNum(a);if(!a||seen.has(k))return false;seen.add(k);return true});
+    if(!to.length&&from)to=['+'+String(from).replace(/^\+/,'')];
+    const lines=[];
+    if(from)lines.push(`    <addr address="${escXml(from)}" type="137" />`);
+    for(const a of to)lines.push(`    <addr address="${escXml(a)}" type="151" />`);
+    const media=[],texts=[];
+    for(const p of m.parts||[]){
+      if(String(p.ct||'').toLowerCase()==='application/smil')continue;
+      if(hasAttach(p)){const d=await resolveData(p);if(d)media.push({p,d})}
+      else if(p.text)texts.push(p.text);
+    }
+    // received parts carry name + cl, sent parts only cl (as in the real backup)
+    const nm=s=>sent?'':` name="${escXml(s)}"`;
+    if(media.length){
+      const refs=media.map(({p},k)=>{
+        const ct=String(p.ct||'application/octet-stream').toLowerCase();
+        const ext=ct.startsWith('audio/')?'.amr':ct==='image/jpeg'||ct==='image/jpg'?'.jpg':extFromCt(ct);
+        return{ct,ext,cl:String(p.cl||('attachment'+k+ext)).replace(/[^A-Za-z0-9._-]/g,'_')};
+      });
+      const tag=ct=>ct.startsWith('image/')?'img':ct.startsWith('audio/')?'audio':ct.startsWith('video/')?'video':'ref';
+      const smil='<smil xmlns="http://www.w3.org/2001/SMIL20/Language"><head><layout/></head><body>'+refs.map(r=>`<par dur="8000ms"><${tag(r.ct)} src="${r.cl}"/></par>`).join('')+'</body></smil>';
+      pid++;lines.push(`    <part ct="application/smil"${nm('smil.xml')} cl="smil.xml" text="${escXml(smil)}" />`);
+      media.forEach(({d},k)=>{
+        const r=refs[k],fn='mms_'+id+'_'+(pid++)+r.ext;
+        files.push({name:'mms_attachments/'+fn,data:new Blob([new Uint8Array(d)])});
+        lines.push(`    <part ct="${escXml(r.ct)}"${nm(r.cl)} cl="${escXml(r.cl)}" file="${fn}" />`);
+      });
+    }
+    for(const t of texts.length||media.length?texts:['']){pid++;lines.push(`    <part ct="text/plain" name="Attachment.txt" cl="Attachment" text="${escXml(t)}" />`)}
+    mms.push(`  <mms date="${Math.floor(ms(m.date)/1000)}" read="1" msg_box="${sent?2:1}" ct_t="application/vnd.wap.multipart.related" m_type="${sent?128:132}" seen="${sent?0:1}">\n${lines.join('\n')}\n  </mms>`);
   }
-  xmlParts.push('</messages>\n');
-  xmlParts[0]=xmlParts[0].replace('__SMS__',String(smsCount)).replace('__MMS__',String(mmsCount));
-
-  const dateStr=new Date().toISOString().slice(0,10);
-  const xmlData=new TextEncoder().encode(xmlParts.join(''));
-  const zipFiles=[{name:'Messages_Backup_'+dateStr+'.xml',data:xmlData}];
-  for(const af of attachFiles)zipFiles.push({name:'mms_attachments/'+af.fn,data:af.data});
-  return await buildRawZip(zipFiles);
+  // every text first, then every MMS, like Wonder's own backups
+  const n=new Date(),p2=x=>String(x).padStart(2,'0'),stem='Messages_Backup_'+n.getFullYear()+'-'+p2(n.getMonth()+1)+'-'+p2(n.getDate());
+  const xml='<?xml version="1.0" encoding="UTF-8"?>\n<messages sms_count="'+sms.length+'" mms_count="'+mms.length+'">\n'+[...sms,...mms].map(s=>s+'\n').join('')+'</messages>\n';
+  log('Building Wonder file: '+sms.length+' SMS, '+mms.length+' MMS, '+files.length+' attachments','ok');
+  return await buildRawZip([{name:stem+'.xml',data:new TextEncoder().encode(xml)},...files],undefined,sink);
 }
 
 // XML is collected as Blob pieces: one JS string can't hold more than ~512 MB, and Pom's mms.xml carries every picture as base64.
@@ -3657,10 +3667,6 @@ buildBtn.addEventListener('click',()=>{
   if(!parsedData)return;
   const t=document.querySelector('input[name="target"]:checked');
   if(!t)return;
-  if(parsedData.fmt==='fig'&&t.value==='wonder'){
-    infoBox.innerHTML='<b>No conversion needed!</b><br>Wonder accepts Fig backups directly. Just take your Fig backup file and import it into Wonder. No conversion required.';
-    infoBox.style.display='block';infoBox.scrollIntoView({behavior:'smooth',block:'center'});return;
-  }
   if(parsedData.fmt===t.value&&!(t.value==='pom'&&parsedData.pomLegacy)){
     const content=(document.querySelector('input[name="content"]:checked')||{}).value||'all';
     if(content==='all'){
@@ -3710,7 +3716,7 @@ async function build(target){
     const pomNative=target==='pom';if(pomNative){_pomOwnKey=pomOwnKey(msgs);pomUniqueDates(msgs)}
     let filename=outFilename(target);
     const type=target==='smsbackup'?'text/xml;charset=utf-8':'application/zip';
-    const writeOne=(list,s,own)=>pomNative?buildPomZip(list,own):target==='smsbackup'?writeToSmsBackup(list,s,own):target==='kp'?buildKeyphoneZip(list,s,own):buildFigZip(list,s);
+    const writeOne=(list,s,own)=>pomNative?buildPomZip(list,own):target==='smsbackup'?writeToSmsBackup(list,s,own):target==='kp'?buildKeyphoneZip(list,s,own):target==='wonder'?buildWonderZip(list,s,own):buildFigZip(list,s);
     let out;
     let est=0;for(const m of msgs)est+=msgBytes(m,target);
     if(needsParts(target,est)){
@@ -3723,7 +3729,7 @@ async function build(target){
       showProgress('Building Pom ZIP…',40);await tick();
       out=await buildPomZip(msgs);
     }else{
-      if(target!=='smsbackup'){showProgress(target==='wonder'?'Building Fig ZIP for Wonder…':'Building '+(target==='pom'?'Pom':'Fig')+' ZIP…',40);await tick()}
+      if(target!=='smsbackup'){showProgress(target==='wonder'?'Building Wonder file…':'Building '+(target==='pom'?'Pom':'Fig')+' ZIP…',40);await tick()}
       out=await writeOne(msgs,blobSink(type));
       if(target==='kp')filename=_kpName;
     }
@@ -3741,6 +3747,7 @@ async function build(target){
       offerFile(out,filename);
       infoBox.textContent='Converted '+total+' messages'+detail+' ('+formatSize(out.size)+') successfully!';
       if(target==='fig')showFigWarn(false);
+      if(target==='wonder')infoBox.innerHTML+='<br><br><b>How to restore on your Wonder:</b><ol class="parts-steps">'+['Copy this file to your Wonder.',WONDER_STEPS[0],'In the Backup app, tap Import Messages, pick this file and tap Confirm.',WONDER_STEPS[1],WONDER_STEPS[2]].map(s=>'<li>'+s+'</li>').join('')+'</ol>';
     }
     if(parsedData.fmt==='merge'){infoBox.innerHTML+='<br><br><b>Now on the new phone:</b><br>1. SMS Backup &amp; Restore → menu → Tools → <b>Delete Messages</b> → All messages.<br>2. Restore this merged file.<br>3. Done: old chats correctly grouped, new messages kept, no duplicates.';}
     infoBox.style.display='block';
