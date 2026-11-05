@@ -5,11 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Kosher Phone SMS Converter</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%236366f1'/%3E%3Cstop offset='100%25' stop-color='%234f46e5'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='8' fill='url(%23g)'/%3E%3Cpath d='M22 17a1.5 1.5 0 0 1-1.5 1.5H13l-3 3V11a1.5 1.5 0 0 1 1.5-1.5h9A1.5 1.5 0 0 1 22 11z' fill='none' stroke='white' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
-<meta name="description" content="Convert SMS/MMS backups between Fig, Wonder, Pom and SMS Backup &amp; Restore. Runs 100% in your browser, so everything stays on your device." />
+<meta name="description" content="Convert SMS/MMS backups between Fig, Keyphone, Wonder, Pom and SMS Backup &amp; Restore. Runs 100% in your browser, so everything stays on your device." />
 <meta name="keywords" content="kosher phone, SMS converter, kosher SMS, Fig phone, Wonder phone, Pom phone, MMS transfer, SMS Backup Restore, message transfer, kosher phone backup" />
 <link rel="canonical" href="https://pythonivelt.github.io/kosher-sms-converter/" />
 <meta property="og:title" content="Kosher Phone SMS Converter" />
-<meta property="og:description" content="Move your text messages between kosher phones, including the pictures and voice notes in your chats. Works with Fig, Wonder, Pom, and SMS Backup &amp; Restore. Free, private, runs in your browser." />
+<meta property="og:description" content="Move your text messages between kosher phones, including the pictures and voice notes in your chats. Works with Fig, Keyphone, Wonder, Pom, and SMS Backup &amp; Restore. Free, private, runs in your browser." />
 <meta property="og:type" content="website" />
 <meta property="og:url" content="https://pythonivelt.github.io/kosher-sms-converter/" />
 <meta name="color-scheme" content="light dark" />
@@ -450,7 +450,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')setMenu(fals
 
 <section class="hero">
   <h1>Switching phones? Take your messages with you.</h1>
-  <p class="hero-sub">Move your text messages between kosher phones, including the pictures and voice notes in your chats. Works with Fig, Wonder, Pom and SMS Backup &amp; Restore. It all runs in your browser, so your messages stay on your device.</p>
+  <p class="hero-sub">Move your text messages between kosher phones, including the pictures and voice notes in your chats. Works with Fig, Keyphone, Wonder, Pom and SMS Backup &amp; Restore. It all runs in your browser, so your messages stay on your device.</p>
   <div class="hero-badges">
     <span class="hero-badge">SMS &amp; MMS</span>
     <span class="hero-badge">Picture &amp; voice messages</span>
@@ -469,7 +469,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')setMenu(fals
       <tr><td>SMS Backup &amp; Restore App *</td><td class="c-yes">SMS + MMS</td><td class="c-yes">SMS + MMS</td></tr>
       <tr><td>Buggy Backup App</td><td class="c-yes">SMS only</td><td class="c-no">Not in plan as of now</td></tr>
       <tr><td>Fig</td><td class="c-yes">SMS + MMS</td><td class="c-yes">SMS + MMS</td></tr>
-      <tr id="kpRow" style="display:none"><td>Keyphone</td><td class="c-yes">SMS + MMS</td><td class="c-yes">SMS + MMS</td></tr>
+      <tr id="kpRow"><td>Keyphone</td><td class="c-yes">SMS + MMS</td><td class="c-yes">SMS + MMS</td></tr>
       <tr><td>Wonder</td><td class="c-yes">SMS + MMS</td><td class="c-yes">SMS + MMS</td></tr>
       <tr id="pomRow"><td>Pom</td><td class="c-yes" id="pomOut">SMS + MMS</td><td class="c-yes" id="pomIn">SMS + MMS</td></tr>
       <tr><td>TAK</td><td class="c-yes">SMS + MMS</td><td class="c-yes">SMS + MMS</td></tr>
@@ -542,7 +542,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')setMenu(fals
         <div class="option-desc">ZIP file for Pom phones</div>
       </div>
     </label>
-    <label class="option" data-value="kp" id="optKp" style="display:none">
+    <label class="option" data-value="kp" id="optKp">
       <input type="radio" name="target" value="kp" />
       <div>
         <div class="option-label">Keyphone</div>
@@ -656,13 +656,14 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')setMenu(fals
   <p class="faq-sub">Common questions about the converter.</p>
   <div class="faq-item"><button class="faq-q" onclick="var p=this.parentElement,all=p.parentElement.querySelectorAll('.faq-item');all.forEach(function(i){if(i!==p){i.classList.remove('open');i.querySelector('.faq-a').style.maxHeight=''}});p.classList.toggle('open');var a=this.nextElementSibling;a.style.maxHeight=a.style.maxHeight?'':a.scrollHeight+'px'">Does it work with the MindPhone?<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></button><div class="faq-a"><div class="faq-a-inner">Yes. The MindPhone uses the SMS Backup &amp; Restore app, which is fully supported. Select "SMS Backup &amp; Restore" as your target in the converter and the output file will work directly on your MindPhone.</div></div></div>
   <div class="faq-item"><button class="faq-q" onclick="var p=this.parentElement,all=p.parentElement.querySelectorAll('.faq-item');all.forEach(function(i){if(i!==p){i.classList.remove('open');i.querySelector('.faq-a').style.maxHeight=''}});p.classList.toggle('open');var a=this.nextElementSibling;a.style.maxHeight=a.style.maxHeight?'':a.scrollHeight+'px'">I converted my messages for a Fig, but restoring doesn’t work. What did I do wrong?<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></button><div class="faq-a"><div class="faq-a-inner">You probably tapped “Choose a file”. That button only takes the Fig’s own full-phone backup, so it says the file isn’t a Fig Backup file and nothing gets restored. Use the Messages button instead: open Settings and tap “Backup and restore”, go to the Restore tab, and tap “Messages” (under “Or restore one thing”). Then pick your file. If your backup was saved in parts, do the same for each part, in order.</div></div></div>
+  <div class="faq-item"><button class="faq-q" onclick="var p=this.parentElement,all=p.parentElement.querySelectorAll('.faq-item');all.forEach(function(i){if(i!==p){i.classList.remove('open');i.querySelector('.faq-a').style.maxHeight=''}});p.classList.toggle('open');var a=this.nextElementSibling;a.style.maxHeight=a.style.maxHeight?'':a.scrollHeight+'px'">I restored my messages on a Wonder, but I don’t see them. Where are they?<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></button><div class="faq-a"><div class="faq-a-inner">They are there, the Messages app just doesn’t show them yet. Go to <b>Settings</b>, then <b>Apps</b>, then <b>Messages</b>, then <b>Storage</b>, and tap <b>Clear storage</b>. Clearing the cache is not enough. This only refreshes the Messages app, your messages stay safe. Open Messages and all your chats are there. If you already had messages on the Wonder, back them up first in the Wonder’s <b>Backup</b> app to be extra safe.</div></div></div>
   <div class="faq-item"><button class="faq-q" onclick="var p=this.parentElement,all=p.parentElement.querySelectorAll('.faq-item');all.forEach(function(i){if(i!==p){i.classList.remove('open');i.querySelector('.faq-a').style.maxHeight=''}});p.classList.toggle('open');var a=this.nextElementSibling;a.style.maxHeight=a.style.maxHeight?'':a.scrollHeight+'px'">My new phone already has messages. Will restoring an old backup mess them up?<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></button><div class="faq-a"><div class="faq-a-inner">No, nothing gets erased. Restoring adds the old messages to what is already on your phone, and messages with the same person end up together in one chat, in date order. Restore apps like SMS Backup &amp; Restore (used by the MindPhone), Fig and Pom also skip any message that is already on the phone, so nothing shows up twice.</div></div></div>
   <div class="faq-item"><button class="faq-q" onclick="var p=this.parentElement,all=p.parentElement.querySelectorAll('.faq-item');all.forEach(function(i){if(i!==p){i.classList.remove('open');i.querySelector('.faq-a').style.maxHeight=''}});p.classList.toggle('open');var a=this.nextElementSibling;a.style.maxHeight=a.style.maxHeight?'':a.scrollHeight+'px'">Do pictures and voice notes lose quality?<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></button><div class="faq-a"><div class="faq-a-inner">No, your pictures, voice notes, and videos come through exactly the same. Nothing changes or gets lower quality.</div></div></div>
   <div class="faq-item"><button class="faq-q" onclick="var p=this.parentElement,all=p.parentElement.querySelectorAll('.faq-item');all.forEach(function(i){if(i!==p){i.classList.remove('open');i.querySelector('.faq-a').style.maxHeight=''}});p.classList.toggle('open');var a=this.nextElementSibling;a.style.maxHeight=a.style.maxHeight?'':a.scrollHeight+'px'">Can I transfer between a Fig and a TAK?<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></button><div class="faq-a"><div class="faq-a-inner">You don't even need the converter for that! Fig and TAK save messages the same way, so just take your backup file and put it on the other phone. It'll work as is.</div></div></div>
   <div class="faq-item"><button class="faq-q" onclick="var p=this.parentElement,all=p.parentElement.querySelectorAll('.faq-item');all.forEach(function(i){if(i!==p){i.classList.remove('open');i.querySelector('.faq-a').style.maxHeight=''}});p.classList.toggle('open');var a=this.nextElementSibling;a.style.maxHeight=a.style.maxHeight?'':a.scrollHeight+'px'">Is it safe? Are my messages uploaded anywhere?<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></button><div class="faq-a"><div class="faq-a-inner">Completely safe. Everything happens right on your phone or computer, and your messages are never sent anywhere. No one can see them.</div></div></div>
   <div class="faq-item"><button class="faq-q" onclick="var p=this.parentElement,all=p.parentElement.querySelectorAll('.faq-item');all.forEach(function(i){if(i!==p){i.classList.remove('open');i.querySelector('.faq-a').style.maxHeight=''}});p.classList.toggle('open');var a=this.nextElementSibling;a.style.maxHeight=a.style.maxHeight?'':a.scrollHeight+'px'">What if my backup file is very large?<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></button><div class="faq-a"><div class="faq-a-inner">No problem. It opens even very large backups (2 GB and up). If the converted file is bigger than about 500 MB, it is saved as several smaller files that download one after another. Restore them in order, starting with part 1. For big backups, use a computer, because phones usually can't save files that big.</div></div></div>
   <div class="faq-item"><button class="faq-q" onclick="var p=this.parentElement,all=p.parentElement.querySelectorAll('.faq-item');all.forEach(function(i){if(i!==p){i.classList.remove('open');i.querySelector('.faq-a').style.maxHeight=''}});p.classList.toggle('open');var a=this.nextElementSibling;a.style.maxHeight=a.style.maxHeight?'':a.scrollHeight+'px'">Does it work with iPhone?<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></button><div class="faq-a"><div class="faq-a-inner">Not currently. This tool is designed for kosher Android phones. iPhones use a completely different backup system that is not compatible.</div></div></div>
-  <div class="faq-item"><button class="faq-q" onclick="var p=this.parentElement,all=p.parentElement.querySelectorAll('.faq-item');all.forEach(function(i){if(i!==p){i.classList.remove('open');i.querySelector('.faq-a').style.maxHeight=''}});p.classList.toggle('open');var a=this.nextElementSibling;a.style.maxHeight=a.style.maxHeight?'':a.scrollHeight+'px'">What if my phone isn't listed?<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></button><div class="faq-a"><div class="faq-a-inner">New phones are added regularly. Use the Contact Us button below to request support for your phone.</div></div></div>
+  <div class="faq-item"><button class="faq-q" onclick="var p=this.parentElement,all=p.parentElement.querySelectorAll('.faq-item');all.forEach(function(i){if(i!==p){i.classList.remove('open');i.querySelector('.faq-a').style.maxHeight=''}});p.classList.toggle('open');var a=this.nextElementSibling;a.style.maxHeight=a.style.maxHeight?'':a.scrollHeight+'px'">What if my phone isn't listed?<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></button><div class="faq-a"><div class="faq-a-inner">New phones are added regularly. Upload your backup file to the converter, and you’ll get an option to share a file description with us. It only describes how the backup is built, with no messages, phone numbers, names or pictures, so we can add your phone and let you know when it’s ready.</div></div></div>
 </section>
 
 <section class="contact-cta">
@@ -672,7 +673,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')setMenu(fals
 </section>
 
 <footer class="site-footer">
-  <p><span id="verSpan">v1.1.14</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
+  <p><span id="verSpan">v1.1.15</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
   <p style="margin-top:6px">Free and open source · Nothing gets uploaded</p>
 </footer>
 
@@ -701,11 +702,12 @@ const SUPPORT_MATRIX={
   fig:      {out:true, in:true},
   wonder:   {out:true, in:true},
   pom:      {out:true, in:true},
+  kp:       {out:true, in:true},
   buggy:    {out:'sms', in:false}
 };
 const TEST_MODE=new URLSearchParams(location.search).has('test');
 const BETA_MODE=new URLSearchParams(location.search).has('beta');
-if(BETA_MODE){SUPPORT_MATRIX.kp={out:true,in:true};var kr=document.getElementById('kpRow');if(kr)kr.style.display='';document.querySelector('.nav-logo').insertAdjacentHTML('beforeend',' <span style="background:#f59e0b;color:#fff;font-size:.6rem;padding:2px 6px;border-radius:4px;vertical-align:middle;font-weight:700;letter-spacing:.04em">BETA</span>');}
+if(BETA_MODE){document.querySelector('.nav-logo').insertAdjacentHTML('beforeend',' <span style="background:#f59e0b;color:#fff;font-size:.6rem;padding:2px 6px;border-radius:4px;vertical-align:middle;font-weight:700;letter-spacing:.04em">BETA</span>');}
 
 const $=id=>document.getElementById(id);
 const dropZone=$('dropZone'),fileInput=$('fileInput'),scanBtn=$('scanBtn'),buildBtn=$('buildBtn'),
@@ -2254,7 +2256,6 @@ async function scan(){
         let src='Fig all-in-one';const meta=entries.find(e=>e.filename==='metadata.json');
         if(meta){try{if(/keyphone/i.test(JSON.parse(await (await meta.getData(new zip.BlobWriter())).text()).format||''))src='Keyphone'}catch(e){}}
         kpSrc=src==='Keyphone';
-        if(src==='Keyphone'&&!BETA_MODE){log('Keyphone backups are still being tested, generating structure report…','warn');window._lastUnknownEntries=entries;await generateStructureReport(entries,selectedFile.name);return}
         log('Detected '+src+' backup, using only messages.zip inside','ok');
         const inner=await entries.find(e=>e.filename==='messages.zip').getData(new zip.BlobWriter('application/zip'));
         entries=await new zip.ZipReader(new zip.BlobReader(inner)).getEntries();
@@ -2272,7 +2273,7 @@ async function scan(){
           try{
             ({messages,attachMap,pdfCount,pdfSize}=await parseFigZip(entries));
             if(messages.some(m=>m.creator&&m.creator.includes('.pom'))){fmt='pom';pomLegacy=true;log('Detected Pom legacy backup (creator: com.figmessenger.pom)','ok')}
-            if(BETA_MODE&&kpSrc&&fmt==='fig')fmt='kp';
+            if(kpSrc&&fmt==='fig')fmt='kp';
           }catch(parseErr){
             log('zip.js read failed: '+parseErr.message+', trying fallback…','warn');
             const fallback=await fallbackZipScan(selectedFile);
@@ -2392,7 +2393,7 @@ async function scan(){
     }
 
     // Hide source format from targets; disable unsupported targets unless ?test mode
-    const targets={smsbackup:'optSms',wonder:'optWonder',pom:'optPom',...(BETA_MODE?{kp:'optKp'}:{}),fig:'optFig'};
+    const targets={smsbackup:'optSms',wonder:'optWonder',pom:'optPom',kp:'optKp',fig:'optFig'};
     for(const[k,elId]of Object.entries(targets)){
       const el=$(elId), sup=SUPPORT_MATRIX[k];
       const descIds={smsbackup:'smsDesc',fig:'figDesc',kp:'kpDesc',wonder:'wonderDesc'};

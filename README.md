@@ -16,6 +16,7 @@ Free, nothing to install, and your messages never leave your device.
 | Wonder | ✅ SMS + MMS | ✅ SMS + MMS |
 | Pom | ✅ SMS + MMS | ✅ SMS + MMS |
 | TAK | ✅ SMS + MMS | ✅ SMS + MMS |
+| Keyphone | ✅ SMS + MMS | ✅ SMS + MMS |
 
 \* SMS Backup & Restore is an app that works on any regular Android phone and on some kosher phones.
 
