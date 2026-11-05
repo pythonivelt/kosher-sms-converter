@@ -8,6 +8,11 @@ Every change, including small ones left out of the release notes.
 - FAQ: new question "I restored my messages on a Wonder, but I don't see them" (clear the Messages app's storage).
 - FAQ: "What if my phone isn't listed?" now points to the file description option instead of Contact Us.
 
+### v1.1.15 quiet update (2026-11-04, no version change)
+- Group chats from Keyphone backups stay correct when converting to other phones. Keyphone leaves the phone's own number out, and the converter used to guess a group member as "you". Now it only guesses when the number is on most incoming picture messages and never writes to you; otherwise it leaves your number out. Fig, Wonder and other backups that include the number are unchanged.
+- Wonder files: when your own number isn't known, sent picture messages use Android's standard placeholder instead of an empty sender.
+- Big Keyphone files: "Finishing Keyphone file…" now shows a percentage, and the bar no longer jumps back at the end.
+
 ## v1.1.14 (2026-11-04)
 - Converting to Wonder makes a file in Wonder's own backup format.
 - Fig backups can be converted to Wonder (no more "no conversion needed").

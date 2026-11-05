@@ -2805,21 +2805,28 @@ async function parsePomZip(entries){
 // ===== WRITERS =====
 
 function normNum(a){const d=String(a||'').replace(/\D/g,'');return d.length>=10?d.slice(-10):d}
-function detectOwnNumber(messages){
-  // own number: the type-137 sender on outgoing MMS; fallback = most frequent type-151 recipient across incoming MMS
-  const out=new Map(),inc=new Map();
+// own number: the type-137 sender on her sent MMS. If there is none, the most common recipient of incoming MMS,
+// but only if it's on most of them and never writes to her itself (Keyphone leaves her number out, so that one is a group member)
+function pickOwn(messages,key){
+  const out=new Map(),inc=new Map(),from=new Map(),sms=new Set();let inTotal=0;
   for(const m of messages){
-    if(m.type!=='mms')continue;
+    if(m.type!=='mms'){const k=key(m.address);if(k)sms.add(k);continue}
+    if(m.direction==='in')inTotal++;
     for(const a of(m.addrs||[])){
-      const n=normNum(a.address);if(!n)continue;
+      const k=key(a.address);if(!k)continue;
       const t=parseInt(a.type,10);
-      if(m.direction==='out'&&t===137)out.set(n,(out.get(n)||0)+1);
-      else if(m.direction==='in'&&t===151)inc.set(n,(inc.get(n)||0)+1);
+      if(m.direction==='out'&&t===137)out.set(k,(out.get(k)||0)+1);
+      else if(m.direction==='in'&&t===151)inc.set(k,(inc.get(k)||0)+1);
+      else if(m.direction==='in'&&t===137)from.set(k,(from.get(k)||0)+1);
     }
   }
   const top=map=>{let b=null,c=0;for(const[k,v]of map)if(v>c){b=k;c=v}return b};
-  return top(out)||top(inc);
+  const o=top(out);if(o)return o;
+  const c=top(inc);if(!c)return null;
+  const n=inc.get(c);
+  return n>=inTotal*0.5&&(from.get(c)||0)<=n*0.05&&!sms.has(c)?c:null;
 }
+function detectOwnNumber(messages){return pickOwn(messages,a=>normNum(a)||null)}
 function markGroups(messages){
   const own=detectOwnNumber(messages);
   let groupCount=0;
@@ -3184,7 +3191,7 @@ async function buildFigZip(messages,sink,opts){
 
 // Keyphone (.kpb): the Fig messages ZIP as messages.zip, plus metadata.json with its size, count and sha256
 let _kpName='';
-async function sha256Blob(blob){
+async function sha256Blob(blob,onProg){
   const K=Uint32Array.from('428a2f98 71374491 b5c0fbcf e9b5dba5 3956c25b 59f111f1 923f82a4 ab1c5ed5 d807aa98 12835b01 243185be 550c7dc3 72be5d74 80deb1fe 9bdc06a7 c19bf174 e49b69c1 efbe4786 0fc19dc6 240ca1cc 2de92c6f 4a7484aa 5cb0a9dc 76f988da 983e5152 a831c66d b00327c8 bf597fc7 c6e00bf3 d5a79147 06ca6351 14292967 27b70a85 2e1b2138 4d2c6dfc 53380d13 650a7354 766a0abb 81c2c92e 92722c85 a2bfe8a1 a81a664b c24b8b70 c76c51a3 d192e819 d6990624 f40e3585 106aa070 19a4c116 1e376c08 2748774c 34b0bcb5 391c0cb3 4ed8aa4a 5b9cca4f 682e6ff3 748f82ee 78a5636f 84c87814 8cc70208 90befffa a4506ceb bef9a3f7 c67178f2'.split(' '),h=>parseInt(h,16));
   const H=Uint32Array.from('6a09e667 bb67ae85 3c6ef372 a54ff53a 510e527f 9b05688c 1f83d9ab 5be0cd19'.split(' '),h=>parseInt(h,16));
   const W=new Uint32Array(64);
@@ -3205,6 +3212,7 @@ async function sha256Blob(blob){
     if(rest.length){const t=new Uint8Array(rest.length+d.length);t.set(rest);t.set(d,rest.length);d=t}
     const n=d.length-d.length%64;for(let i=0;i<n;i+=64)block(d,i);
     rest=d.slice(n);if(cancelled)throw{cancelled:true};
+    if(onProg)onProg(Math.min(1,(o+CH)/blob.size));await tick();
   }
   const tl=rest.length+9>64?128:64,t=new Uint8Array(tl),dv=new DataView(t.buffer);
   t.set(rest);t[rest.length]=0x80;dv.setUint32(tl-8,Math.floor(blob.size/0x20000000));dv.setUint32(tl-4,(blob.size*8)>>>0);
@@ -3213,11 +3221,12 @@ async function sha256Blob(blob){
 }
 async function buildKeyphoneZip(messages,sink,own){
   const inner=await buildFigZip(messages,blobSink('application/zip'),{kp:true,own:own||detectOwnNumber(messages)});
-  showProgress('Finishing Keyphone file…',95);await tick();
+  // the last steps read the whole file a few times; show how far along, so it never looks stuck
+  const fin=x=>showProgress('Finishing Keyphone file… '+Math.round(x*100)+'%',95+Math.round(x*4));fin(0);await tick();
   const n=new Date(),p=x=>String(x).padStart(2,'0'),id=crypto.randomUUID();
-  const meta={format:'keyphone-backup',version:1,id,created:n.getTime(),automatic:false,device:'KP1',build:'user',categories:{messages:{entry:'messages.zip',version:1,bytes:inner.size,sha256:await sha256Blob(inner),count:messages.length,failed:0,warning:''}}};
+  const meta={format:'keyphone-backup',version:1,id,created:n.getTime(),automatic:false,device:'KP1',build:'user',categories:{messages:{entry:'messages.zip',version:1,bytes:inner.size,sha256:await sha256Blob(inner,x=>fin(x/3)),count:messages.length,failed:0,warning:''}}};
   _kpName='keyphone-'+n.getFullYear()+p(n.getMonth()+1)+p(n.getDate())+'-'+p(n.getHours())+p(n.getMinutes())+p(n.getSeconds())+'-'+id+'.kpb';
-  return await buildRawZip([{name:'messages.zip',data:inner,stream:true},{name:'metadata.json',data:new TextEncoder().encode(JSON.stringify(meta))}],undefined,sink);
+  return await buildRawZip([{name:'messages.zip',data:inner,stream:true,onProgress:x=>fin(1/3+x*2/3)},{name:'metadata.json',data:new TextEncoder().encode(JSON.stringify(meta))}],undefined,sink);
 }
 async function buildRawZip(files,zipComment,sink=blobSink('application/zip')){
   // Pure JS ZIP creator (STORE, no compression) - compatible with Fig
@@ -3254,9 +3263,11 @@ async function buildRawZip(files,zipComment,sink=blobSink('application/zip')){
     if(f.data instanceof Blob&&(f.stream||BETA_MODE&&f.data.size>32*1024*1024)){
       // big files are checksummed and compressed as streams, so they never have to fit in memory at once
       const CH=8*1024*1024;let c=0xFFFFFFFF;
-      for(let o=0;o<f.data.size;o+=CH){c=crcUpdate(c,new Uint8Array(await f.data.slice(o,o+CH).arrayBuffer()));if(cancelled)throw{cancelled:true}}
+      const prog=f.onProgress||(()=>{});
+      for(let o=0;o<f.data.size;o+=CH){c=crcUpdate(c,new Uint8Array(await f.data.slice(o,o+CH).arrayBuffer()));if(cancelled)throw{cancelled:true};prog(Math.min(1,(o+CH)/f.data.size)/2)}
       crc=(c^0xFFFFFFFF)>>>0;sz=f.data.size;
-      let z=null;try{z=await new Response(f.data.stream().pipeThrough(new CompressionStream('deflate-raw'))).blob()}catch(e){}
+      let z=null,done=0;const total=f.data.size,count=new TransformStream({transform(ch,ctl){done+=ch.byteLength;prog(.5+Math.min(1,done/total)/2);ctl.enqueue(ch)}});
+      try{z=await new Response(f.data.stream().pipeThrough(count).pipeThrough(new CompressionStream('deflate-raw'))).blob()}catch(e){}
       if(z&&z.size<sz){method=8;cData=z;csz=z.size}else{method=0;cData=f.data;csz=sz}
     }else{
       const raw=f.data instanceof Blob?new Uint8Array(await f.data.arrayBuffer()):f.data instanceof Uint8Array?f.data:new Uint8Array(f.data);
@@ -3273,7 +3284,7 @@ async function buildRawZip(files,zipComment,sink=blobSink('application/zip')){
     cdirs.push(cd,nameBytes);
     offset+=lh.length+nameBytes.length+csz;
     f.data=null;
-    if(cancelled)throw{cancelled:true};if(fi%2===0){showProgress('Building ZIP… '+(fi+1)+'/'+files.length,60+Math.round(fi/files.length*35));await tick()}
+    if(cancelled)throw{cancelled:true};if(fi%2===0&&!f.onProgress){showProgress('Building ZIP… '+(fi+1)+'/'+files.length,60+Math.round(fi/files.length*35));await tick()}
   }
   const cdirOffset=offset;let cdirSize=0;
   for(const c of cdirs)cdirSize+=c.length;
@@ -3301,9 +3312,9 @@ async function buildWonderZip(messages,sink,own){
     // sender first, then everyone else; Wonder writes her own number as 1XXXXXXXXXX when she sent it and +1XXXXXXXXXX when she got it
     const sent=m.direction!=='in',id=mid++,addrs=(m.addrs||[]).filter(a=>a.address);
     const fa=addrs.find(a=>parseInt(a.type,10)===137);
-    let from=fa?fa.address:sent?(own?'1'+own:''):(m.address||'');
+    let from=fa?fa.address:sent?(own?'1'+own:'insert-address-token'):(m.address||'');
     // sent MMS often say insert-address-token instead of her number
-    if(sent&&!/\d/.test(from))from=own?'1'+own:'';else if(sent&&isOwn(from))from=ownSent(from);
+    if(sent&&!/\d/.test(from))from=own?'1'+own:'insert-address-token';else if(sent&&isOwn(from))from=ownSent(from);
     let to=addrs.filter(a=>a!==fa).map(a=>a.address);
     if(!to.length&&sent)to=String(m.address||'').split('~');
     if(!sent&&own&&!to.some(isOwn))to.push('+1'+own);
@@ -3355,13 +3366,7 @@ function xmlPieces(){
   };
 }
 // Pom threads each MMS by its <recipients>, so the phone owner's number must never be in it, in any format (+972 55… / 055…)
-function pomOwnKey(messages){
-  const out=new Map(),inc=new Map();
-  for(const m of messages){if(m.type!=='mms')continue;for(const a of m.addrs||[]){if(String(a.address||'').replace(/\D/g,'').length<7)continue;const k=pvPhoneKey(a.address),t=parseInt(a.type,10);
-    if(m.direction==='out'&&t===137)out.set(k,(out.get(k)||0)+1);else if(m.direction==='in'&&t===151)inc.set(k,(inc.get(k)||0)+1)}}
-  const top=map=>{let b=null,c=0;for(const[k,v]of map)if(v>c){b=k;c=v}return b};
-  return top(out)||top(inc);
-}
+function pomOwnKey(messages){return pickOwn(messages,a=>String(a||'').replace(/\D/g,'').length<7?null:pvPhoneKey(a))}
 // Pom's restore treats two MMS with the same second + box + type as one and skips the second (several pictures sent at once).
 // Nudge such MMS a second apart, the same way every time, so nothing is dropped and a second restore still skips real duplicates.
 function pomUniqueDates(messages){
