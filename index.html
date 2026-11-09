@@ -673,7 +673,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')setMenu(fals
 </section>
 
 <footer class="site-footer">
-  <p><span id="verSpan">v1.1.15</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
+  <p><span id="verSpan">v1.1.16</span> · <a href="https://github.com/pythonivelt/kosher-sms-converter" target="_blank" rel="noopener" style="color:#4f46e5">Source code on GitHub</a></p>
   <p style="margin-top:6px">Free and open source · Nothing gets uploaded</p>
 </footer>
 
@@ -2573,10 +2573,8 @@ async function parseWonderZip(entries){
       if(ct==='application/smil')continue;
       const fileRef=p.getAttribute('file');
       if(fileRef&&attachEntries[fileRef]){
-        let data=null;
-        try{const blob=await attachEntries[fileRef].getData(new zip.BlobWriter());data=await blob.arrayBuffer()}catch{}
         if(ct==='application/pdf'){pdfCount++;pdfSize+=(attachEntries[fileRef].uncompressedSize||0)}
-        parts.push({ct,cl:p.getAttribute('cl')||'',data,seq:parts.length});
+        parts.push({ct,cl:p.getAttribute('cl')||'',_entry:attachEntries[fileRef],seq:parts.length});
       }else if(p.getAttribute('text')!=null){
         parts.push({ct:'text/plain',text:p.getAttribute('text')||'',seq:parts.length});
       }
@@ -2708,6 +2706,8 @@ async function rehydrateSmsBackupStream(file,messages){
   log('Attachments loaded for '+mmsIdx+' MMS messages','ok');
 }
 
+// text cut out of the big XML keeps that whole piece of XML (with its pictures) in memory, so give each message its own copy
+function detachMsg(m){const blobs=m.parts.map(p=>p._dataBlob),c=JSON.parse(JSON.stringify(m));c.parts.forEach((p,i)=>{if(blobs[i])p._dataBlob=blobs[i]});return c}
 async function parsePomZip(entries){
   showProgress('Reading Pom backup…',15);await tick();
   const smsEntry=entries.find(e=>e.filename==='sms.xml');
@@ -2780,7 +2780,7 @@ async function parsePomZip(entries){
           if(pp._data_b64&&pp._data_b64!=='null'){
             const raw=b642ab(pp._data_b64);
             if(ct==='application/pdf'){pdfCount++;pdfSize+=raw.byteLength}
-            parts.push({ct,cl:nv(pp.cl)||nv(pp.name)||'',cid:nv(pp.cid)||'',data:raw,seq:parseInt(pp.seq)||0});
+            parts.push({ct,cl:nv(pp.cl)||nv(pp.name)||'',cid:nv(pp.cid)||'',_dataBlob:new Blob([raw]),seq:parseInt(pp.seq)||0});
           }else if(pp.text!=null&&pp.text!=='null'){
             parts.push({ct:ct||'text/plain',text:ux2(pp.text),seq:parseInt(pp.seq)||0});
           }
@@ -2792,6 +2792,7 @@ async function parsePomZip(entries){
         else if(recipAddr)addr=recipAddr.address;
         else if(recipients.length)addr=recipients[0];
         messages.push({type:'mms',date:dateMs,dateSent:ma.date_sent?String((parseInt(ma.date_sent)||0)<1e12?(parseInt(ma.date_sent)||0)*1000:parseInt(ma.date_sent)||0):'0',direction:mb==='1'?'in':'out',read:ma.read||'0',address:(addr||'').replace(/\s/g,''),contactName:cn,addrs,parts,msgBox:mb,ctT:nv(ma.ct_t)||'application/vnd.wap.multipart.related',mType:nv(ma.m_type)||'132',mSize:nv(ma.m_size),mId:nv(ma.m_id),trId:nv(ma.tr_id),locked:ma.locked||'0',seen:ma.seen||'1',_pomRecipients:recipients.length?recipients:null});
+        messages[messages.length-1]=detachMsg(messages[messages.length-1]);
         mmsCount++;
         if(mmsCount%100===0){if(cancelled)throw{cancelled:true};const p=Math.min(90,Math.round(bytesRead/tot*50)+40);if(p>lastPct+1){lastPct=p;showProgress('Parsing MMS… '+mmsCount+' messages ('+formatSize(bytesRead)+')',p);await tick()}}
       }

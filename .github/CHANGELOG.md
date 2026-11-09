@@ -2,6 +2,10 @@
 
 Every change, including small ones left out of the release notes.
 
+## v1.1.16 (2026-11-09)
+- Very big Pom backups no longer crash the page with "Out of memory". Pictures now wait on disk instead of in the tab, and each message keeps its own copy of its text so the big XML can be released. A 4 GB Pom backup went from a dead tab at 6.3 GB of memory to finished at about 500 MB.
+- Big Wonder backups no longer load every attachment during the scan. Pictures are read only when they are written out (4.6 GB of memory down to about 580 MB on a 4 GB backup).
+
 ## v1.1.15 (2026-11-04)
 - Keyphone is public: read .kpb backups and convert to Keyphone, on the normal page (was beta only).
 - Keyphone added to the "What's supported" table, the README table, the chart picture (assets/chart.svg), the top of the page and the Google description.
